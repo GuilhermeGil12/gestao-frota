@@ -15,15 +15,25 @@ public class CartaoRfid {
     @Column(name = "id_cartao")
     private Long id;
 
-
+    @Column(name = "uid", nullable = false, unique = true)
     private String uid;
-
 
     @Column(name = "ativo")
     private Boolean ativo;
 
     @Column(name = "criado_em")
     private LocalDateTime criadoEm;
+
+    @Column(name = "atualizado_em")
+    private LocalDateTime atualizadoEm;
+
+    // Define que muitos cartões podem pertencer a um único funcionário (N:1).
+    // O @JoinColumn indica que a coluna 'id_funcionario' no banco de dados é a Chave Estrangeira (FK)
+    // que conecta este cartão ao seu dono na tabela de funcionários.
+    @ManyToOne
+    @JoinColumn(name = "id_funcionario")
+    private Funcionario funcionario;
+
 
     public Long getId() {
         return id;
@@ -73,14 +83,4 @@ public class CartaoRfid {
         this.funcionario = funcionario;
     }
 
-    @Column(name = "atualizado_em")
-    private LocalDateTime atualizadoEm;
-
-
-    // Define que muitos cartões podem pertencer a um único funcionário (N:1).
-    // O @JoinColumn indica que a coluna 'id_funcionario' no banco de dados é a Chave Estrangeira (FK)
-    // que conecta este cartão ao seu dono na tabela de funcionários.
-    @ManyToOne
-    @JoinColumn(name = "id_funcionario")
-    private Funcionario funcionario;
 }

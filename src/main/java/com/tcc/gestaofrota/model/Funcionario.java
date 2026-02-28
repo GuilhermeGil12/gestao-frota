@@ -1,15 +1,12 @@
 package com.tcc.gestaofrota.model;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 import java.util.List;
-
 
 @Entity
 @Table(name = "funcionario")
 public class Funcionario {
-
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,6 +25,14 @@ public class Funcionario {
     @Column(name = "setor")
     private String setor;
 
+    // AQUI ESTÁ A MÁGICA DA CHAVE ESTRANGEIRA (FK):
+    @ManyToOne
+    @JoinColumn(name = "id_permissao", referencedColumnName = "id_permissao")
+    private Permissao permissao; // Alterado de String para a Classe Permissao
+
+    @Column(name = "nivel_motorista")
+    private Integer nivelMotorista; // Ajustado para camelCase
+
     @Column(name = "ativo")
     private Boolean ativo;
 
@@ -37,23 +42,12 @@ public class Funcionario {
     @Column(name = "atualizado_em")
     private LocalDateTime atualizadoEm;
 
-    @Column(name = "permissao")
-    private String permissao;
-
-    public String getPermissao() {
-        return permissao;
-    }
-
-    public void setPermissao(String permissao) {
-        this.permissao = permissao;
-    }
-
-    //Diz ao Java: "Olha, um Funcionário pode ter uma Lista de cartões. Para saber quais são, vá na tabela de cartões
-    // e procure por aqueles que têm o ID deste funcionário lá".
-    //@UmParaMuitos(mapeado por "funcionario)
-    //listar cartões por tal funcionário
     @OneToMany(mappedBy = "funcionario")
     private List<CartaoRfid> cartoes;
+
+    // ==========================================
+    // GETTERS E SETTERS (Atualizados)
+    // ==========================================
 
     public Long getId() {
         return id;
@@ -95,6 +89,22 @@ public class Funcionario {
         this.setor = setor;
     }
 
+    public Permissao getPermissao() {
+        return permissao;
+    }
+
+    public void setPermissao(Permissao permissao) {
+        this.permissao = permissao;
+    }
+
+    public Integer getNivelMotorista() {
+        return nivelMotorista;
+    }
+
+    public void setNivelMotorista(Integer nivelMotorista) {
+        this.nivelMotorista = nivelMotorista;
+    }
+
     public Boolean getAtivo() {
         return ativo;
     }
@@ -126,5 +136,4 @@ public class Funcionario {
     public void setCartoes(List<CartaoRfid> cartoes) {
         this.cartoes = cartoes;
     }
-
 }

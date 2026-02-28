@@ -11,8 +11,11 @@ import java.util.Optional;
 @Service
 public class CartaoRfidService {
 
-    @Autowired
-    private CartaoRfidRepository cartaoRfidRepository;
+    private final CartaoRfidRepository cartaoRfidRepository;
+
+    public CartaoRfidService(CartaoRfidRepository cartaoRfidRepository) {
+        this.cartaoRfidRepository = cartaoRfidRepository;
+    }
 
     public Optional<CartaoRfid> buscarPorUid(String uid){
         return cartaoRfidRepository.findByUid(uid);
@@ -26,4 +29,5 @@ public class CartaoRfidService {
 
         return cartaoRfidRepository.save(cartaoRfid);
     }
+
 }

@@ -1,8 +1,6 @@
 package com.tcc.gestaofrota.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
@@ -10,19 +8,55 @@ import java.time.LocalDateTime;
 @Table(name = "permissao")
 public class Permissao {
 
-
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_permissao")
     private Long id;
 
-    @Column(name = "id_veiculo")
-    private Long idVeiculo;
+    @Column(name = "nome_permissao", unique = true)
+    private Long nomePermissao;
 
-    @Column(name = "nivel")
-    private String nivel;
 
     @Column(name = "criado_em")
     private LocalDateTime criadoEm;
 
     @Column(name = "atualizado_em")
     private LocalDateTime atualizadoEm;
+
+    // ==========================================
+    // GETTERS E SETTERS (Atualizados)
+    // ==========================================
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getNomePermissao() {
+        return nomePermissao;
+    }
+
+    public void setNomePermissao(Long nomePermissao) {
+        this.nomePermissao = nomePermissao;
+    }
+
+    public LocalDateTime getCriadoEm() {
+        return criadoEm;
+    }
+
+    public void setCriadoEm(LocalDateTime criadoEm) {
+        this.criadoEm = criadoEm;
+    }
+
+    public LocalDateTime getAtualizadoEm() {
+        return atualizadoEm;
+    }
+
+    public void setAtualizadoEm(LocalDateTime atualizadoEm) {
+        this.atualizadoEm = atualizadoEm;
+    }
+
 }

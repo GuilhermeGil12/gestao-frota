@@ -11,8 +11,11 @@ import java.util.Optional;
 @Service
 public class FuncionarioService {
 
-    @Autowired
-    private FuncionarioRepository funcionarioRepository;
+    private final FuncionarioRepository funcionarioRepository;
+
+    public FuncionarioService(FuncionarioRepository funcionarioRepository) {
+        this.funcionarioRepository = funcionarioRepository;
+    }
 
     public Optional<Funcionario> buscarPorNome(String nome){
         return funcionarioRepository.findByNome(nome);

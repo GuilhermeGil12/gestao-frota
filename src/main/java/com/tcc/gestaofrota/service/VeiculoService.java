@@ -3,7 +3,6 @@ package com.tcc.gestaofrota.service;
 
 import com.tcc.gestaofrota.model.Veiculo;
 import com.tcc.gestaofrota.repository.VeiculoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -11,8 +10,22 @@ import java.util.Optional;
 @Service
 public class VeiculoService {
 
-    @Autowired
-    private VeiculoRepository veiculoRepository;
+    private final VeiculoRepository veiculoRepository;
+
+    /**
+     * Construtor utilizado para a Injeção de Dependências (Padrão Ouro do Spring Boot).
+     * * Por que usamos o construtor em vez de colocar @Autowired direto na variável?
+     * 1. Segurança: Permite usar a palavra 'final' na variável do repositório, garantindo
+     * que ela nunca seja substituída ou fique nula durante a execução.
+     * 2. Testabilidade: Cria uma "porta de entrada" clara, permitindo injetar um
+     * repositório falso (Mock) facilmente na hora de criar Testes Unitários.
+     * 3. Clareza de Design: Deixa explícito que o Service depende obrigatoriamente
+     * deste repositório para ser instanciado e funcionar.
+     */
+
+    public VeiculoService(VeiculoRepository veiculoRepository) {
+        this.veiculoRepository = veiculoRepository;
+    }
 
     public Optional<Veiculo> buscarPorPlaca(String placa){
         return veiculoRepository.findByPlaca(placa);

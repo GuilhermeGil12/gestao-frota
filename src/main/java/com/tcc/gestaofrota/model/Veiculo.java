@@ -13,13 +13,22 @@ public class Veiculo {
     @Column(name = "id_veiculo")
     private Long id;
 
+    @Column(name = "placa", unique = true, length = 8)
     private String placa;
+
+    @Column(name = "renavam", unique = true)
     private String renavam;
 
-    @Column(name = "km_atual") //O java irá olhar aqui para saber o nome da tabela
+    @Column(name = "km_atual")
     private Double kmAtual;
 
+    @Column(name = "velocidade_maxima")
+    private Double velocidadeMaxima;
+
+    @Column(name = "nome")
     private String nome;
+
+    @Column(name = "ativo")
     private Boolean ativo;
 
     @Column(name = "criado_em")
@@ -28,10 +37,24 @@ public class Veiculo {
     @Column(name = "atualizado_em")
     private LocalDateTime atualizadoEm;
 
-    //FK com a tabela de controladora
     @OneToOne(mappedBy = "veiculo", cascade = CascadeType.ALL)
     private Controladora controladora;
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getPlaca() {
+        return placa;
+    }
+
+    public void setPlaca(String placa) {
+        this.placa = placa;
+    }
 
     public String getRenavam() {
         return renavam;
@@ -49,12 +72,12 @@ public class Veiculo {
         this.kmAtual = kmAtual;
     }
 
-    public Boolean getAtivo() {
-        return ativo;
+    public Double getVelocidadeMaxima() {
+        return velocidadeMaxima;
     }
 
-    public void setAtivo(Boolean ativo) {
-        this.ativo = ativo;
+    public void setVelocidadeMaxima(Double velocidadeMaxima) {
+        this.velocidadeMaxima = velocidadeMaxima;
     }
 
     public String getNome() {
@@ -63,6 +86,14 @@ public class Veiculo {
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    public Boolean getAtivo() {
+        return ativo;
+    }
+
+    public void setAtivo(Boolean ativo) {
+        this.ativo = ativo;
     }
 
     public LocalDateTime getCriadoEm() {
@@ -81,21 +112,11 @@ public class Veiculo {
         this.atualizadoEm = atualizadoEm;
     }
 
-    public String getPlaca() {
-        return placa;
+    public Controladora getControladora() {
+        return controladora;
     }
 
-    public void setPlaca(String placa) {
-        this.placa = placa;
+    public void setControladora(Controladora controladora) {
+        this.controladora = controladora;
     }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-
-    }
+}
