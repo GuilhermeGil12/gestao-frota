@@ -3,7 +3,7 @@ package com.tcc.gestaofrota.model;
 
 import jakarta.persistence.*;
 
-import javax.xml.crypto.Data;
+
 import java.sql.Date;
 import java.time.LocalDateTime;
 
@@ -18,14 +18,13 @@ public class Localizacao {
 
     @ManyToOne
     @JoinColumn(name = "id_veiculo")
-    @Column(name = "id_veiculo")
-    private Long idVeiculo;
+    private Veiculo veiculo;
 
-    @Column(name = "laitude")
-    private String latitude;
+    @Column(name = "latitude")
+    private Double latitude;
 
     @Column(name = "longitude")
-    private String longitude;
+    private Double longitude;
 
     @Column(name = "altitude")
     private Double altitude;
@@ -40,7 +39,7 @@ public class Localizacao {
     private String motorista;
 
     @Column(name = "data_hora")
-    private Date dataHora;
+    private LocalDateTime dataHora;
 
     @Column(name = "recebido_em")
     private LocalDateTime recebidoEM;
@@ -53,27 +52,27 @@ public class Localizacao {
         this.id = id;
     }
 
-    public Long getIdVeiculo() {
-        return idVeiculo;
+    public Veiculo getVeiculo() {
+        return veiculo;
     }
 
-    public void setIdVeiculo(Long idVeiculo) {
-        this.idVeiculo = idVeiculo;
+    public void setVeiculo(Veiculo veiculo) {
+        this.veiculo = veiculo;
     }
 
-    public String getLatitude() {
+    public Double getLatitude() {
         return latitude;
     }
 
-    public void setLatitude(String latitude) {
+    public void setLatitude(Double latitude) {
         this.latitude = latitude;
     }
 
-    public String getLongitude() {
+    public Double getLongitude() {
         return longitude;
     }
 
-    public void setLongitude(String longitude) {
+    public void setLongitude(Double longitude) {
         this.longitude = longitude;
     }
 
@@ -109,11 +108,11 @@ public class Localizacao {
         this.motorista = motorista;
     }
 
-    public Date getDataHora() {
+    public LocalDateTime getDataHora() {
         return dataHora;
     }
 
-    public void setDataHora(Date dataHora) {
+    public void setDataHora(LocalDateTime dataHora) {
         this.dataHora = dataHora;
     }
 
@@ -124,5 +123,4 @@ public class Localizacao {
     public void setRecebidoEM(LocalDateTime recebidoEM) {
         this.recebidoEM = recebidoEM;
     }
-
 }
