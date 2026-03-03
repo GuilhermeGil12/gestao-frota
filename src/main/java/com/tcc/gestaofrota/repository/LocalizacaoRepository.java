@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface LocalizacaoRepository extends JpaRepository <Localizacao, Long> {
 
     // Aqui o Spring injeta automaticamente comandos como save(), findAll(), findById(), etc.
-     Optional<Localizacao> findByVeiculo(Long idVeiclo);
+     Optional<Localizacao> findByVeiculoId(Long id);
 
     Optional<Localizacao> findByMotorista(String motorista);
 

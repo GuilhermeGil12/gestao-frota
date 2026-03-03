@@ -14,7 +14,7 @@ public class Permissao {
     private Long id;
 
     @Column(name = "nome_permissao", unique = true)
-    private Long nomePermissao;
+    private String nomePermissao;
 
 
     @Column(name = "criado_em")
@@ -27,6 +27,7 @@ public class Permissao {
     // GETTERS E SETTERS (Atualizados)
     // ==========================================
 
+
     public Long getId() {
         return id;
     }
@@ -35,11 +36,11 @@ public class Permissao {
         this.id = id;
     }
 
-    public Long getNomePermissao() {
+    public String getNomePermissao() {
         return nomePermissao;
     }
 
-    public void setNomePermissao(Long nomePermissao) {
+    public void setNomePermissao(String nomePermissao) {
         this.nomePermissao = nomePermissao;
     }
 
@@ -58,5 +59,4 @@ public class Permissao {
     public void setAtualizadoEm(LocalDateTime atualizadoEm) {
         this.atualizadoEm = atualizadoEm;
     }
-
 }

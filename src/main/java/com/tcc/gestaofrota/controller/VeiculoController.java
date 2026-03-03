@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 public class VeiculoController {
 
     @Autowired
-    private VeiculoService veiculoService;
+    VeiculoService veiculoService;
 
     //Metodo para salvar via POST
     @PostMapping

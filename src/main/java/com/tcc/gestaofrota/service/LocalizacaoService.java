@@ -77,8 +77,6 @@ public class LocalizacaoService {
                  // 6. Marcando a hora exata que o servidor recebeu o pacote
                  novaLoc.setRecebidoEM(LocalDateTime.now());
 
-                 novaLoc.setRecebidoEM(LocalDateTime.now());
-
                  // 7. ️ Pegando a Data/Hora do GPS
                  String dataHoraString = dto.getData_localizacao();
 
@@ -89,11 +87,10 @@ public class LocalizacaoService {
 
                  // Coloca na sacola de dados bons
                  localizacoesParaSalvar.add(novaLoc);
-
-
-
              }
 
          }
-     }
-}
+
+         localizacaoRepository.saveAll(localizacoesParaSalvar);
+     }//fim do metodo
+}//fim da classe
