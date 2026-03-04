@@ -28,6 +28,6 @@ public interface LocalizacaoRepository extends JpaRepository <Localizacao, Long>
 
      */
 
-    Optional<Localizacao> findTopByVeiculoIdOderByDataHoraDesc(Long veiculoId);
+    Optional<Localizacao> findTopByVeiculoIdOrderByDataHoraDesc(Long veiculoId);
 
 }

@@ -49,7 +49,7 @@ public class VeiculoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Permissao> atualizar(@PathVariable Long id, @RequestBody Veiculo veiculoNovo) {
+    public ResponseEntity<Veiculo> atualizar(@PathVariable Long id, @RequestBody Veiculo veiculoNovo) {
         // Chamamos a service que já faz toda aquela troca de "antiga pela nova"
         Veiculo veiculoAtualizado = veiculoService.atualizar(id, veiculoNovo);
 
@@ -60,7 +60,6 @@ public class VeiculoController {
     @DeleteMapping("/{id}")
         public ResponseEntity<Void> deletar(@PathVariable Long id){
             veiculoService.deletar(id);
-
             return ResponseEntity.noContent().build();
         }
 

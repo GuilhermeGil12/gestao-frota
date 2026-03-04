@@ -3,7 +3,6 @@ package com.tcc.gestaofrota.service;
 
 import com.tcc.gestaofrota.model.Funcionario;
 import com.tcc.gestaofrota.repository.FuncionarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,8 +17,9 @@ public class FuncionarioService {
         this.funcionarioRepository = funcionarioRepository;
     }
 
-    public Optional<Funcionario> buscarPorNome(String nome){
-        return funcionarioRepository.findByNome(nome);
+    public Funcionario buscarPorNome(String nome) { //
+        return funcionarioRepository.findByNome(nome)
+                .orElseThrow(() -> new RuntimeException("Funcionário com o nome " + nome + " não encontrado"));
     }
 
     public Optional<Funcionario> buscarPorCpf(String cpf){
@@ -37,6 +37,7 @@ public class FuncionarioService {
         if(jaExiste.isPresent()){
             throw new RuntimeException("Já existe um funcionário com este CPF cadastrado!");
         }
+
 
         Optional<Funcionario> rgExiste = funcionarioRepository.findByRg(funcionario.getRg());
         if (rgExiste.isPresent()){

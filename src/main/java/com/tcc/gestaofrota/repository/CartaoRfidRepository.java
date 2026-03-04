@@ -18,4 +18,11 @@ public interface CartaoRfidRepository extends JpaRepository<CartaoRfid, Long> {
    Optional<CartaoRfid> findById(Long id);
 
    List<CartaoRfid> findByFuncionarioId(Long id);
+
+   List<CartaoRfid> findByAtivoTrue();
+
+    List<CartaoRfid> findByFuncionarioIdAndAtivoTrue(Long funcionarioId);
+
+
+
 }

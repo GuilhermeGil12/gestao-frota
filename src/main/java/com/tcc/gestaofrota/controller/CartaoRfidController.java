@@ -39,4 +39,18 @@ public class CartaoRfidController
         List<CartaoRfid> cartoes = cartaoRfidService.listarPorFuncionario(funcionarioId);
         return ResponseEntity.ok(cartoes);
     }
+
+    @PatchMapping("/{id}/inativar")
+    public ResponseEntity<Void> inativar(@PathVariable Long id){
+        cartaoRfidService.inativar(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Long id){
+        cartaoRfidService.deletar(id);
+
+        return ResponseEntity.noContent().build();
+    }
+
 }

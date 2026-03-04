@@ -11,8 +11,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/funcionarios")
 public class FuncionarioController {
 
-    @Autowired
-    private FuncionarioService funcionarioService;
+    private final FuncionarioService funcionarioService;
+
+    public FuncionarioController(FuncionarioService funcionarioService) {
+        this.funcionarioService = funcionarioService;
+    }
 
     // Metodo para salvar via POST
     @PostMapping
@@ -29,10 +32,9 @@ public class FuncionarioController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/nome/{nome}")
-    public ResponseEntity<Funcionario> buscarPorNome(@PathVariable String nome){
-        return funcionarioService.buscarPorNome(nome)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @GetMapping("/nome")
+    public ResponseEntity<Funcionario> buscarPorNome(@RequestParam String nome) {
+        Funcionario funcionario = funcionarioService.buscarPorNome(nome);
+        return ResponseEntity.ok(funcionario);
     }
 }
