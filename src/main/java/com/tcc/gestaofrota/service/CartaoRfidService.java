@@ -6,6 +6,7 @@ import com.tcc.gestaofrota.repository.CartaoRfidRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -28,6 +29,11 @@ public class CartaoRfidService {
         }
 
         return cartaoRfidRepository.save(cartaoRfid);
+    }
+    // metodo listar cartão por funcionário
+    public List<CartaoRfid> listarPorFuncionario(Long funcionarioId) {
+        // Aqui você pode até validar se o funcionário existe antes, se quiser
+        return cartaoRfidRepository.findByFuncionarioId(funcionarioId);
     }
 
     public CartaoRfid buscarPorId(Long id){

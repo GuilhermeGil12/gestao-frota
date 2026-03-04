@@ -9,12 +9,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/cartaorfid")
 public class CartaoRfidController
 {
-    @Autowired
-    private CartaoRfidService cartaoRfidService;
+    private final CartaoRfidService cartaoRfidService;
+
+    public CartaoRfidController(CartaoRfidService cartaoRfidService) {
+        this.cartaoRfidService = cartaoRfidService;
+    }
 
     @PostMapping
     public ResponseEntity<CartaoRfid> criar(@RequestBody CartaoRfid cartaoRfid){
@@ -27,5 +32,11 @@ public class CartaoRfidController
         return cartaoRfidService.buscarPorUid(uid)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/funcionario/{funcionarioId}")
+    public ResponseEntity<List<CartaoRfid>> listarPorFuncionario(@PathVariable Long funcionarioId) {
+        List<CartaoRfid> cartoes = cartaoRfidService.listarPorFuncionario(funcionarioId);
+        return ResponseEntity.ok(cartoes);
     }
 }
