@@ -72,6 +72,8 @@ public class FuncionarioService {
         funcionarioAntigo.setNivelMotorista(funcionarioNovo.getNivelMotorista());
         funcionarioAntigo.setPermissao(funcionarioNovo.getPermissao());
         funcionarioAntigo.setSetor(funcionarioNovo.getSetor());
+
+        return funcionarioRepository.save(funcionarioAntigo);
     }
 
     public void deletar(Long id){

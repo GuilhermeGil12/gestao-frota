@@ -34,7 +34,7 @@ public class CartaoRfidService {
         Optional<CartaoRfid> caixaMisteriosa = cartaoRfidRepository.findById(id);
 
         if (caixaMisteriosa.isEmpty()){
-            throw new RuntimeException("Cartão não encontrado no banco de dados!")
+            throw new RuntimeException("Cartão não encontrado no banco de dados!");
         }
 
         return caixaMisteriosa.get();

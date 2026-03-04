@@ -74,7 +74,7 @@ public class VeiculoService {
         veiculoAntigo.setVelocidadeMaxima(veiculoNovo.getVelocidadeMaxima());
         veiculoAntigo.setNome(veiculoNovo.getNome());
 
-
+        return veiculoRepository.save(veiculoAntigo);
     }
 
     public void deletar(Long id){
@@ -82,5 +82,4 @@ public class VeiculoService {
 
         veiculoRepository.deleteById(id);
     }
-
 }

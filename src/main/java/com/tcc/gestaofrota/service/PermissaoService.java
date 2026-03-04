@@ -2,7 +2,7 @@ package com.tcc.gestaofrota.service;
 
 
 import com.tcc.gestaofrota.model.Permissao;
-import com.tcc.gestaofrota.repository.PermissaoRepository
+import com.tcc.gestaofrota.repository.PermissaoRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
