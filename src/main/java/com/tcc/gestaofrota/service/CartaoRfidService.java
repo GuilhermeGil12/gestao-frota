@@ -30,4 +30,20 @@ public class CartaoRfidService {
         return cartaoRfidRepository.save(cartaoRfid);
     }
 
+    public CartaoRfid buscarPorId(Long id){
+        Optional<CartaoRfid> caixaMisteriosa = cartaoRfidRepository.findById(id);
+
+        if (caixaMisteriosa.isEmpty()){
+            throw new RuntimeException("Cartão não encontrado no banco de dados!")
+        }
+
+        return caixaMisteriosa.get();
+    }
+
+    public void deletar(Long id){
+        buscarPorId(id);
+
+        cartaoRfidRepository.deleteById(id);
+    }
+
 }

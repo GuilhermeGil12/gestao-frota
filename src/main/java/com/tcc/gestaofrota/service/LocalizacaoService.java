@@ -41,6 +41,9 @@ public class LocalizacaoService {
          //tira a controladora dentro do Optional usando o .get, vai passar o valor que está dentro da variavel controladoraBusca
          Controladora controladoraAutenticada = controladoraBusca.get();
 
+         //como a controladora está vinculada, puxamos o veiculo completo que está vinculado a controladora
+         //que está dentro da variavel controladoraAutenticada, esse veiculo que puxamos fica dentro da
+         //variavel carroEsp32
          Veiculo carroDoEsp32 = controladoraAutenticada.getVeiculo();
 
          // 1. Cria uma sacola vazia para as localizações oficiais que vão para o banco

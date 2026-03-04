@@ -13,4 +13,6 @@ public interface CartaoRfidRepository extends JpaRepository<CartaoRfid, Long> {
     // Este metodo faz o Spring criar um:
     // "SELECT * FROM cartao_rfid WHERE uid = ?"
    Optional<CartaoRfid> findByUid(String uid);
+
+   Optional<CartaoRfid> findById(Long id);
 }

@@ -6,6 +6,7 @@ import com.tcc.gestaofrota.repository.FuncionarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -44,5 +45,38 @@ public class FuncionarioService {
 
         //caso não existir, ele retorna o valor e salva
         return funcionarioRepository.save(funcionario);
+    }
+
+    public List<Funcionario> listarTodas(){
+        return funcionarioRepository.findAll();
+
+    }
+
+    public Funcionario buscarPorId(Long id){
+        Optional<Funcionario> caixaMisteriosa = funcionarioRepository.findById(id);
+
+        if (caixaMisteriosa.isEmpty()){
+            throw new RuntimeException("Nehum funcionário encontrado no banco de dados!");
+        }
+        //Se a caixa não está vazia, nós pegamos a permissão lá de dentro e devolvemos
+        return caixaMisteriosa.get();
+    }
+
+    public Funcionario atualizar(Long id, Funcionario funcionarioNovo){
+        Funcionario funcionarioAntigo = buscarPorId(id);
+
+        funcionarioAntigo.setCpf(funcionarioNovo.getCpf());
+        funcionarioAntigo.setRg(funcionarioAntigo.getRg());
+        funcionarioAntigo.setNome(funcionarioNovo.getNome());
+        funcionarioAntigo.setCartoes(funcionarioNovo.getCartoes());
+        funcionarioAntigo.setNivelMotorista(funcionarioNovo.getNivelMotorista());
+        funcionarioAntigo.setPermissao(funcionarioNovo.getPermissao());
+        funcionarioAntigo.setSetor(funcionarioNovo.getSetor());
+    }
+
+    public void deletar(Long id){
+        buscarPorId(id);
+
+        funcionarioRepository.deleteById(id);
     }
 }

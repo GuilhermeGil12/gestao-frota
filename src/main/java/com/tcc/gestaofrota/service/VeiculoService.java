@@ -5,6 +5,7 @@ import com.tcc.gestaofrota.model.Veiculo;
 import com.tcc.gestaofrota.repository.VeiculoRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -46,6 +47,40 @@ public class VeiculoService {
         return veiculoRepository.save(veiculo);
 
 
+    }
+
+    public List<Veiculo> listarTodas(){
+        return veiculoRepository.findAll();
+    }
+
+    public Veiculo buscarPorId(Long id){
+        Optional<Veiculo> caixaMisteriosa = veiculoRepository.findById(id);
+
+        if(caixaMisteriosa.isEmpty()){
+            throw new RuntimeException("Veiculo não encontrado no banco de dados!");
+        }
+        //Se a caixa não está vazia, nós pegamos a permissão lá de dentro e devolvemos
+        return caixaMisteriosa.get();
+    }
+
+    public Veiculo atualizar(Long id, Veiculo veiculoNovo){
+
+        Veiculo veiculoAntigo = buscarPorId(id);
+
+        //vai pegar o valor que vem do front e coloca dentro da variavel antiga, substitui
+        //não coloquei a mudança da placa pois não será possível alterar a placa
+        veiculoAntigo.setKmAtual(veiculoNovo.getKmAtual());
+        veiculoAntigo.setRenavam(veiculoNovo.getRenavam());
+        veiculoAntigo.setVelocidadeMaxima(veiculoNovo.getVelocidadeMaxima());
+        veiculoAntigo.setNome(veiculoNovo.getNome());
+
+
+    }
+
+    public void deletar(Long id){
+        buscarPorId(id);
+
+        veiculoRepository.deleteById(id);
     }
 
 }

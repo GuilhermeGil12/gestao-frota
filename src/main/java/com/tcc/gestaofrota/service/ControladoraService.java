@@ -3,8 +3,12 @@ package com.tcc.gestaofrota.service;
 
 import com.tcc.gestaofrota.model.Controladora;
 import com.tcc.gestaofrota.repository.ControladoraRepository;
+import org.aspectj.apache.bcel.classfile.Module;
+import org.springframework.expression.spel.ast.OpAnd;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -48,4 +52,41 @@ public class ControladoraService {
         }
         return controladoraRepository.save(controladora);
     }
+
+    public List<Controladora> listarTodas(){
+        return controladoraRepository.findAll();
+    }
+
+    public Controladora buscarPorId(Long id){
+        Optional<Controladora> caixaMisteriosa = controladoraRepository.findById(id);
+
+        if (caixaMisteriosa.isEmpty()){
+            throw new RuntimeException("Controladora não encontrada no banco de dados!");
+        }
+
+        //Se a caixa não está vazia, nós pegamos a permissão lá de dentro e devolvemos
+        return caixaMisteriosa.get();
+    }
+
+    public Controladora atualizar(Long id, Controladora controladoraNova){
+
+        Controladora controladoraAntiga = buscarPorId(id);
+
+        //pego o valor que está na nova (vem do body) e pego da nova e coloco na antiga e depois descarto a antiga
+        controladoraAntiga.setIpControladora(controladoraNova.getIpControladora());
+        controladoraAntiga.setMacControladora(controladoraNova.getMacControladora());
+        controladoraAntiga.setSenha(controladoraNova.getSenha());
+
+        controladoraAntiga.setVeiculo(controladoraNova.getVeiculo());
+
+        return controladoraRepository.save(controladoraAntiga);
+
+    }
+
+    public void deletar(Long id){
+        buscarPorId(id);
+
+        controladoraRepository.deleteById(id);
+    }
+
 }

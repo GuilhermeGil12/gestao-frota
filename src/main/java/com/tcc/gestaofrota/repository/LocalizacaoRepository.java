@@ -16,4 +16,18 @@ public interface LocalizacaoRepository extends JpaRepository <Localizacao, Long>
     //buscar pela data
     Optional<Localizacao> findByDataHora(Date dataHora);
 
+
+
+    /*findTop: Busque apenas o PRIMEIRO resultado (Limit 1).
+
+    ByVeiculoId: Onde o ID do veículo seja igual ao número que eu passar.
+
+    OrderByDataHoraDesc: Organize pela data e hora do GPS, do mais novo para o mais velho (Decrescente).
+
+    Optional<>: Como vimos antes, é a nossa "Caixa Misteriosa". Se o carro for zero km e nunca tiver andado, a caixa volta vazia e não quebra o sistema.
+
+     */
+
+    Optional<Localizacao> findTopByVeiculoIdOderByDataHoraDesc(Long veiculoId);
+
 }
