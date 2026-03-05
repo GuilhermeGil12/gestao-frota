@@ -2,10 +2,13 @@ package com.tcc.gestaofrota.controller;
 
 
 import com.tcc.gestaofrota.model.Funcionario;
+import com.tcc.gestaofrota.model.Permissao;
 import com.tcc.gestaofrota.service.FuncionarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/funcionarios")
@@ -36,5 +39,38 @@ public class FuncionarioController {
     public ResponseEntity<Funcionario> buscarPorNome(@RequestParam String nome) {
         Funcionario funcionario = funcionarioService.buscarPorNome(nome);
         return ResponseEntity.ok(funcionario);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Funcionario> atualizar(@PathVariable Long id, @ResponseBody Funcionario funcionarioNovo){
+
+        Funcionario funcionarioAtualizado = funcionarioService.atualizar(id, funcionarioNovo);
+
+        return ResponseEntity.ok(funcionarioAtualizado);
+
+
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Funcionario>> listarTodas(){
+        // o garçom (Controller) pede para o cozinheiro (Service) a lista
+        List<Funcionario> lista = funcionarioService.listarTodas();
+
+        //o garçom entrega o prato com o status 200 OK
+        return ResponseEntity.ok(lista);
+    }
+
+    @PostMapping("/{id}")
+    public ResponseEntity<Funcionario> salvar(@RequestBody Funcionario funcionario){
+        Funcionario funcionarioSalvo = funcionarioService.salvar(funcionario);
+
+        return ResponseEntity.status(201).body(funcionarioSalvo);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Long id){
+        funcionarioService.deletar(id);
+
+        return ResponseEntity.noContent().build();
     }
 }
