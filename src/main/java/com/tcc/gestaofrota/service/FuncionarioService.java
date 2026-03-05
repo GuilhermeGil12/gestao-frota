@@ -77,9 +77,18 @@ public class FuncionarioService {
         return funcionarioRepository.save(funcionarioAntigo);
     }
 
+    public void inativar(Long id){
+        Funcionario funcionarioInativo = buscarPorId(id);
+
+        funcionarioInativo.setAtivo(false);
+
+        funcionarioRepository.save(funcionarioInativo);
+    }
+
     public void deletar(Long id){
         buscarPorId(id);
 
         funcionarioRepository.deleteById(id);
     }
+
 }

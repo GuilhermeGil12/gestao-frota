@@ -89,4 +89,11 @@ public class ControladoraService {
         controladoraRepository.deleteById(id);
     }
 
+    public void inativar(Long id){
+        Controladora controladora = buscarPorId(id);
+
+        controladora.setAtivo(false);
+
+        controladoraRepository.save(controladora);
+    }
 }

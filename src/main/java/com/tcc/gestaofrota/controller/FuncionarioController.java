@@ -2,9 +2,7 @@ package com.tcc.gestaofrota.controller;
 
 
 import com.tcc.gestaofrota.model.Funcionario;
-import com.tcc.gestaofrota.model.Permissao;
 import com.tcc.gestaofrota.service.FuncionarioService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,13 +40,11 @@ public class FuncionarioController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Funcionario> atualizar(@PathVariable Long id, @ResponseBody Funcionario funcionarioNovo){
+    public ResponseEntity<Funcionario> atualizar(@PathVariable Long id, @RequestBody Funcionario funcionarioNovo){
 
         Funcionario funcionarioAtualizado = funcionarioService.atualizar(id, funcionarioNovo);
 
         return ResponseEntity.ok(funcionarioAtualizado);
-
-
     }
 
     @GetMapping
@@ -65,6 +61,12 @@ public class FuncionarioController {
         Funcionario funcionarioSalvo = funcionarioService.salvar(funcionario);
 
         return ResponseEntity.status(201).body(funcionarioSalvo);
+    }
+
+    @PatchMapping("/{id}/inativar")
+    public ResponseEntity<Funcionario> inativar(@PathVariable Long id){
+        funcionarioService.inativar(id);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
