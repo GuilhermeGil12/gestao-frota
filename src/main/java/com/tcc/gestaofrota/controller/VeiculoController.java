@@ -50,11 +50,8 @@ public class VeiculoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Veiculo> atualizar(@PathVariable Long id, @RequestBody Veiculo veiculoNovo) {
-        // Chamamos a service que já faz toda aquela troca de "antiga pela nova"
         Veiculo veiculoAtualizado = veiculoService.atualizar(id, veiculoNovo);
-
-        // Retornamos 200 OK com o resultado final
-        return ResponseEntity.ok(veiculoAtualizado);
+        return ResponseEntity.ok(veiculoAtualizado); // Agora o tipo bate!
     }
 
     @DeleteMapping("/{id}")

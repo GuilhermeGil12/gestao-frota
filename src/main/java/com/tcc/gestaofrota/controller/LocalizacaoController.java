@@ -29,4 +29,6 @@ public class LocalizacaoController {
 
         return ResponseEntity.ok("Dados recebidos e salvos com sucesso!");
     }
+
+
 }

@@ -1,6 +1,7 @@
 package com.tcc.gestaofrota.service;
 
 
+import com.tcc.gestaofrota.dto.CartaoEsp32DTO;
 import com.tcc.gestaofrota.model.CartaoRfid;
 import com.tcc.gestaofrota.repository.CartaoRfidRepository;
 import com.tcc.gestaofrota.repository.FuncionarioRepository;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CartaoRfidService {
@@ -69,6 +71,14 @@ public class CartaoRfidService {
         cartao.setAtivo(false);
 
         cartaoRfidRepository.save(cartao);
+    }
+
+    public String listarParaEsp32() {
+        return cartaoRfidRepository.findByAtivoTrue().stream()
+                .map(cartao ->
+                        cartao.getUid().replace(" ", "") + "," + cartao.getFuncionario().getNivelMotorista()
+                )
+                .collect(Collectors.joining(";")); // Une tudo com ; entre eles
     }
 
 }

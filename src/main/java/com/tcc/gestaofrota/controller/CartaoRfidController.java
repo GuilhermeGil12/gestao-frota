@@ -1,6 +1,7 @@
 package com.tcc.gestaofrota.controller;
 
 
+import com.tcc.gestaofrota.dto.CartaoEsp32DTO;
 import com.tcc.gestaofrota.model.CartaoRfid;
 
 import com.tcc.gestaofrota.service.CartaoRfidService;
@@ -51,6 +52,12 @@ public class CartaoRfidController
         cartaoRfidService.deletar(id);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping(value = "/dispositivos", produces = "text/plain")
+    public ResponseEntity<String> listarParaEsp32() {
+        String dados = cartaoRfidService.listarParaEsp32();
+        return ResponseEntity.ok(dados);
     }
 
 }

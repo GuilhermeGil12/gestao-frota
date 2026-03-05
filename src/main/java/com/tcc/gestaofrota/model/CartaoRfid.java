@@ -1,6 +1,7 @@
 package com.tcc.gestaofrota.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CollectionId;
 
@@ -32,6 +33,7 @@ public class CartaoRfid {
     // que conecta este cartão ao seu dono na tabela de funcionários.
     @ManyToOne
     @JoinColumn(name = "id_funcionario")
+    @JsonIgnoreProperties("cartoes")
     private Funcionario funcionario;
 
 

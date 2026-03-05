@@ -1,5 +1,6 @@
 package com.tcc.gestaofrota.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,6 +44,7 @@ public class Funcionario {
     private LocalDateTime atualizadoEm;
 
     @OneToMany(mappedBy = "funcionario")
+    @JsonIgnoreProperties("funcionario")
     private List<CartaoRfid> cartoes;
 
     // ==========================================

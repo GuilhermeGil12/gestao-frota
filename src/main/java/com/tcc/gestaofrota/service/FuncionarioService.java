@@ -67,7 +67,7 @@ public class FuncionarioService {
         Funcionario funcionarioAntigo = buscarPorId(id);
 
         funcionarioAntigo.setCpf(funcionarioNovo.getCpf());
-        funcionarioAntigo.setRg(funcionarioAntigo.getRg());
+        funcionarioAntigo.setRg(funcionarioNovo.getRg());
         funcionarioAntigo.setNome(funcionarioNovo.getNome());
         funcionarioAntigo.setCartoes(funcionarioNovo.getCartoes());
         funcionarioAntigo.setNivelMotorista(funcionarioNovo.getNivelMotorista());
