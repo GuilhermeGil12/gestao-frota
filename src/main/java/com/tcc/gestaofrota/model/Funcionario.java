@@ -2,10 +2,15 @@ package com.tcc.gestaofrota.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class) //preenche as datas criado_em / atualizado
 @Table(name = "funcionario")
 public class Funcionario {
 
@@ -37,9 +42,11 @@ public class Funcionario {
     @Column(name = "ativo")
     private Boolean ativo;
 
+    @CreatedDate //pega a data que aquele registro foi criado
     @Column(name = "criado_em")
     private LocalDateTime criadoEm;
 
+    @LastModifiedDate // usado para pegar a ultima atualizacao
     @Column(name = "atualizado_em")
     private LocalDateTime atualizadoEm;
 
