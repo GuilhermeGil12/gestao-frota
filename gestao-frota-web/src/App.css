@@ -1,21 +1,86 @@
 #root {
-  max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  background-color: black;
+  width: 100%;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+/* Isso só afeta o container do menu */
+.sidebar-container {
+  width: 250px;
+  background-color: #111;
+  color: white;
+  height: 100vh;
+  padding: 20px;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+
+/* Isso só afeta a lista dentro do menu */
+.sidebar-list {
+  list-style: none; /* Tira as bolinhas apenas do menu */
+  padding: 0;
 }
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+
+/* Isso só afeta os links do menu */
+.sidebar-item a {
+  color: #ccc;
+  text-decoration: none;
+  display: block;
+  padding: 10px 0;
+}
+
+.sidebar-item a:hover {
+  color: #007bff; /* Fica azul só quando passa o mouse no menu */
+}
+
+
+.app-container {
+  display: flex; /* Alinha Menu e Conteúdo horizontalmente */
+  min-height: 100vh; /* Faz o layout ocupar a tela inteira */
+  text-decoration: none;
+}
+
+.conteudo-principal {
+  flex: 1; /* Faz o conteúdo ocupar todo o espaço restante */
+  padding: 20px;
+  background-color: #1a1a1a; /* Cor de fundo para combinar com seu print */
+}
+
+table{
+  width: 80%;
+  margin-top: 20px;
+}
+
+
+input{
+  padding: 10px;           /* Espaço interno para o texto não grudar na borda */
+  margin: 5px;            /* Espaço entre um input e outro */
+  border: 1px solid #ccc;  /* Borda fina e cinza */
+  border-radius: 4px;      /* Cantos levemente arredondados */
+  width: 200px;           /* Largura fixa para ficarem alinhados */
+  display: inline-flex;         /* Faz um ficar embaixo do outro */
+
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 10px;
+
+  align-items: flex-end;
+}
+
+button:hover{
+  background-color: #0056b3;
+}
+
+select{
+  padding: 5px;
+  display: inline-flex;
 }
 
 @keyframes logo-spin {

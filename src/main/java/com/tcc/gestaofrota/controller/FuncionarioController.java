@@ -21,8 +21,12 @@ public class FuncionarioController {
     // Metodo para salvar via POST
     @PostMapping
     public ResponseEntity<Funcionario> criar(@RequestBody Funcionario funcionario){
+        //para ver oque está recebendo
+
+        System.out.println("Recebendo: " + funcionario.getNome() + " CPF: " + funcionario.getCpf());
+
         Funcionario novoFuncionario = funcionarioService.salvar(funcionario);
-        return ResponseEntity.ok(novoFuncionario);
+        return ResponseEntity.status(201).body(novoFuncionario);
     }
 
     //Metodo para BUSCAR por CPF via GET
@@ -56,12 +60,6 @@ public class FuncionarioController {
         return ResponseEntity.ok(lista);
     }
 
-    @PostMapping("/{id}")
-    public ResponseEntity<Funcionario> salvar(@RequestBody Funcionario funcionario){
-        Funcionario funcionarioSalvo = funcionarioService.salvar(funcionario);
-
-        return ResponseEntity.status(201).body(funcionarioSalvo);
-    }
 
     @PatchMapping("/{id}/inativar")
     public ResponseEntity<Funcionario> inativar(@PathVariable Long id){
