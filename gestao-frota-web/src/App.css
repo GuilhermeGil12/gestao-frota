@@ -1,42 +1,186 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* 1. Reset e Configurações Globais */
+:root {
+  font-size: 16px; /* Base para o cálculo de rem */
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #121212;
+  color: #ffffff;
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* 2. Layout Principal (Ocupando a tela toda) */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100vw;
+}
+
+/* 3. Sidebar (Menu Lateral Fixo) */
+.sidebar-container {
+  width: 16rem;
+  background-color: #111;
+  color: white;
+  padding: 1.5rem;
+  border-right: 1px solid #333;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+
+  /* Layout Flex para empurrar o perfil para o rodapé */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sidebar-logo {
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+  color: #fff;
+}
+
+.sidebar-list {
+  list-style: none;
+}
+
+.sidebar-item a {
+  color: #ccc;
+  text-decoration: none;
+  display: block;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  transition: 0.3s;
+}
+
+.sidebar-item a:hover {
+  color: white;
+  background-color: #b30000; /* Vermelho escuro ao passar o mouse */
+}
+
+/* Botão de Perfil Aqua */
+.btn-perfil {
+  display: block;
+  background-color: #00ffff;
+  color: #000 !important;
   text-align: center;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-weight: bold;
+  text-decoration: none;
+  transition: 0.3s;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.btn-perfil:hover {
+  filter: brightness(1.2);
+  transform: translateY(-2px);
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* 4. Conteúdo Principal */
+.conteudo-principal {
+  flex: 1;
+  padding: 2rem;
+  background-color: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* 5. Formulário e Inputs */
+.formulario {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 2.5rem;
 }
 
-.card {
-  padding: 2em;
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.read-the-docs {
-  color: #888;
+input, select {
+  padding: 0.6rem 1rem;
+  background-color: #333;
+  border: 1px solid #444;
+  border-radius: 0.3rem;
+  color: white;
+  font-size: 1rem;
+}
+
+input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+/* Botões de Ação */
+button {
+  padding: 0.6rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button.save {
+  background-color: #007bff;
+  color: white;
+}
+
+button.exp {
+  background-color: #556b2f;
+  color: white;
+}
+
+button:hover {
+  filter: brightness(1.3);
+}
+
+/* 6. Tabela Zebra Profissional */
+table {
+  width: 100%;
+  max-width: 80rem;
+  margin-top: 1.5rem;
+  background-color: #242424;
+  border-collapse: collapse; /* Essencial para remover bordas fantasmas */
+  border: none;
+}
+
+th, td {
+  border: none !important;
+  padding: 1rem;
+  text-align: left;
+}
+
+th {
+  background-color: darkred;
+  color: white;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.05rem;
+  font-weight: 600;
+}
+
+/* Cores das linhas */
+tbody tr {
+  background-color: #1a1a1a;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #242424;
+}
+
+tbody tr:hover {
+  background-color: #333;
+  transition: background-color 0.2s ease;
 }
