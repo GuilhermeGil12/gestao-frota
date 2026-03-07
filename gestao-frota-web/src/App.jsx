@@ -64,7 +64,7 @@ function App() {
             <Menu /> {/* O componente que você criou */}
 
             <main className="conteudo-principal"> {/* Onde fica seu formulário e tabela */}
-                <h1>Gestão de Frota - Funcionários</h1>
+
 
                 <div className="formulario">
                     <label>Nome:</label>
@@ -116,11 +116,12 @@ function App() {
                         <option value="3">3</option>
                     </select>
 
-                    <button onClick={handleSalvar}>Cadastrar</button>
+                    <button className="save" onClick={handleSalvar}>Cadastrar</button>
+                    <button className="exp">Exportar</button>
 
                 </div>
 
-                <table border="1" align="center">
+                <table border="2" align="center">
                     <thead>
                     <tr>
                         <th>Nome</th>
