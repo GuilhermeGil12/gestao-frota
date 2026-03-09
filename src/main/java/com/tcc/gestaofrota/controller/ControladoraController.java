@@ -3,7 +3,7 @@ package com.tcc.gestaofrota.controller;
 
 import com.tcc.gestaofrota.model.Controladora;
 import com.tcc.gestaofrota.service.ControladoraService;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

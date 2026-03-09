@@ -1,7 +1,9 @@
 package com.tcc.gestaofrota.service;
 
 
+import com.tcc.gestaofrota.model.Controladora;
 import com.tcc.gestaofrota.model.Veiculo;
+import com.tcc.gestaofrota.repository.ControladoraRepository;
 import com.tcc.gestaofrota.repository.VeiculoRepository;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +14,7 @@ import java.util.Optional;
 public class VeiculoService {
 
     private final VeiculoRepository veiculoRepository;
+    private final ControladoraRepository controladoraRepository;
 
     /**
      * Construtor utilizado para a Injeção de Dependências (Padrão Ouro do Spring Boot).
@@ -24,8 +27,9 @@ public class VeiculoService {
      * deste repositório para ser instanciado e funcionar.
      */
 
-    public VeiculoService(VeiculoRepository veiculoRepository) {
+    public VeiculoService(VeiculoRepository veiculoRepository, ControladoraRepository controladoraRepository) {
         this.veiculoRepository = veiculoRepository;
+        this.controladoraRepository = controladoraRepository;
     }
 
     public Optional<Veiculo> buscarPorPlaca(String placa){
@@ -44,9 +48,27 @@ public class VeiculoService {
             throw new RuntimeException("Já existe Veículo com esse Renavam cadastrado!");
         }
 
+        // Lógica para vincular a controladora se ela vier preenchida
+        if (veiculo.getControladora() != null && veiculo.getControladora().getIdControladora() != null) {
+            Controladora controladora = controladoraRepository.findById(veiculo.getControladora().getIdControladora())
+                    .orElseThrow(() -> new RuntimeException("Controladora não encontrada"));
+            
+            // O relacionamento é bidirecional, mas o dono da chave é a Controladora (lado @OneToOne com @JoinColumn)
+            // Porém, como estamos salvando o Veículo, precisamos garantir que a controladora aponte para este veículo.
+            // Mas espere! O mapeamento diz que Controladora tem o @JoinColumn.
+            // Então precisamos salvar a controladora com o veículo setado nela.
+            
+            // Vamos salvar o veículo primeiro para ter um ID
+            Veiculo veiculoSalvo = veiculoRepository.save(veiculo);
+            
+            controladora.setVeiculo(veiculoSalvo);
+            controladoraRepository.save(controladora);
+            
+            veiculoSalvo.setControladora(controladora);
+            return veiculoSalvo;
+        }
+
         return veiculoRepository.save(veiculo);
-
-
     }
 
     public List<Veiculo> listarTodas(){
@@ -73,12 +95,48 @@ public class VeiculoService {
         veiculoAntigo.setRenavam(veiculoNovo.getRenavam());
         veiculoAntigo.setVelocidadeMaxima(veiculoNovo.getVelocidadeMaxima());
         veiculoAntigo.setNome(veiculoNovo.getNome());
+        veiculoAntigo.setAtivo(veiculoNovo.getAtivo()); // Permitir atualizar o status
+
+        // Lógica para atualizar a controladora
+        if (veiculoNovo.getControladora() != null && veiculoNovo.getControladora().getIdControladora() != null) {
+            // Se o usuário selecionou uma controladora nova
+            Controladora novaControladora = controladoraRepository.findById(veiculoNovo.getControladora().getIdControladora())
+                    .orElseThrow(() -> new RuntimeException("Controladora não encontrada"));
+
+            // Se o veículo já tinha uma controladora antes, precisamos desvincular a antiga
+            if (veiculoAntigo.getControladora() != null) {
+                Controladora antigaControladora = veiculoAntigo.getControladora();
+                antigaControladora.setVeiculo(null);
+                controladoraRepository.save(antigaControladora);
+            }
+
+            // Vincula a nova controladora a este veículo
+            novaControladora.setVeiculo(veiculoAntigo);
+            controladoraRepository.save(novaControladora);
+            
+            veiculoAntigo.setControladora(novaControladora);
+        } else if (veiculoNovo.getControladora() == null) {
+            // Se o usuário selecionou "Nenhuma / Sem Rastreador", precisamos desvincular a atual se existir
+            if (veiculoAntigo.getControladora() != null) {
+                Controladora antigaControladora = veiculoAntigo.getControladora();
+                antigaControladora.setVeiculo(null);
+                controladoraRepository.save(antigaControladora);
+                veiculoAntigo.setControladora(null);
+            }
+        }
 
         return veiculoRepository.save(veiculoAntigo);
     }
 
     public void deletar(Long id){
-        buscarPorId(id);
+        Veiculo veiculo = buscarPorId(id);
+        
+        // Antes de deletar o veículo, precisamos desvincular a controladora se houver
+        if (veiculo.getControladora() != null) {
+            Controladora c = veiculo.getControladora();
+            c.setVeiculo(null);
+            controladoraRepository.save(c);
+        }
 
         veiculoRepository.deleteById(id);
     }

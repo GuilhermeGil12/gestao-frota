@@ -96,4 +96,9 @@ public class LocalizacaoService {
 
          localizacaoRepository.saveAll(localizacoesParaSalvar);
      }//fim do metodo
+    public Optional<Localizacao> buscarUltimaLocalizacao(Long veiculoId) {
+        // Ele vai lá no repository e usa aquele "buscador mágico" que você já tinha criado!
+        return localizacaoRepository.findTopByVeiculoIdOrderByDataHoraDesc(veiculoId);
+    }
+
 }//fim da classe

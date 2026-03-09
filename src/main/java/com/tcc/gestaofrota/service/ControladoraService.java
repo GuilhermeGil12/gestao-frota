@@ -92,7 +92,11 @@ public class ControladoraService {
     public void inativar(Long id){
         Controladora controladora = buscarPorId(id);
 
-        controladora.setAtivo(false);
+        // Se estiver ativo, inativa. Se estiver inativo, ativa.
+        if (controladora.getAtivo() == null) {
+            controladora.setAtivo(true); // Assume true se for nulo
+        }
+        controladora.setAtivo(!controladora.getAtivo());
 
         controladoraRepository.save(controladora);
     }

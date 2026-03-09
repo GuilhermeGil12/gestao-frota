@@ -1,186 +1,185 @@
-/* 1. Reset e Configurações Globais */
-:root {
-  font-size: 16px; /* Base para o cálculo de rem */
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* =========================================
+   1. RESET E FUNDO PRINCIPAL
+   ========================================= */
+:root { font-size: 16px; }
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
 
 body {
-  background-color: #121212;
+  background-color: #000000; /* Preto Absoluto no fundo principal */
   color: #ffffff;
-  font-family: 'Inter', system-ui, sans-serif;
   overflow-x: hidden;
 }
 
-/* 2. Layout Principal (Ocupando a tela toda) */
-.app-container {
-  display: flex;
-  min-height: 100vh;
-  width: 100vw;
-}
+/* =========================================
+   2. LAYOUT E MENU LATERAL (SIDEBAR)
+   ========================================= */
+.app-container { display: flex; min-height: 100vh; width: 100vw; }
 
-/* 3. Sidebar (Menu Lateral Fixo) */
 .sidebar-container {
   width: 16rem;
-  background-color: #111;
-  color: white;
+  background-color: #121212; /* Cinza escuro para contraste no menu */
   padding: 1.5rem;
-  border-right: 1px solid #333;
+  border-right: 1px solid #222;
   position: sticky;
   top: 0;
   height: 100vh;
-
-  /* Layout Flex para empurrar o perfil para o rodapé */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-.sidebar-logo {
-  font-size: 1.5rem;
-  margin-bottom: 2rem;
-  color: #fff;
-}
+.sidebar-logo { font-size: 1.5rem; margin-bottom: 2rem; color: #fff; font-weight: 800; letter-spacing: 1px; }
+.sidebar-list { list-style: none; }
+.sidebar-item a { color: #aaa; text-decoration: none; display: block; padding: 0.8rem 1rem; border-radius: 0.5rem; transition: 0.2s; font-weight: 500; }
+.sidebar-item a:hover { color: #fff; background-color: #b30000; transform: translateX(5px); }
 
-.sidebar-list {
-  list-style: none;
-}
+/* Botão de Perfil Aqua colado no rodapé */
+.btn-perfil { display: block; background-color: #00ffff; color: #000 !important; text-align: center; padding: 0.8rem; border-radius: 0.5rem; font-weight: bold; text-decoration: none; transition: 0.3s; }
+.btn-perfil:hover { box-shadow: 0 0 15px rgba(0, 255, 255, 0.4); transform: translateY(-2px); }
 
-.sidebar-item a {
-  color: #ccc;
-  text-decoration: none;
-  display: block;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  transition: 0.3s;
-}
-
-.sidebar-item a:hover {
-  color: white;
-  background-color: #b30000; /* Vermelho escuro ao passar o mouse */
-}
-
-/* Botão de Perfil Aqua */
-.btn-perfil {
-  display: block;
-  background-color: #00ffff;
-  color: #000 !important;
-  text-align: center;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  font-weight: bold;
-  text-decoration: none;
-  transition: 0.3s;
-}
-
-.btn-perfil:hover {
-  filter: brightness(1.2);
-  transform: translateY(-2px);
-}
-
-/* 4. Conteúdo Principal */
+/* =========================================
+   3. ÁREA CENTRAL E CABEÇALHO DAS TELAS
+   ========================================= */
 .conteudo-principal {
   flex: 1;
-  padding: 2rem;
-  background-color: #1a1a1a;
+  padding: 2.5rem;
+  background-color: #000000;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-/* 5. Formulário e Inputs */
-.formulario {
+/* Header que organiza Título de um lado e Botão do outro */
+.header-actions {
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-bottom: 2.5rem;
+  justify-content: space-between;
+  align-items: center; /* Impede que o botão fique gigante */
+  width: 100%;
+  max-width: 95%; /* 95% para caber todas as colunas da tabela */
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #222;
+  padding-bottom: 1rem;
 }
 
-.input-group {
+.header-actions h1 { font-size: 1.5rem; font-weight: 600; color: #eeeeee; }
+.header-actions button { height: fit-content; white-space: nowrap; }
+
+/* =========================================
+   4. MODAL (TELA SUSPENSA DE CADASTRO)
+   ========================================= */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+.modal-content { background: #121212; border: 1px solid #333; width: 100%; max-width: 600px; padding: 2.5rem; border-radius: 12px; box-shadow: 0 25px 50px rgba(0,0,0,0.9); animation: modalIn 0.3s ease-out; }
+@keyframes modalIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.modal-header h2 { font-size: 1.4rem; color: #fff; }
+.btn-close { background: none; border: none; color: #888; font-size: 1.8rem; cursor: pointer; transition: 0.2s;}
+.btn-close:hover { color: #ff4d4d; }
+
+.modal-form { display: flex; flex-direction: column; gap: 1.2rem; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.input-container { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.input-container label { font-size: 0.85rem; color: #00ffff; font-weight: 600; text-transform: uppercase; }
+.modal-form input, .modal-form select { width: 100%; padding: 0.8rem; background: #0a0a0a; border: 1px solid #333; border-radius: 6px; color: white; transition: 0.3s; }
+.modal-form input:focus, .modal-form select:focus { border-color: #00ffff; outline: none; box-shadow: 0 0 8px rgba(0,255,255,0.2); }
+
+.checkbox-row { display: flex; align-items: center; gap: 0.8rem; margin-top: 0.5rem; }
+.checkbox-row input { width: 18px; height: 18px; cursor: pointer; }
+
+.modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; border-top: 1px solid #222; padding-top: 1.5rem; }
+
+/* =========================================
+   5. BOTÕES GERAIS E DE AÇÕES DA TABELA
+   ========================================= */
+.save { background-color: #0056b3; color: white; padding: 0.7rem 1.5rem; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+.save:hover { background-color: #007bff; }
+.btn-cancel { background: transparent; color: #aaa; border: 1px solid #444; padding: 0.7rem 1.5rem; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+.btn-cancel:hover { background: #222; color: white; }
+
+.btn-edit { background: #f39c12; color: #000; font-weight: 600; padding: 0.5rem 0.8rem; border-radius: 4px; border: none; cursor: pointer; transition: 0.2s; }
+.btn-edit:hover { background: #f1c40f; }
+.btn-inativar { background: #8e44ad; color: white; font-weight: 600; padding: 0.5rem 0.8rem; border-radius: 4px; border: none; cursor: pointer; transition: 0.2s; }
+.btn-inativar:hover { background: #732d91; }
+.btn-delete { background: #e74c3c; color: white; font-weight: 600; padding: 0.5rem 0.8rem; border-radius: 4px; border: none; cursor: pointer; transition: 0.2s; }
+.btn-delete:hover { background: #c0392b; }
+.btn-ativar {background-color: darkseagreen; color: white; font-weight: 600; padding: 0.5rem 0.8rem; border-radius: 4px; border: none; cursor: pointer; transition: 0.2s; }
+.btn-ativar:hover { background-color: green; }
+
+/* MÁGICA DO ALINHAMENTO: Impede botões da tabela de empilharem */
+.action-buttons {
   display: flex;
-  flex-direction: column;
   gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
 }
+.action-buttons button { margin: 0; white-space: nowrap; }
 
-input, select {
-  padding: 0.6rem 1rem;
-  background-color: #333;
-  border: 1px solid #444;
-  border-radius: 0.3rem;
-  color: white;
-  font-size: 1rem;
-}
-
-input:focus {
-  border-color: #007bff;
-  outline: none;
-}
-
-/* Botões de Ação */
-button {
-  padding: 0.6rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border: none;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-button.save {
-  background-color: #007bff;
-  color: white;
-}
-
-button.exp {
-  background-color: #556b2f;
-  color: white;
-}
-
-button:hover {
-  filter: brightness(1.3);
-}
-
-/* 6. Tabela Zebra Profissional */
+/* =========================================
+   6. TABELAS (ZEBRA STRIPING)
+   ========================================= */
 table {
   width: 100%;
-  max-width: 80rem;
-  margin-top: 1.5rem;
-  background-color: #242424;
-  border-collapse: collapse; /* Essencial para remover bordas fantasmas */
-  border: none;
+  max-width: 95%; /* 95% para caber todas as colunas da tabela */
+  background-color: #121212;
+  border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
 }
 
-th, td {
-  border: none !important;
-  padding: 1rem;
-  text-align: left;
+th, td { border: none !important; padding: 1rem 1.2rem; text-align: left; vertical-align: middle; }
+th { background-color: #8b0000; color: white; text-transform: uppercase; font-size: 0.8rem; font-weight: 700; white-space: nowrap; }
+
+tbody tr { background-color: #0a0a0a; border-bottom: 1px solid #1f1f1f; transition: 0.2s; }
+tbody tr:nth-child(even) { background-color: #121212; }
+tbody tr:hover { background-color: #1a1a1a; }
+
+.status-ativo { color: #00ff88; font-weight: 600; font-size: 0.9rem;}
+.status-inativo { color: #888; font-weight: 600; font-size: 0.9rem;}
+.text-center { text-align: center; }
+
+/* =========================================
+   7. DASHBOARD (Cards de Monitoramento)
+   ========================================= */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* Força ficar lado a lado */
+  gap: 1.5rem;
+  width: 100%; /* Força a ocupar a tela toda */
+  max-width: 95%;
+  margin-top: 1rem;
+  align-self: flex-start; /* Impede que fiquem esmagados no meio da tela */
 }
 
-th {
-  background-color: darkred;
-  color: white;
-  text-transform: uppercase;
-  font-size: 0.875rem;
-  letter-spacing: 0.05rem;
-  font-weight: 600;
+.dash-card {
+  background-color: #121212;
+  border: 1px solid #222;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-/* Cores das linhas */
-tbody tr {
-  background-color: #1a1a1a;
-}
+.dash-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.8); border-color: #333; }
 
-tbody tr:nth-child(even) {
-  background-color: #242424;
-}
+.card-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.2rem; font-weight: bold; font-size: 1.1rem; }
 
-tbody tr:hover {
-  background-color: #333;
-  transition: background-color 0.2s ease;
+.status-dot { width: 12px; height: 12px; border-radius: 50%; }
+.dot-movimento { background-color: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
+.dot-parado { background-color: #3498db; box-shadow: 0 0 8px #3498db; }
+.dot-desligado { background-color: #e74c3c; box-shadow: 0 0 8px #e74c3c; }
+.dot-desligando { background-color: #f39c12; box-shadow: 0 0 8px #f39c12; }
+
+.card-info { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.8rem; color: #ddd; font-size: 0.95rem; }
+
+.card-actions { display: flex; gap: 0.8rem; margin-top: 1.5rem; }
+.btn-seguir { flex: 1; background-color: #d32f2f; color: white; padding: 0.6rem; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+.btn-seguir:hover { background-color: #b71c1c; }
+.btn-google { flex: 1; background-color: #242424; color: white; padding: 0.6rem; border: 1px solid #444; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+.btn-google:hover { background-color: #333; }
+
+.search-input{
+  width: 50%;
+  height: 40px;
 }

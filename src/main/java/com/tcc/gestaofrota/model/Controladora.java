@@ -1,6 +1,6 @@
 package com.tcc.gestaofrota.model;
 
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -14,6 +14,8 @@ public class Controladora {
     @Column(name = "id_controladora")
     private Long idControladora;
 
+    // A MÁGICA ESTÁ AQUI: Isso impede o Java de ficar indo e voltando num loop infinito!
+    @JsonIgnore
     @OneToOne
     @JoinColumn(name = "id_veiculo", referencedColumnName = "id_veiculo", unique = true)
     private Veiculo veiculo;
@@ -35,6 +37,10 @@ public class Controladora {
 
     @Column(name = "atualizado_em")
     private LocalDateTime atualizadoEm;
+
+    // ==========================================
+    // GETTERS E SETTERS
+    // ==========================================
 
     public Long getIdControladora() {
         return idControladora;
@@ -99,5 +105,4 @@ public class Controladora {
     public void setAtualizadoEm(LocalDateTime atualizadoEm) {
         this.atualizadoEm = atualizadoEm;
     }
-
 }
