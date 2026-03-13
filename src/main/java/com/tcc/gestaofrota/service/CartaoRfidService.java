@@ -73,6 +73,14 @@ public class CartaoRfidService {
         cartaoRfidRepository.save(cartao);
     }
 
+    public void ativar(Long id) {
+        CartaoRfid cartao = cartaoRfidRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cartão não encontrado"));
+
+        cartao.setAtivo(true);
+        cartaoRfidRepository.save(cartao);
+    }
+
     public String listarParaEsp32() {
         return cartaoRfidRepository.findByAtivoTrue().stream()
                 .map(cartao ->
@@ -80,5 +88,7 @@ public class CartaoRfidService {
                 )
                 .collect(Collectors.joining(";")); // Une tudo com ; entre eles
     }
+
+
 
 }

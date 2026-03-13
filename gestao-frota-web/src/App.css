@@ -68,8 +68,23 @@ body {
    4. MODAL (TELA SUSPENSA DE CADASTRO)
    ========================================= */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 2000; }
-.modal-content { background: #121212; border: 1px solid #333; width: 100%; max-width: 600px; padding: 2.5rem; border-radius: 12px; box-shadow: 0 25px 50px rgba(0,0,0,0.9); animation: modalIn 0.3s ease-out; }
-@keyframes modalIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-content {
+  background: #121212;
+  border: 1px solid #333;
+  width: 100%;
+  max-width: 850px; /* Deixamos bem mais largo! */
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.9);
+  animation: modalIn 0.3s ease-out;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+@keyframes modalIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
 
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
 .modal-header h2 { font-size: 1.4rem; color: #fff; }
@@ -183,3 +198,272 @@ tbody tr:hover { background-color: #1a1a1a; }
   width: 50%;
   height: 40px;
 }
+
+.swal2-container {
+  z-index: 99999 !important;
+}
+
+/* =========================================
+   BARRA SUPERIOR GLOBAL E NOTIFICAÇÕES (O SINO)
+   ========================================= */
+.global-topbar {
+  display: flex;
+  justify-content: flex-end; /* Joga os itens para a direita */
+  align-items: center;
+  padding: 15px 30px;
+  background-color: #000000; /* Mesma cor de fundo do seu tema escuro */
+  border-bottom: 1px solid #333;
+  width: 100%;
+  height: 70px;
+  box-sizing: border-box;
+  z-index: 100;
+}
+
+.notification-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.btn-bell {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  padding: 5px;
+  transition: transform 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Efeito de aumentar um pouquinho quando passa o mouse */
+.btn-bell:hover {
+  transform: scale(1.1);
+}
+
+/* A bolinha vermelha com a quantidade de notificações */
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background-color: #ff3d00;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 50%;
+  border: 2px solid #121212; /* Borda grossa para dar contraste com o sino */
+  z-index: 2;
+}
+
+/* O Menu Suspenso (A caixinha que abre ao clicar) */
+.notification-dropdown {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  width: 350px;
+  background-color: #1e1e1e;
+  border: 1px solid #444;
+  border-radius: 8px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.9);
+  z-index: 9999;
+  overflow: hidden;
+  animation: fadeInDropdown 0.2s ease-out;
+}
+
+.dropdown-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #333;
+  background-color: #151515;
+}
+
+.dropdown-header h4 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.05rem;
+}
+
+.dropdown-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: 15px 20px;
+  border-bottom: 1px solid #333;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.notification-item:hover {
+  background-color: #2a2a2a;
+}
+
+.notification-item p {
+  margin: 0;
+  color: #eee;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.notification-item .time {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.dropdown-footer {
+  padding: 12px;
+  text-align: center;
+  background-color: #151515;
+  border-top: 1px solid #333;
+}
+
+.btn-ver-todas {
+  background: transparent;
+  border: none;
+  color: #00d2ff; /* Aquele ciano/azul estiloso do seu sistema */
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: color 0.2s;
+}
+
+.btn-ver-todas:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* Animação suave para a caixinha aparecer descendo */
+@keyframes fadeInDropdown {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================
+   TELA DE CONFIGURAÇÕES E TOGGLE SWITCH
+   ========================================= */
+.config-card {
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.config-header {
+  background-color: #222;
+  padding: 15px 20px;
+  border-bottom: 1px solid #333;
+}
+
+.config-header h3 {
+  margin: 0;
+  color: #00d2ff;
+  font-size: 1.2rem;
+}
+
+.config-header p {
+  margin: 5px 0 0 0;
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.config-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.config-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #2a2a2a;
+  padding-bottom: 15px;
+}
+
+.config-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.config-item strong {
+  display: block;
+  color: #ddd;
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.config-item span {
+  display: block;
+  color: #777;
+  font-size: 0.8rem;
+  max-width: 250px;
+}
+
+.config-item-input {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.config-item-input label {
+  color: #ddd;
+  font-size: 0.95rem;
+  font-weight: bold;
+}
+
+/* O INTERRUPTOR (TOGGLE SWITCH) ESTILO CELULAR */
+/* Container do item Veículos */
+.submenu-trigger-button {
+  color: #aaa;
+  text-decoration: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1rem; /* Mesmo padding do seu .sidebar-item a */
+  border-radius: 0.5rem;
+  transition: 0.2s;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Hover Vermelho IDENTICO ao Dashboard/Funcionários */
+.submenu-trigger-button:hover {
+  color: #fff;
+  background-color: #b30000;
+  transform: translateX(5px);
+}
+
+/* Seletor para quando estiver aberto, manter o texto branco */
+.submenu-trigger-button:active {
+  color: #fff;
+}
+
+/* Recuo do Submenu */
+.submenu-list {
+  margin-top: 0.2rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Estilo dos links dentro do submenu */
+.submenu-item a {
+  padding-left: 2.5rem !important; /* Recuo maior para parecer "dentro" */
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Seta */
+.arrow-icon {
+  font-size: 0.7rem;
+  opacity: 0.6;

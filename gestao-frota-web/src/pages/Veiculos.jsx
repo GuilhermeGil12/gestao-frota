@@ -3,6 +3,7 @@ import api from "../services/api";
 import "../App.css";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
+import {maskCPF, maskPlaca, maskRG} from '../utils/mascaras';
 
 function Veiculos() {
     const [veiculos, setVeiculos] = useState([]);
@@ -162,7 +163,7 @@ function Veiculos() {
                             <div className="form-grid">
                                 <div className="input-container">
                                     <label>Placa</label>
-                                    <input value={formData.placa} onChange={e => setFormData({...formData, placa: e.target.value})} required />
+                                    <input value={formData.placa} onChange={e => setFormData({...formData, placa: maskPlaca(e.target.value)})} required />
                                 </div>
                                 <div className="input-container">
                                     <label>Renavam</label>

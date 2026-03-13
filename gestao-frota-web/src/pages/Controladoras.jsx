@@ -3,6 +3,7 @@ import api from "../services/api";
 import "../App.css";
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
+import {maskIP, maskMAC} from "../utils/mascaras.js";
 
 function Controladoras() {
     const [controladoras, setControladoras] = useState([]);
@@ -125,12 +126,12 @@ function Controladoras() {
                         <form onSubmit={handleSalvar} className="modal-form">
                             <div className="input-container">
                                 <label>Endereço IP</label>
-                                <input placeholder="192.168.0.1" value={formData.ipControladora} onChange={e => setFormData({...formData, ipControladora: e.target.value})} required />
+                                <input placeholder="192.168.0.1" value={formData.ipControladora} onChange={e => setFormData({...formData, ipControladora: maskIP(e.target.value)})} required />
                             </div>
                             <div className="form-grid">
                                 <div className="input-container">
                                     <label>Endereço MAC</label>
-                                    <input placeholder="00:1B:44:11:3A:B7" value={formData.macControladora} onChange={e => setFormData({...formData, macControladora: e.target.value})} required />
+                                    <input placeholder="00:1B:44:11:3A:B7" value={formData.macControladora} onChange={e => setFormData({...formData, macControladora: maskMAC(e.target.value)})} required />
                                 </div>
                                 <div className="input-container">
                                     <label>Senha</label>

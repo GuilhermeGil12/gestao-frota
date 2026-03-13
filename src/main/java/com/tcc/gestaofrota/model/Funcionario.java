@@ -6,6 +6,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,6 +25,27 @@ public class Funcionario {
 
     @Column(name = "cpf")
     private String cpf;
+
+    @Column(name = "numero_telefone")
+    private String numeroTelefone;
+
+    @Column(name = "end_email")
+    private String email;
+
+    @Column(name = "func_cargo")
+    private String cargo;
+
+    @Column(name = "num_matricula")
+    private String matricula;
+
+    @Column(name = "numero_cnh")
+    private String numCNH;
+
+    @Column(name = "categoria_cnh")
+    private String categoriaCNH;
+
+    @Column(name = "valida_cnh")
+    private LocalDate validadeCNH;
 
     @Column(name = "rg")
     private String rg;
@@ -144,5 +166,61 @@ public class Funcionario {
 
     public void setCartoes(List<CartaoRfid> cartoes) {
         this.cartoes = cartoes;
+    }
+
+    public String getNumeroTelefone() {
+        return numeroTelefone;
+    }
+
+    public void setNumeroTelefone(String numeroTelefone) {
+        this.numeroTelefone = numeroTelefone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getCargo() {
+        return cargo;
+    }
+
+    public void setCargo(String cargo) {
+        this.cargo = cargo;
+    }
+
+    public String getMatricula() {
+        return matricula;
+    }
+
+    public void setMatricula(String matricula) {
+        this.matricula = matricula;
+    }
+
+    public String getNumCNH() {
+        return numCNH;
+    }
+
+    public void setNumCNH(String numCNH) {
+        this.numCNH = numCNH;
+    }
+
+    public String getCategoriaCNH() {
+        return categoriaCNH;
+    }
+
+    public void setCategoriaCNH(String categoriaCNH) {
+        this.categoriaCNH = categoriaCNH;
+    }
+
+    public LocalDate getValidadeCNH() {
+        return validadeCNH;
+    }
+
+    public void setValidadeCNH(LocalDate validadeCNH) {
+        this.validadeCNH = validadeCNH;
     }
 }

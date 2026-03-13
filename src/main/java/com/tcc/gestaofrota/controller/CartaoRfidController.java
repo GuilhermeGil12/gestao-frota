@@ -60,4 +60,10 @@ public class CartaoRfidController
         return ResponseEntity.ok(dados);
     }
 
+    @PatchMapping("/{id}/ativar")
+    public ResponseEntity<Void> ativar(@PathVariable Long id){
+        cartaoRfidService.ativar(id);
+        return ResponseEntity.noContent().build();
+    }
+
 }
