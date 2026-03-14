@@ -119,7 +119,7 @@ function Rotas() {
             </div>
 
             {/* ÁREA DO MAPA */}
-            <div style={{ width: "100%", height: "600px", borderRadius: "12px", overflow: "hidden", border: "1px solid #333", position: "relative" }}>
+            <div style={{ width: "100%", height: "60%", borderRadius: "12px", overflow: "hidden", border: "1px solid #333", position: "relative" }}>
 
                 {/* LEGENDA */}
                 <div style={{ position: "absolute", top: "10px", right: "10px", zIndex: 1000, background: "rgba(0,0,0,0.85)", padding: "12px", borderRadius: "8px", fontSize: "0.85rem", color: "white", border: "1px solid #444" }}>

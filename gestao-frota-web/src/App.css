@@ -423,6 +423,7 @@ tbody tr:hover { background-color: #1a1a1a; }
   font-weight: bold;
 }
 
+/*MENU*/
 /* O INTERRUPTOR (TOGGLE SWITCH) ESTILO CELULAR */
 /* Container do item Veículos */
 .submenu-trigger-button {
@@ -467,3 +468,40 @@ tbody tr:hover { background-color: #1a1a1a; }
 .arrow-icon {
   font-size: 0.7rem;
   opacity: 0.6;
+
+  /* Layout Principal */
+  .app-container {
+    display: flex;
+    width: 100%;
+  }
+
+  .conteudo-principal {
+    flex-grow: 1;
+    /* Essa margem deve bater com a largura do menu no JS */
+    margin-left: 260px;
+    transition: margin-left 0.3s ease;
+    min-height: 100vh;
+    background-color: #121212;
+    color: white;
+  }
+
+  /* Quando o menu encolher, o conteúdo ocupa o espaço */
+  .sidebar-container.retracted + .conteudo-principal {
+    margin-left: 80px;
+  }
+
+  /* Responsividade para Celular */
+  @media (max-width: 768px) {
+    .conteudo-principal {
+      margin-left: 0 !important;
+      padding: 10px;
+    }
+
+    .sidebar-container {
+      transform: translateX(-100%); /* Esconde o menu no celular */
+    }
+
+    .sidebar-container.active {
+      transform: translateX(0); /* Mostra se você criar uma classe active */
+    }
+  }
