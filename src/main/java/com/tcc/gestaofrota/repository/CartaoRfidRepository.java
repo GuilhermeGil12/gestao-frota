@@ -26,4 +26,5 @@ public interface CartaoRfidRepository extends JpaRepository<CartaoRfid, Long> {
 
 
 
+
 }
