@@ -16,6 +16,7 @@ import Dashboard from './pages/Dashboard';
 import Funcionarios from './pages/Funcionarios';
 import Veiculos from './pages/Veiculos';
 import Rotas from './pages/Rotas';
+import Alertas from './pages/Alertas';
 import Controladoras from './pages/Controladoras';
 import Cartoes from './pages/Cartoes';
 import Configuracoes from './pages/Configuracoes';
@@ -124,6 +125,7 @@ function App() {
                             <Route path="/funcionarios" element={<Funcionarios />} />
                             <Route path="/veiculos" element={<Veiculos />} />
                             <Route path="/rotas" element={<Rotas />} />
+                            <Route path="/alertas" element={<Alertas />} />
                             <Route path="/controladoras" element={<Controladoras />} />
                             <Route path="/cartoes" element={<Cartoes />} />
                             <Route path="/configuracoes" element={<Configuracoes />} />

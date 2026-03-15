@@ -107,4 +107,8 @@ public class LocalizacaoService {
     public Optional<Localizacao> buscarUltimaLocalizacao(Long veiculoId) {
         return localizacaoRepository.findTopByVeiculoIdOrderByDataHoraDesc(veiculoId);
     }
+
+    public Optional<Localicao> buscarPorVelocidade(Long veiculoId){
+        return localizacaoRepository.findByVelocidadeDesc(veiculoId);
+    }
 }

@@ -17,15 +17,22 @@ body {
 
 .sidebar-container {
   width: 16rem;
-  background-color: #121212; /* Cinza escuro para contraste no menu */
+  background-color: #121212;
   padding: 1.5rem;
   border-right: 1px solid #222;
-  position: sticky;
+  position: fixed; /* Mudamos para fixed para o efeito de deslizar funcionar */
   top: 0;
   height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+
+  /* 👇 ADICIONADO PARA ROLAGEM 👇 */
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin; /* Deixa a barra fina no Firefox */
+  scrollbar-color: #333 transparent;
+  transition: left 0.3s ease; /* Para a animação de abre/fecha */
 }
 
 .sidebar-logo { font-size: 1.5rem; margin-bottom: 2rem; color: #fff; font-weight: 800; letter-spacing: 1px; }
@@ -499,9 +506,47 @@ tbody tr:hover { background-color: #1a1a1a; }
 
     .sidebar-container {
       transform: translateX(-100%); /* Esconde o menu no celular */
+      overflow-y: scroll;
     }
 
     .sidebar-container.active {
       transform: translateX(0); /* Mostra se você criar uma classe active */
     }
+  }
+
+  #menu-lateral .sidebar-item a,
+  #menu-lateral .sidebar-item .menu-link,
+  #menu-lateral .sidebar-item .submenu-trigger-button {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 15px !important;
+    padding: 0.8rem 1rem !important;
+    text-decoration: none !important;
+    color: #aaa !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Garante que os ícones fiquem alinhados */
+  #menu-lateral .sidebar-item svg {
+    min-width: 24px !important;
+    height: auto !important;
+    flex-shrink: 0 !important;
+    display: block !important;
+  }
+
+  /* Centraliza o texto verticalmente */
+  #menu-lateral .sidebar-item span {
+    display: flex !important;
+    align-items: center !important;
+    line-height: 1 !important;
+  }
+
+  /* Hover */
+  #menu-lateral .sidebar-item a:hover,
+  #menu-lateral .sidebar-item .submenu-trigger-button:hover {
+    background-color: #b30000 !important;
+    color: #fff !important;
+    transform: translateX(5px);
   }

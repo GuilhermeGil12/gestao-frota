@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import React, { useState } from 'react';
 import logoEmpresa from '../assets/logocompleta.svg';
+import '../App.css';
+import { Users, Car, House, IdentificationCardIcon, FileText, Gear, SignOut, Cpu } from "@phosphor-icons/react";
 
 // Recebemos isOpen e a função de fechar via props do App.js
 function Menu({ isOpen, toggleMenu }) {
@@ -59,12 +61,18 @@ function Menu({ isOpen, toggleMenu }) {
                     </button>
                 </div>
 
-                <ul className="sidebar-list">
+                <ul className="sidebar-list" id="menu-lateral">
                     <li className="sidebar-item">
-                        <Link to="/dashboard">Dashboard</Link>
+                        <Link to="/dashboard" className="menu-link">
+                            <House size={22} weight="regular" />
+                            <span>Dashboard</span>
+                        </Link>
                     </li>
                     <li className="sidebar-item">
-                        <Link to="/funcionarios">Funcionários</Link>
+                        <Link to="/funcionarios" className="menu-link">
+                            <Users size={22} weight="regular" />
+                            <span>Funcionários</span>
+                        </Link>
                     </li>
 
                     {/* Submenu de Veículos */}
@@ -74,6 +82,7 @@ function Menu({ isOpen, toggleMenu }) {
                             onClick={() => setIsVeiculosOpen(!isVeiculosOpen)}
                             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
                         >
+                            <Car size={22} weight="regular" />
                             <span>Veículos</span>
                             <span className="arrow-icon">{isVeiculosOpen ? '▼' : '▶'}</span>
                         </div>
@@ -86,23 +95,43 @@ function Menu({ isOpen, toggleMenu }) {
                                 <li className="sidebar-item submenu-item">
                                     <Link to="/Rotas">Rotas</Link>
                                 </li>
+                                <li className="sidebar-item submenu-item">
+                                    <Link to="/Alertas">Alertas</Link>
+                                </li>
                             </ul>
                         )}
                     </li>
 
                     <li className="sidebar-item">
-                        <Link to="/controladoras">Controladoras</Link>
+                        <Link to="/controladoras" className="menu-link">
+                            <Cpu size={22} weight="regular" />
+                            <span>Controladoras</span>
+                        </Link>
                     </li>
                     <li className="sidebar-item">
-                        <Link to="/cartoes">Cartões</Link>
+                        <Link to="/cartoes" className="menu-link">
+                            <IdentificationCardIcon size={22} weight="regular" />
+                            Cartões
+                        </Link>
                     </li>
                     <li className="sidebar-item">
-                        <Link to="/Relatorios">Relatórios</Link>
+                        <Link to="/Relatorios">
+                            <FileText size={22} weight="regular" />
+                            Relatórios
+                        </Link>
                     </li>
                     <li className="sidebar-item">
-                        <Link to="/configuracoes">Configuração</Link>
+                        <Link to="/configuracoes" className="menu-link">
+                            <Gear size={22} weight="regular" />
+                            Configuração
+                        </Link>
                     </li>
-                    <li className="sidebar-item"><a style={{cursor: 'pointer'}}>Sair</a></li>
+                    <li className="sidebar-item">
+                        <a style={{cursor: 'pointer'}} className="menu-link">
+                            <SignOut size={22} weight="regular" />
+                            <span>Sair</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
 

@@ -72,4 +72,12 @@ public class LocalizacaoController {
 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/alerta")
+    public ResponseEntity<List<Localizacao>> obterAlerta(
+            @RequestParam Long idVeiculo,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
+
+        List<Localizacao> velocidade
+    }
 }
