@@ -11,6 +11,7 @@ import com.tcc.gestaofrota.repository.FuncionarioRepository;
 import com.tcc.gestaofrota.repository.LocalizacaoRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -108,7 +109,17 @@ public class LocalizacaoService {
         return localizacaoRepository.findTopByVeiculoIdOrderByDataHoraDesc(veiculoId);
     }
 
-    public Optional<Localicao> buscarPorVelocidade(Long veiculoId){
-        return localizacaoRepository.findByVelocidadeDesc(veiculoId);
+    public List<Localizacao> buscarAlerta(Long idVeiculo, LocalDate dataInicio, LocalDate dataFinal) {
+        // Define hora 00:00:00 para o início e 23:59:59 para o fim
+        LocalDateTime inicio = dataInicio.atStartOfDay();
+        LocalDateTime fim = dataFinal.atTime(23, 59, 59);
+
+        if (idVeiculo == null) {
+            // AQUI: Troquei de 'repository' para 'localizacaoRepository'
+            return localizacaoRepository.buscarTodosAlertasNoPeriodo(inicio, fim);
+        } else {
+            // AQUI: Troquei de 'repository' para 'localizacaoRepository'
+            return localizacaoRepository.buscarAlertaPorVeiculo(idVeiculo, inicio, fim);
+        }
     }
 }

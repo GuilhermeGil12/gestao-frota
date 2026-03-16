@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -38,4 +39,17 @@ public interface LocalizacaoRepository extends JpaRepository <Localizacao, Long>
 
     Optional<Localizacao> findTopByVeiculoIdOrderByDataHoraDesc(Long veiculoId);
 
+    @Query("SELECT l FROM Localizacao l WHERE l.veiculo.id = :veiculoId AND l.velocidade > 110 AND l.dataHora BETWEEN :inicio AND :fim")
+    List<Localizacao> buscarAlertaPorVeiculo(
+            @Param("veiculoId") Long veiculoId,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fim") LocalDateTime fim
+    );
+
+    // Repare no final: l.dataHora BETWEEN :inicio AND :fim
+    @Query("SELECT l FROM Localizacao l WHERE l.velocidade > 110 AND l.dataHora BETWEEN :inicio AND :fim")
+    List<Localizacao> buscarTodosAlertasNoPeriodo(
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fim") LocalDateTime fim
+    );
 }
