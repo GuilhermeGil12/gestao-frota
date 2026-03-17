@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import './App.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-import iconeSinoGif from './assets/icons8-sino.gif';
-import iconeSinoPng from './assets/icons8-sino-48.png';
+import { Bell } from 'lucide-react';
+import { cn } from './lib/utils';
+import { Button } from './components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+} from './components/ui/dropdown-menu';
+import { Badge } from './components/ui/badge';
 
 import Menu from './components/Menu';
 
@@ -19,115 +26,58 @@ import Cartoes       from './pages/Cartoes';
 import Configuracoes from './pages/Configuracoes';
 import Relatorios    from './pages/Relatorios';
 
-// Deve bater com W_OPEN e W_CLOSED do Menu.jsx
 const W_OPEN   = 240;
 const W_CLOSED =  56;
 
 function App() {
-    const [isMenuOpen, setIsMenuOpen]           = useState(true);
-    const [isNotificacaoOpen, setIsNotificacaoOpen] = useState(false);
-    const [isHovering, setIsHovering]           = useState(false);
-
+    const [isMenuOpen, setIsMenuOpen] = useState(true);
     const toggleMenu = () => setIsMenuOpen(prev => !prev);
 
     const notificacoes = [
-        { id: 1, texto: "⚠️ A CNH do motorista Guilherme Gil vence em 5 dias.",       tempo: "Há 2 horas" },
-        { id: 2, texto: "🔧 Veículo ABC-1234 atingiu a quilometragem para revisão.", tempo: "Há 4 horas" },
-        { id: 3, texto: "🚫 Tentativa de acesso negada fora do horário.",             tempo: "Ontem"      },
+        { id: 1, texto: "A CNH do motorista Guilherme Gil vence em 5 dias.",       tempo: "Ha 2 horas" },
+        { id: 2, texto: "Veiculo ABC-1234 atingiu a quilometragem para revisao.", tempo: "Ha 4 horas" },
+        { id: 3, texto: "Tentativa de acesso negada fora do horario.",             tempo: "Ontem"      },
     ];
 
     return (
         <Router>
-            <div
-                className="app-container"
-                style={{ display: 'flex', height: '100vh', background: '#121212', overflow: 'hidden' }}
-            >
-                {/*
-                    MENU LATERAL
-                    O botão hamburguer/toggle já está DENTRO do Menu.
-                    NÃO adicione nenhum botão ☰ fora daqui.
-                */}
+            <div className="dark flex h-screen bg-background overflow-hidden">
                 <Menu isOpen={isMenuOpen} toggleMenu={toggleMenu} />
 
-                {/* COLUNA DIREITA — acompanha a largura do menu */}
-                <div style={{
-                    flex          : 1,
-                    display       : 'flex',
-                    flexDirection : 'column',
-                    marginLeft    : isMenuOpen ? W_OPEN : W_CLOSED,
-                    transition    : 'margin-left 0.3s ease',
-                    overflow      : 'hidden',
-                }}>
-
-                    {/* TOPBAR — SEM botão hamburguer aqui */}
-                    <div
-                        className="global-topbar"
-                        style={{
-                            height         : '60px',
-                            background     : '#1a1a1a',
-                            display        : 'flex',
-                            alignItems     : 'center',
-                            justifyContent : 'flex-end',   // alinha sino à direita
-                            padding        : '0 20px',
-                            borderBottom   : '1px solid #333',
-                            zIndex         : 1000,
-                        }}
-                    >
-                        {/* SINO */}
-                        <div className="notification-wrapper" style={{ position: 'relative' }}>
-                            <button
-                                className="btn-bell"
-                                onClick={() => setIsNotificacaoOpen(!isNotificacaoOpen)}
-                                onMouseEnter={() => setIsHovering(true)}
-                                onMouseLeave={() => setIsHovering(false)}
-                                style={{
-                                    background: 'none', border: 'none',
-                                    cursor: 'pointer', display: 'flex', alignItems: 'center',
-                                }}
-                            >
-                                <img
-                                    src={isHovering ? iconeSinoGif : iconeSinoPng}
-                                    alt="Notificações"
-                                    style={{ width: '28px', height: '28px', filter: 'invert(1)' }}
-                                />
-                                {notificacoes.length > 0 && (
-                                    <span style={{
-                                        position: 'absolute', top: '-5px', right: '-5px',
-                                        background: 'red', color: 'white',
-                                        borderRadius: '50%', padding: '2px 6px', fontSize: '10px',
-                                    }}>
-                                        {notificacoes.length}
-                                    </span>
-                                )}
-                            </button>
-
-                            {isNotificacaoOpen && (
-                                <div style={{
-                                    position: 'absolute', right: 0, top: '45px',
-                                    background: '#fff', color: '#000', width: '300px',
-                                    borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', zIndex: 2000,
-                                }}>
-                                    <div style={{ padding: '15px', borderBottom: '1px solid #eee' }}>
-                                        <h4 style={{ margin: 0 }}>Notificações Recentes</h4>
-                                    </div>
-                                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                                        {notificacoes.map(notif => (
-                                            <div key={notif.id} style={{ padding: '12px', borderBottom: '1px solid #f9f9f9' }}>
-                                                <p style={{ margin: '0 0 5px 0', fontSize: '0.9rem', color: '#333' }}>{notif.texto}</p>
-                                                <span style={{ fontSize: '0.75rem', color: '#888' }}>{notif.tempo}</span>
-                                            </div>
-                                        ))}
-                                    </div>
+                <div
+                    className="flex-1 flex flex-col overflow-hidden transition-[margin-left] duration-300"
+                    style={{ marginLeft: isMenuOpen ? W_OPEN : W_CLOSED }}
+                >
+                    {/* Topbar */}
+                    <header className="h-[60px] bg-card flex items-center justify-end px-5 border-b border-border z-40">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="relative">
+                                    <Bell className="h-5 w-5" />
+                                    {notificacoes.length > 0 && (
+                                        <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] bg-red-600 text-white border-0">
+                                            {notificacoes.length}
+                                        </Badge>
+                                    )}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-80">
+                                <DropdownMenuLabel>Notificacoes Recentes</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <div className="max-h-80 overflow-y-auto">
+                                    {notificacoes.map(notif => (
+                                        <div key={notif.id} className="px-4 py-3 border-b border-border last:border-0 hover:bg-accent cursor-pointer transition-colors">
+                                            <p className="text-sm text-foreground leading-relaxed">{notif.texto}</p>
+                                            <span className="text-xs text-muted-foreground mt-1 block">{notif.tempo}</span>
+                                        </div>
+                                    ))}
                                 </div>
-                            )}
-                        </div>
-                    </div>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </header>
 
-                    {/* CONTEÚDO PRINCIPAL */}
-                    <main
-                        className="conteudo-principal"
-                        style={{ flex: 1, overflowY: 'auto', padding: '20px' }}
-                    >
+                    {/* Conteudo principal */}
+                    <main className="flex-1 overflow-y-auto p-6">
                         <Routes>
                             <Route path="/dashboard"     element={<Dashboard />}     />
                             <Route path="/funcionarios"  element={<Funcionarios />}  />

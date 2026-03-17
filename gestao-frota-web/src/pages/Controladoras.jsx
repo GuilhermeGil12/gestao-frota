@@ -1,32 +1,26 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
-import "../App.css";
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
-import {maskIP, maskMAC} from "../utils/mascaras.js";
+import { maskIP, maskMAC } from "../utils/mascaras.js";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Badge } from "../components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../components/ui/dialog";
 
 function Controladoras() {
     const [controladoras, setControladoras] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-
     const initialState = { idControladora: null, ipControladora: "", macControladora: "", senha: "", ativo: true };
     const [formData, setFormData] = useState(initialState);
 
     const carregar = async () => {
         try {
             const res = await api.get('/controladora');
-
-            // TRAVA DE SEGURANÇA
-            if (Array.isArray(res.data)) {
-                setControladoras(res.data);
-            } else {
-                console.error("🚨 O Java não mandou uma lista de Controladoras! Ele mandou isto:", res.data);
-                setControladoras([]);
-            }
-        } catch (e) {
-            console.error("Erro na requisição:", e);
-            setControladoras([]);
-        }
+            setControladoras(Array.isArray(res.data) ? res.data : []);
+        } catch (e) { console.error("Erro na requisicao:", e); setControladoras([]); }
     };
 
     useEffect(() => { carregar(); }, []);
@@ -34,157 +28,81 @@ function Controladoras() {
     const handleSalvar = async (e) => {
         e.preventDefault();
         try {
-            if (formData.idControladora) {
-                await api.put(`/controladora/${formData.idControladora}`, formData);
-            } else {
-                await api.post('/controladora', formData);
-            }
-            setIsModalOpen(false);
-            carregar();
+            if (formData.idControladora) await api.put(`/controladora/${formData.idControladora}`, formData);
+            else await api.post('/controladora', formData);
+            setIsModalOpen(false); carregar();
             toast.success("Controladora salva com sucesso!");
-        } catch (e) {toast.error("Erro ao salvar. Verifique se o IP ou MAC já existem!") }
+        } catch (e) { toast.error("Erro ao salvar. Verifique se o IP ou MAC ja existem!"); }
     };
 
     const handleInativar = async (controladora) => {
         const isAtivo = controladora.ativo;
         const acao = isAtivo ? "INATIVAR" : "ATIVAR";
-        const confirmacao = await Swal.fire({
-            title: 'Tem certeza?',
-            text: `Deseja ${acao} esta controladora?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: isAtivo ? '#d33' : '#28a745',   // Vermelho para inativar, Verde para ativar
-            cancelButtonColor: '#3085d6', // Botão de cancelar azul
-            confirmButtonText: `Sim, ${acao}!`,
-            cancelButtonText: 'Cancelar',
-            background: '#1e1e1e',
-            color: '#ffffff'
-        });
-        if(confirmacao.isConfirmed){
-            try{
-                await api.patch(`/controladora/${controladora.idControladora}/inativar`);
-                carregar(); // Corrigido de carregarDados() para carregar()
-                toast.success(`Controladora ${isAtivo ? 'inativada' : 'ativada'} com sucesso`);
-            }catch (e) {
-                toast.error("Ops! Não foi possível alterar o status desta controladora.");
-            }
-
+        const confirmacao = await Swal.fire({ title: 'Tem certeza?', text: `Deseja ${acao} esta controladora?`, icon: 'warning', showCancelButton: true, confirmButtonColor: isAtivo ? '#d33' : '#28a745', cancelButtonColor: '#3085d6', confirmButtonText: `Sim, ${acao}!`, cancelButtonText: 'Cancelar', background: '#1e1e1e', color: '#ffffff' });
+        if (confirmacao.isConfirmed) {
+            try { await api.patch(`/controladora/${controladora.idControladora}/inativar`); carregar(); toast.success(`Controladora ${isAtivo ? 'inativada' : 'ativada'} com sucesso`); }
+            catch (e) { toast.error("Ops! Nao foi possivel alterar o status desta controladora."); }
         }
-    }
-
-    // Não esqueça de colocar isso lá no topo do arquivo junto com os outros imports!
-// import Swal from 'sweetalert2';
+    };
 
     const handleExcluir = async (idControladora) => {
-
-        // 1. Dispara o modal bonitão do SweetAlert e "espera" a resposta
-        const confirmacao = await Swal.fire({
-            title: 'Tem certeza?',
-            text: "Deseja EXCLUIR permanentemente esta controladora?",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',   // Botão de confirmar vermelho (padrão para exclusão)
-            cancelButtonColor: '#3085d6', // Botão de cancelar azul
-            confirmButtonText: 'Sim, excluir!',
-            cancelButtonText: 'Cancelar',
-            background: '#1e1e1e',
-            color: '#ffffff'
-        });
-
-        // 2. O SweetAlert retorna um objeto. Se a pessoa clicou no "Sim", o isConfirmed vem como true
+        const confirmacao = await Swal.fire({ title: 'Tem certeza?', text: "Deseja EXCLUIR permanentemente esta controladora?", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'Sim, excluir!', cancelButtonText: 'Cancelar', background: '#1e1e1e', color: '#ffffff' });
         if (confirmacao.isConfirmed) {
-            try {
-                await api.delete(`/controladora/${idControladora}`);
-                carregar();
-
-                // Mantemos o seu Toast aqui porque fica super moderno!
-                // (A tela escurece pro Modal de pergunta, depois some e pula o toast de sucesso)
-                toast.success("Controladora excluída com sucesso!");
-
-            } catch (e) {
-                toast.error("Ops! Não foi possível excluir esta controladora.");
-            }
+            try { await api.delete(`/controladora/${idControladora}`); carregar(); toast.success("Controladora excluida com sucesso!"); }
+            catch (e) { toast.error("Ops! Nao foi possivel excluir esta controladora."); }
         }
     };
 
     const abrirModal = (c = null) => { setFormData(c || initialState); setIsModalOpen(true); };
 
     return (
-        <div className="conteudo-principal" style={{ alignItems: "stretch", width: "100%" }}>
-            <div className="header-actions" style={{ maxWidth: "100%" }}>
-                <h1>Gestão de Controladoras</h1>
-                <button className="save" onClick={() => abrirModal()}>+ Nova Controladora</button>
+        <div className="w-full">
+            <div className="flex items-center justify-between mb-6 border-b border-border pb-4">
+                <h1 className="text-xl font-semibold text-foreground">Gestao de Controladoras</h1>
+                <Button onClick={() => abrirModal()}>+ Nova Controladora</Button>
             </div>
 
-            {isModalOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h2>{formData.idControladora ? "Editar Controladora" : "Cadastrar Controladora"}</h2>
-                            <button className="btn-close" onClick={() => setIsModalOpen(false)}>&times;</button>
+            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <DialogContent className="max-w-[600px]">
+                    <DialogHeader><DialogTitle>{formData.idControladora ? "Editar Controladora" : "Cadastrar Controladora"}</DialogTitle><DialogDescription>Preencha os dados da controladora GPS.</DialogDescription></DialogHeader>
+                    <form onSubmit={handleSalvar} className="space-y-4">
+                        <div className="space-y-2"><Label>Endereco IP</Label><Input placeholder="192.168.0.1" value={formData.ipControladora} onChange={e => setFormData({ ...formData, ipControladora: maskIP(e.target.value) })} required /></div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2"><Label>Endereco MAC</Label><Input placeholder="00:1B:44:11:3A:B7" value={formData.macControladora} onChange={e => setFormData({ ...formData, macControladora: maskMAC(e.target.value) })} required /></div>
+                            <div className="space-y-2"><Label>Senha</Label><Input type="password" placeholder="Senha do equipamento" value={formData.senha} onChange={e => setFormData({ ...formData, senha: e.target.value })} required /></div>
                         </div>
-                        <form onSubmit={handleSalvar} className="modal-form">
-                            <div className="input-container">
-                                <label>Endereço IP</label>
-                                <input placeholder="192.168.0.1" value={formData.ipControladora} onChange={e => setFormData({...formData, ipControladora: maskIP(e.target.value)})} required />
-                            </div>
-                            <div className="form-grid">
-                                <div className="input-container">
-                                    <label>Endereço MAC</label>
-                                    <input placeholder="00:1B:44:11:3A:B7" value={formData.macControladora} onChange={e => setFormData({...formData, macControladora: maskMAC(e.target.value)})} required />
-                                </div>
-                                <div className="input-container">
-                                    <label>Senha</label>
-                                    <input type="password" placeholder="Senha do equipamento" value={formData.senha} onChange={e => setFormData({...formData, senha: e.target.value})} required />
-                                </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>Cancelar</button>
-                                <button type="submit" className="save">Confirmar</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+                        <DialogFooter className="border-t border-border pt-4"><Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button><Button type="submit">Confirmar</Button></DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
-            <table style={{ maxWidth: "100%" }}>
-                <thead>
-                <tr>
-                    <th style={{width: "10%"}}>Status</th>
-                    <th style={{width: "15%"}}>ID Banco</th>
-                    <th style={{width: "25%"}}>IP Controladora</th>
-                    <th style={{width: "25%"}}>MAC Controladora</th>
-                    <th className="text-center" style={{width: "25%"}}>Ações</th>
-                </tr>
-                </thead>
-                <tbody>
-                {(!Array.isArray(controladoras) || controladoras.length === 0) ? (
-                    <tr><td colSpan="5" className="text-center" style={{padding: "2rem", color: "#888"}}>Nenhuma controladora encontrada no banco.</td></tr>
-                ) : (
-                    controladoras.map(c => (
-                        <tr key={c.idControladora}>
-                            <td><span className={c.ativo ? "status-ativo" : "status-inativo"}>{c.ativo ? "● Ativo" : "● Inativo"}</span></td>
-                            <td>#{c.idControladora}</td>
-                            <td>{c.ipControladora}</td>
-                            <td>{c.macControladora}</td>
-                            <td>
-                                <div className="action-buttons">
-                                    <button className="btn-edit" onClick={() => abrirModal(c)}>Editar</button>
-                                    <button 
-                                        className={c.ativo ? "btn-inativar" : "btn-ativar"} 
-                                        style={{ backgroundColor: c.ativo ? "#dc3545" : "#28a745" }}
-                                        onClick={() => handleInativar(c)}
-                                    >
-                                        {c.ativo ? "Inativar" : "Ativar"}
-                                    </button>
-                                    <button className="btn-delete" onClick={() => handleExcluir(c.idControladora)}>Excluir</button>
-                                </div>
-                            </td>
-                        </tr>
-                    ))
-                )}
-                </tbody>
-            </table>
+            <Table>
+                <TableHeader><TableRow>
+                    <TableHead className="w-[10%]">Status</TableHead><TableHead className="w-[15%]">ID Banco</TableHead>
+                    <TableHead className="w-[25%]">IP Controladora</TableHead><TableHead className="w-[25%]">MAC Controladora</TableHead><TableHead className="w-[25%] text-center">Acoes</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                    {(!Array.isArray(controladoras) || controladoras.length === 0) ? (
+                        <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhuma controladora encontrada no banco.</TableCell></TableRow>
+                    ) : (
+                        controladoras.map(c => (
+                            <TableRow key={c.idControladora}>
+                                <TableCell><Badge variant={c.ativo ? "default" : "secondary"} className={c.ativo ? "bg-green-600" : ""}>{c.ativo ? "Ativo" : "Inativo"}</Badge></TableCell>
+                                <TableCell>#{c.idControladora}</TableCell>
+                                <TableCell>{c.ipControladora}</TableCell>
+                                <TableCell>{c.macControladora}</TableCell>
+                                <TableCell>
+                                    <div className="flex gap-2 justify-center">
+                                        <Button size="sm" variant="outline" onClick={() => abrirModal(c)}>Editar</Button>
+                                        <Button size="sm" variant={c.ativo ? "secondary" : "default"} onClick={() => handleInativar(c)}>{c.ativo ? "Inativar" : "Ativar"}</Button>
+                                        <Button size="sm" variant="destructive" onClick={() => handleExcluir(c.idControladora)}>Excluir</Button>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ))
+                    )}
+                </TableBody>
+            </Table>
         </div>
     );
 }
