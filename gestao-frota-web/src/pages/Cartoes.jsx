@@ -1,201 +1,102 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
-import "../App.css";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Badge } from "../components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../components/ui/dialog";
 
 function Cartoes() {
-    // ==========================================
-    // 1. ESTADOS
-    // ==========================================
     const [funcionarios, setFuncionarios] = useState([]);
     const [termoBusca, setTermoBusca] = useState("");
-
     const [isModalCartoesOpen, setIsModalCartoesOpen] = useState(false);
     const [funcionarioSelecionado, setFuncionarioSelecionado] = useState(null);
-
-    // Estado para guardar o código do crachá que está sendo digitado/lido
     const [novoUid, setNovoUid] = useState("");
 
-    // ==========================================
-    // 2. FUNÇÕES DE CARREGAMENTO
-    // ==========================================
     const carregarFuncionarios = async () => {
         try {
             const res = await api.get('/funcionarios');
             setFuncionarios(res.data);
-
-            // Se o modal estiver aberto, atualiza o funcionário selecionado em tempo real
             if (funcionarioSelecionado) {
                 const atualizado = res.data.find(f => f.id === funcionarioSelecionado.id);
                 setFuncionarioSelecionado(atualizado);
             }
-        } catch (e) {
-            console.error(e);
-        }
+        } catch (e) { console.error(e); }
     };
 
     useEffect(() => { carregarFuncionarios(); }, []);
 
-    const abrirPainelCartoes = (f) => {
-        setFuncionarioSelecionado(f);
-        setNovoUid(""); // Limpa o campo sempre que abrir um novo funcionário
-        setIsModalCartoesOpen(true);
-    };
+    const abrirPainelCartoes = (f) => { setFuncionarioSelecionado(f); setNovoUid(""); setIsModalCartoesOpen(true); };
 
-    // ==========================================
-    // 3. AÇÕES DOS CARTÕES (API)
-    // ==========================================
-
-    // CADASTRAR NOVO CARTÃO
     const handleVincularCartao = async () => {
-        if (!novoUid.trim()) {
-            return toast.warning("Digite ou aproxime o cartão no leitor RFID!");
-        }
-
+        if (!novoUid.trim()) { return toast.warning("Digite ou aproxime o cartao no leitor RFID!"); }
         try {
-            const payload = {
-                uid: novoUid.trim(),
-                ativo: true,
-                funcionario: { id: funcionarioSelecionado.id }
-            };
-
-            await api.post('/cartaorfid', payload);
-            toast.success("Cartão vinculado com sucesso!");
-            setNovoUid(""); // Limpa o input
-            carregarFuncionarios(); // Atualiza a tela
-        } catch (e) {
-            toast.error("Erro ao vincular cartão. Talvez o código já exista?");
-        }
+            await api.post('/cartaorfid', { uid: novoUid.trim(), ativo: true, funcionario: { id: funcionarioSelecionado.id } });
+            toast.success("Cartao vinculado com sucesso!");
+            setNovoUid("");
+            carregarFuncionarios();
+        } catch (e) { toast.error("Erro ao vincular cartao. Talvez o codigo ja exista?"); }
     };
 
-    // INATIVAR / ATIVAR CARTÃO
     const handleAlternarStatus = async (cartao) => {
         try {
-            if (cartao.ativo) {
-                // Se está ativo, inativa
-                await api.patch(`/cartaorfid/${cartao.id}/inativar`);
-                toast.success("Cartão Inativado!");
-            } else {
-                // Se está inativo, reativa
-                await api.patch(`/cartaorfid/${cartao.id}/ativar`);
-                toast.success("Cartão Reativado com sucesso!");
-            }
-            carregarFuncionarios(); // Atualiza a tela
-        } catch (e) {
-            toast.error("Erro ao mudar status do cartão.");
-        }
+            if (cartao.ativo) await api.patch(`/cartaorfid/${cartao.id}/inativar`);
+            else await api.patch(`/cartaorfid/${cartao.id}/ativar`);
+            toast.success(cartao.ativo ? "Cartao Inativado!" : "Cartao Reativado com sucesso!");
+            carregarFuncionarios();
+        } catch (e) { toast.error("Erro ao mudar status do cartao."); }
     };
 
-    // EXCLUIR CARTÃO
     const handleExcluirCartao = async (idCartao) => {
-        const confirmacao = await Swal.fire({
-            title: 'Remover Cartão?',
-            text: "O funcionário perderá o acesso deste cartão permanentemente.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Sim, remover',
-            cancelButtonText: 'Cancelar',
-            background: '#1e1e1e',
-            color: '#ffffff',
-            // Esse comando força o alerta a ficar na frente do Modal
-            didOpen: () => {
-                document.querySelector('.swal2-container').style.zIndex = '99999';
-            }
-        });
-
+        const confirmacao = await Swal.fire({ title: 'Remover Cartao?', text: "O funcionario perdera o acesso deste cartao permanentemente.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'Sim, remover', cancelButtonText: 'Cancelar', background: '#1e1e1e', color: '#ffffff', didOpen: () => { document.querySelector('.swal2-container').style.zIndex = '99999'; } });
         if (confirmacao.isConfirmed) {
-            try {
-                await api.delete(`/cartaorfid/${idCartao}`);
-                toast.success("Cartão removido!");
-                carregarFuncionarios();
-            } catch (e) {
-                toast.error("Erro ao remover o cartão.");
-            }
+            try { await api.delete(`/cartaorfid/${idCartao}`); toast.success("Cartao removido!"); carregarFuncionarios(); }
+            catch (e) { toast.error("Erro ao remover o cartao."); }
         }
     };
 
-    // ==========================================
-    // 4. FILTRO DE PESQUISA INTELIGENTE
-    // ==========================================
     const buscaMinuscula = termoBusca.toLocaleLowerCase();
-
     const funcionariosFiltrados = funcionarios.filter((f) => {
         const nome = f.nome ? f.nome.toLocaleLowerCase() : "";
         const cpf = f.cpf ? f.cpf.toLocaleLowerCase() : "";
-
-        // A Mágica: Verifica se o funcionário tem algum cartão e se o UID desse cartão bate com a busca
-        const temCartaoBuscado = f.cartoes && f.cartoes.some(cartao =>
-            cartao.uid && cartao.uid.toLocaleLowerCase().includes(buscaMinuscula)
-        );
-
-        // Retorna o funcionário se bater o Nome, o CPF OU o UID de algum cartão dele
+        const temCartaoBuscado = f.cartoes && f.cartoes.some(cartao => cartao.uid && cartao.uid.toLocaleLowerCase().includes(buscaMinuscula));
         return nome.includes(buscaMinuscula) || cpf.includes(buscaMinuscula) || temCartaoBuscado;
     });
 
     return (
-        <div className="conteudo-principal" style={{ alignItems: "stretch", width: "100%" }}>
-
-            <div className="header-actions" style={{ maxWidth: "100%" }}>
-                <h1>Vínculo de Cartões RFID</h1>
-                <input
-                    className="search-input"
-                    type="text"
-                    placeholder="Buscar por Nome, CPF ou Código do Crachá..."
-                    value={termoBusca}
-                    onChange={(e) => setTermoBusca(e.target.value)}
-                    style={{ padding: "8px", borderRadius: "5px", border: "1px solid #ccc", minWidth: "350px" }}
-                />
+        <div className="w-full">
+            <div className="flex items-center justify-between mb-6 border-b border-border pb-4 gap-4">
+                <h1 className="text-xl font-semibold text-foreground">Vinculo de Cartoes RFID</h1>
+                <Input type="text" placeholder="Buscar por Nome, CPF ou Codigo do Cracha..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} className="max-w-sm" />
             </div>
 
-            {/* ====================================================== */}
-            {/* O MODAL DE CARTÕES                                     */}
-            {/* ====================================================== */}
-            {isModalCartoesOpen && funcionarioSelecionado && (
-                <div className="modal-overlay">
-                    <div className="modal-content" style={{ maxWidth: "850px" }}>
-                        <div className="modal-header">
-                            <h2>💳 Cartões de: <span style={{color: "#00d2ff"}}>{funcionarioSelecionado.nome}</span></h2>
-                            <button className="btn-close" onClick={() => setIsModalCartoesOpen(false)}>&times;</button>
-                        </div>
-
-                        <div className="modal-body" style={{ display: "flex", gap: "30px", marginTop: "20px" }}>
-
-                            {/* LADO ESQUERDO: LISTA DOS CARTÕES VINCULADOS */}
-                            <div style={{ flex: "2" }}>
-                                <h3 style={{ color: '#aaa', borderBottom: '1px solid #444', paddingBottom: '5px' }}>Cartões Vinculados</h3>
-
+            <Dialog open={isModalCartoesOpen} onOpenChange={setIsModalCartoesOpen}>
+                <DialogContent className="max-w-[850px]">
+                    <DialogHeader>
+                        <DialogTitle>Cartoes de: <span className="text-blue-400">{funcionarioSelecionado?.nome}</span></DialogTitle>
+                        <DialogDescription>Gerencie os cartoes RFID vinculados a este funcionario.</DialogDescription>
+                    </DialogHeader>
+                    {funcionarioSelecionado && (
+                        <div className="flex gap-6 mt-4">
+                            {/* Lado esquerdo: lista de cartoes */}
+                            <div className="flex-[2]">
+                                <h3 className="text-sm text-muted-foreground border-b border-border pb-2 mb-3">Cartoes Vinculados</h3>
                                 {(!funcionarioSelecionado.cartoes || funcionarioSelecionado.cartoes.length === 0) ? (
-                                    <div style={{ background: "#1e1e1e", padding: "15px", borderRadius: "8px", textAlign: "center", color: "#888", marginTop: "15px" }}>
-                                        Nenhum cartão vinculado no momento.
-                                    </div>
+                                    <div className="bg-muted/50 p-4 rounded-lg text-center text-muted-foreground text-sm">Nenhum cartao vinculado no momento.</div>
                                 ) : (
-                                    <div style={{ marginTop: "15px", display: "flex", flexDirection: "column", gap: "10px", maxHeight: "300px", overflowY: "auto", paddingRight: "5px" }}>
+                                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                                         {funcionarioSelecionado.cartoes.map(cartao => (
-                                            <div key={cartao.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#1a1a1a", padding: "12px", borderLeft: cartao.ativo ? "4px solid #00e676" : "4px solid #ff3d00", borderRadius: "6px" }}>
+                                            <div key={cartao.id} className={`flex justify-between items-center bg-card p-3 rounded-md border-l-4 ${cartao.ativo ? 'border-l-green-500' : 'border-l-red-500'}`}>
                                                 <div>
-                                                    <strong style={{ display: "block", color: "#fff", fontSize: "1.1rem", letterSpacing: "1px" }}>{cartao.uid}</strong>
-                                                    <span style={{ fontSize: "0.8rem", color: cartao.ativo ? "#00e676" : "#ff3d00" }}>
-                                                        {cartao.ativo ? "● ATIVO" : "● INATIVO"}
-                                                    </span>
+                                                    <strong className="block text-foreground text-base tracking-wider">{cartao.uid}</strong>
+                                                    <Badge variant={cartao.ativo ? "default" : "destructive"} className={`text-xs mt-1 ${cartao.ativo ? 'bg-green-600' : ''}`}>{cartao.ativo ? "ATIVO" : "INATIVO"}</Badge>
                                                 </div>
-                                                <div style={{ display: "flex", gap: "8px" }}>
-                                                    {/* Botão de Inativar / Ativar */}
-                                                    <button
-                                                        onClick={() => handleAlternarStatus(cartao)}
-                                                        style={{ background: cartao.ativo ? "#ff9800" : "#00e676", color: "#fff", border: "none", padding: "6px 10px", borderRadius: "4px", cursor: "pointer", fontSize: "0.85rem", width: "70px" }}
-                                                    >
-                                                        {cartao.ativo ? "Inativar" : "Ativar"}
-                                                    </button>
-                                                    {/* Botão de Excluir */}
-                                                    <button
-                                                        onClick={() => handleExcluirCartao(cartao.id)}
-                                                        style={{ background: "#d33", color: "#fff", border: "none", padding: "6px 10px", borderRadius: "4px", cursor: "pointer", fontSize: "0.85rem" }}
-                                                    >
-                                                        Excluir
-                                                    </button>
+                                                <div className="flex gap-2">
+                                                    <Button size="sm" variant={cartao.ativo ? "secondary" : "default"} onClick={() => handleAlternarStatus(cartao)}>{cartao.ativo ? "Inativar" : "Ativar"}</Button>
+                                                    <Button size="sm" variant="destructive" onClick={() => handleExcluirCartao(cartao.id)}>Excluir</Button>
                                                 </div>
                                             </div>
                                         ))}
@@ -203,68 +104,42 @@ function Cartoes() {
                                 )}
                             </div>
 
-                            {/* LADO DIREITO: CADASTRAR NOVO CARTÃO */}
-                            <div style={{ flex: "1", background: "#1a1a1a", padding: "20px", borderRadius: "8px", border: "1px solid #333", height: "fit-content" }}>
-                                <h3 style={{ color: '#00d2ff', marginTop: 0, marginBottom: "15px", fontSize: "1.1rem" }}>+ Novo Cartão</h3>
-
-                                <label style={{ display: "block", color: "#ccc", marginBottom: "5px", fontSize: "0.9rem" }}>Código RFID (Passe o crachá)</label>
-                                <input
-                                    type="text"
-                                    placeholder="Ex: A1B2C3D4"
-                                    value={novoUid}
-                                    onChange={(e) => setNovoUid(e.target.value.toUpperCase())}
-                                    style={{ width: "100%", padding: "10px", borderRadius: "5px", border: "1px solid #444", background: "#222", color: "white", marginBottom: "15px" }}
-                                />
-
-                                <button className="save" onClick={handleVincularCartao} style={{ width: "100%", padding: "10px", fontSize: "1rem" }}>
-                                    Vincular
-                                </button>
+                            {/* Lado direito: novo cartao */}
+                            <div className="flex-1 bg-card p-5 rounded-lg border border-border h-fit">
+                                <h3 className="text-sm font-semibold text-blue-400 mb-3">+ Novo Cartao</h3>
+                                <div className="space-y-3">
+                                    <div className="space-y-2">
+                                        <Label>Codigo RFID (Passe o cracha)</Label>
+                                        <Input type="text" placeholder="Ex: A1B2C3D4" value={novoUid} onChange={(e) => setNovoUid(e.target.value.toUpperCase())} />
+                                    </div>
+                                    <Button className="w-full" onClick={handleVincularCartao}>Vincular</Button>
+                                </div>
                             </div>
-
                         </div>
-                    </div>
-                </div>
-            )}
+                    )}
+                </DialogContent>
+            </Dialog>
 
-            {/* ====================================================== */}
-            {/* TABELA DE FUNCIONÁRIOS                                 */}
-            {/* ====================================================== */}
-            <table style={{ maxWidth: "100%", marginTop: "20px" }}>
-                <thead>
-                <tr>
-                    <th style={{ width: "30%" }}>Nome do Funcionário</th>
-                    <th style={{ width: "20%" }}>CPF</th>
-                    <th style={{ width: "20%" }}>Setor</th>
-                    <th className="text-center" style={{ width: "30%" }}>Ação</th>
-                </tr>
-                </thead>
-                <tbody>
-                {(!Array.isArray(funcionariosFiltrados) || funcionariosFiltrados.length === 0) ? (
-                    <tr>
-                        <td colSpan="4" className="text-center" style={{ padding: "2rem", color: "#888" }}>
-                            Nenhum funcionário encontrado.
-                        </td>
-                    </tr>
-                ) : (
-                    funcionariosFiltrados.map(f => (
-                        <tr key={f.id}>
-                            <td style={{ fontWeight: "600", color: "#fff" }}>{f.nome}</td>
-                            <td>{f.cpf}</td>
-                            <td style={{ textTransform: 'uppercase' }}>{f.setor}</td>
-                            <td className="text-center">
-                                <button
-                                    className="save"
-                                    onClick={() => abrirPainelCartoes(f)}
-                                    style={{ padding: "6px 15px", fontSize: "0.9rem" }}
-                                >
-                                    Gerenciar Cartões
-                                </button>
-                            </td>
-                        </tr>
-                    ))
-                )}
-                </tbody>
-            </table>
+            <Table>
+                <TableHeader><TableRow>
+                    <TableHead className="w-[30%]">Nome do Funcionario</TableHead><TableHead className="w-[20%]">CPF</TableHead>
+                    <TableHead className="w-[20%]">Setor</TableHead><TableHead className="w-[30%] text-center">Acao</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                    {(!Array.isArray(funcionariosFiltrados) || funcionariosFiltrados.length === 0) ? (
+                        <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Nenhum funcionario encontrado.</TableCell></TableRow>
+                    ) : (
+                        funcionariosFiltrados.map(f => (
+                            <TableRow key={f.id}>
+                                <TableCell className="font-semibold">{f.nome}</TableCell>
+                                <TableCell>{f.cpf}</TableCell>
+                                <TableCell className="uppercase">{f.setor}</TableCell>
+                                <TableCell className="text-center"><Button size="sm" onClick={() => abrirPainelCartoes(f)}>Gerenciar Cartoes</Button></TableCell>
+                            </TableRow>
+                        ))
+                    )}
+                </TableBody>
+            </Table>
         </div>
     );
 }
