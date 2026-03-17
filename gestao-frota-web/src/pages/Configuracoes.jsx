@@ -135,7 +135,7 @@ function Configuracoes() {
                 </div>
 
 
-                <div className="config-card">
+{/*                 <div className="config-card"> */}
                     <div className="config-header">
                         <h3>Alertas</h3>
                         <p>Visualizar alertas</p>
@@ -144,7 +144,7 @@ function Configuracoes() {
 
             </div>
 
-        </div>
+
     );
 }
 
