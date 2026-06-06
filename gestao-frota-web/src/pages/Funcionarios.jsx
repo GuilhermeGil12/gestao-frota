@@ -1,7 +1,18 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
-import { toast } from "react-toastify";
-import Swal from "sweetalert2";
+import { toast } from 'sonner';
+
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "../components/ui/alert-dialog";
+
 import { maskCPF, maskRG } from '../utils/mascaras';
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -12,9 +23,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 function Funcionarios() {
     const [funcionarios, setFuncionarios] = useState([]);
     const [termoBusca, setTermoBusca] = useState("");
+    
+    // 1. NOVO ESTADO: Controla o filtro de status (todos, ativos, inativos)
+    const [filtroStatus, setFiltroStatus] = useState("ativos"); 
+    
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [funcionarioSelecionado, setFuncionarioSelecionado] = useState(null);
+    const [funcionarioParaExcluir, setFuncionarioParaExcluir] = useState(null);
 
     const initialState = {
         id: null, nome: "", cpf: "", rg: "", numeroTelefone: "", email: "",
@@ -33,59 +49,86 @@ function Funcionarios() {
 
     useEffect(() => { carregar(); }, []);
 
+    const erroMsg = (e, fallback) => e?.response?.data?.message || fallback;
+
     const handleSalvar = async (e) => {
         e.preventDefault();
+        if (formData.email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(formData.email)) {
+                return toast.error("Endereço de e-mail inválido.");
+            }
+        }
         try {
             if (formData.id) await api.put(`/funcionarios/${formData.id}`, formData);
             else await api.post('/funcionarios', formData);
             setIsModalOpen(false);
             carregar();
-            toast.success("Funcionario salvo com sucesso!");
-        } catch (e) { toast.error("Ops! Nao foi possivel salvar este funcionario."); }
+            toast.success("Funcionário salvo com sucesso!");
+        } catch (e) { toast.error(erroMsg(e, "Não foi possível salvar o funcionário.")); }
     };
 
-    const handleExcluir = async (id) => {
-        const confirmacao = await Swal.fire({
-            title: 'Tem certeza?', text: "Deseja EXCLUIR permanentemente este funcionario?",
-            icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6', confirmButtonText: 'Sim, excluir!',
-            cancelButtonText: 'Cancelar', background: '#1e1e1e', color: '#ffffff'
-        });
-        if (confirmacao.isConfirmed) {
-            try {
-                await api.delete(`/funcionarios/${id}`);
-                carregar();
-                toast.success("Funcionario excluido com sucesso!");
-            } catch (e) { toast.error("Ops! Nao foi possivel excluir este funcionario."); }
-        }
+    const confirmarExclusao = async () => {
+        if (!funcionarioParaExcluir) return;
+        try {
+            await api.delete(`/funcionarios/${funcionarioParaExcluir.id}`);
+            carregar();
+            toast.success("Funcionário inativado com sucesso!");
+        } catch (e) { toast.error(erroMsg(e, "Não foi possível inativar o funcionário.")); }
+        finally { setFuncionarioParaExcluir(null); }
     };
 
     const abrirModal = (f = null) => { setFormData(f || initialState); setIsModalOpen(true); };
     const abrirModalVisualizacao = (f) => { setFuncionarioSelecionado(f); setIsViewModalOpen(true); };
 
-    const buscaMinuscula = termoBusca.toLocaleLowerCase();
+    // 2. FILTRAGEM DUPLA: Filtra por texto E por status de ativação
     const funcionariosFiltrados = funcionarios.filter((f) => {
+        const buscaMinuscula = termoBusca.toLocaleLowerCase();
         const nome = f.nome ? f.nome.toLocaleLowerCase() : "";
         const cpf = f.cpf ? f.cpf.toLocaleLowerCase() : "";
-        return nome.includes(buscaMinuscula) || cpf.includes(buscaMinuscula);
+        
+        // Regra do filtro de texto
+        const bateTexto = nome.includes(buscaMinuscula) || cpf.includes(buscaMinuscula);
+        
+        // Regra do filtro de status (Combobox)
+        if (filtroStatus === "ativos") return bateTexto && f.ativo === true;
+        if (filtroStatus === "inativos") return bateTexto && f.ativo === false;
+        return bateTexto; // "todos"
     });
 
     return (
         <div className="w-full">
             <div className="flex items-center justify-between mb-6 border-b border-border pb-4 gap-4">
-                <h1 className="text-xl font-semibold text-foreground">Gestao de Funcionarios</h1>
-                <Input type="text" placeholder="Pesquisar por Nome ou CPF..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} className="max-w-xs" />
-                <Button onClick={() => abrirModal()}>+ Novo Funcionario</Button>
+                <h1 className="text-xl font-semibold text-foreground">Gestão de Funcionários</h1>
+                
+                <div className="flex items-center gap-3 ml-auto">
+                    {/* Barra de Pesquisa */}
+                    <Input type="text" placeholder="Pesquisar por Nome ou CPF..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} className="w-full max-w-md" />
+                    
+                    {/* 3. NOVO COMPONENTE: Filtro de exibição por status */}
+                    <select 
+                        value={filtroStatus} 
+                        onChange={(e) => setFiltroStatus(e.target.value)}
+                        className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border-border text-foreground"
+                    >
+                        <option value="ativos" className="bg-background text-foreground">Apenas Ativos</option>
+                        <option value="inativos" className="bg-background text-foreground">Apenas Inativos</option>
+                        <option value="todos" className="bg-background text-foreground">Mostrar Todos</option>
+                    </select>
+                </div>
+                
+                <Button onClick={() => abrirModal()}>+ Novo Funcionário</Button>
             </div>
 
             {/* Modal de Cadastro/Edicao */}
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="max-w-[850px] max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>{formData.id ? "Editar Funcionario" : "Cadastrar Funcionario"}</DialogTitle>
-                        <DialogDescription>Preencha os dados do funcionario abaixo.</DialogDescription>
+                        <DialogTitle>{formData.id ? "Editar Funcionário" : "Cadastrar Funcionário"}</DialogTitle>
+                        <DialogDescription>Preencha os dados do funcionário abaixo.</DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={handleSalvar} className="space-y-6">
+                    
+                    <form onSubmit={handleSalvar} className="space-y-6" noValidate>
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados Pessoais</h3>
                         <div className="grid grid-cols-3 gap-4">
                             <div className="col-span-2 space-y-2"><Label>Nome Completo</Label><Input value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} required /></div>
@@ -99,7 +142,7 @@ function Funcionarios() {
 
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados Corporativos</h3>
                         <div className="grid grid-cols-4 gap-4">
-                            <div className="space-y-2"><Label>Matricula</Label><Input value={formData.matricula} onChange={e => setFormData({ ...formData, matricula: e.target.value })} placeholder="Ex: 107858" required /></div>
+                            <div className="space-y-2"><Label>Matrícula</Label><Input value={formData.matricula} onChange={e => setFormData({ ...formData, matricula: e.target.value })} placeholder="Ex: 107858" required /></div>
                             <div className="space-y-2"><Label>Cargo</Label><Input value={formData.cargo} onChange={e => setFormData({ ...formData, cargo: e.target.value })} required /></div>
                             <div className="space-y-2">
                                 <Label>Setor</Label>
@@ -112,25 +155,25 @@ function Funcionarios() {
                                 </select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Nivel Motorista</Label>
+                                <Label>Nível Motorista</Label>
                                 <select value={formData.nivelMotorista} onChange={e => setFormData({ ...formData, nivelMotorista: e.target.value })} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                                     <option value="">Selecione...</option>
-                                    <option value="1">1 (Basico)</option>
-                                    <option value="2">2 (Intermediario)</option>
-                                    <option value="3">3 (Avancado)</option>
+                                    <option value="1">1 (Básico)</option>
+                                    <option value="2">2 (Intermediário)</option>
+                                    <option value="3">3 (Avançado)</option>
                                 </select>
                             </div>
                         </div>
 
-                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados de Direcao</h3>
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados de Direção</h3>
                         <div className="grid grid-cols-3 gap-4">
-                            <div className="space-y-2"><Label>Numero CNH</Label><Input value={formData.numCNH} onChange={e => setFormData({ ...formData, numCNH: e.target.value })} required /></div>
+                            <div className="space-y-2"><Label>Número CNH</Label><Input value={formData.numCNH} onChange={e => setFormData({ ...formData, numCNH: e.target.value })} required /></div>
                             <div className="space-y-2">
                                 <Label>Categoria CNH</Label>
                                 <select value={formData.categoriaCNH} onChange={e => setFormData({ ...formData, categoriaCNH: e.target.value })} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                                     <option value="">Selecione...</option>
                                     <option value="A">A</option><option value="B">B</option><option value="AB">AB</option>
-                                    <option value="C">C</option><option value="D">D</option><option value="naopossui">Nao possui</option>
+                                    <option value="C">C</option><option value="D">D</option><option value="naopossui">Não possui</option>
                                 </select>
                             </div>
                             <div className="space-y-2"><Label>Validade CNH</Label><Input type="date" value={formData.validadeCNH} onChange={e => setFormData({ ...formData, validadeCNH: e.target.value })} /></div>
@@ -148,8 +191,8 @@ function Funcionarios() {
             <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
                 <DialogContent className="max-w-[1000px]">
                     <DialogHeader>
-                        <DialogTitle>Detalhes do Funcionario</DialogTitle>
-                        <DialogDescription>Informacoes completas do funcionario.</DialogDescription>
+                        <DialogTitle>Detalhes do Funcionário</DialogTitle>
+                        <DialogDescription>Informações completas do funcionário.</DialogDescription>
                     </DialogHeader>
                     {funcionarioSelecionado && (
                         <div className="space-y-6">
@@ -158,21 +201,8 @@ function Funcionarios() {
                                 <div className="col-span-2"><span className="block text-xs text-muted-foreground">Nome Completo</span><span>{funcionarioSelecionado.nome}</span></div>
                                 <div><span className="block text-xs text-muted-foreground">CPF</span><span>{funcionarioSelecionado.cpf}</span></div>
                                 <div><span className="block text-xs text-muted-foreground">RG</span><span>{funcionarioSelecionado.rg}</span></div>
-                                <div><span className="block text-xs text-muted-foreground">Telefone</span><span>{funcionarioSelecionado.numeroTelefone || "Nao informado"}</span></div>
-                                <div className="col-span-3"><span className="block text-xs text-muted-foreground">E-mail</span><span>{funcionarioSelecionado.email || "Nao informado"}</span></div>
-                            </div>
-                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados Corporativos</h3>
-                            <div className="grid grid-cols-4 gap-4">
-                                <div><span className="block text-xs text-muted-foreground">Matricula</span><span>{funcionarioSelecionado.matricula}</span></div>
-                                <div><span className="block text-xs text-muted-foreground">Cargo</span><span>{funcionarioSelecionado.cargo}</span></div>
-                                <div><span className="block text-xs text-muted-foreground">Setor</span><span className="uppercase">{funcionarioSelecionado.setor}</span></div>
-                                <div><span className="block text-xs text-muted-foreground">Nivel Motorista</span><span>{funcionarioSelecionado.nivelMotorista}</span></div>
-                            </div>
-                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados de Direcao</h3>
-                            <div className="grid grid-cols-3 gap-4">
-                                <div><span className="block text-xs text-muted-foreground">Numero CNH</span><span>{funcionarioSelecionado.numCNH}</span></div>
-                                <div><span className="block text-xs text-muted-foreground">Categoria</span><span>{funcionarioSelecionado.categoriaCNH}</span></div>
-                                <div><span className="block text-xs text-muted-foreground">Validade</span><span>{funcionarioSelecionado.validadeCNH}</span></div>
+                                <div><span className="block text-xs text-muted-foreground">Telefone</span><span>{funcionarioSelecionado.numeroTelefone || "Não informado"}</span></div>
+                                <div className="col-span-3"><span className="block text-xs text-muted-foreground">E-mail</span><span>{funcionarioSelecionado.email || "Não informado"}</span></div>
                             </div>
                         </div>
                     )}
@@ -190,25 +220,41 @@ function Funcionarios() {
                         <TableHead className="w-[15%]">CPF</TableHead>
                         <TableHead className="w-[15%]">RG</TableHead>
                         <TableHead className="w-[15%]">Setor</TableHead>
-                        <TableHead className="w-[10%]">Nivel</TableHead>
-                        <TableHead className="w-[20%] text-center">Acoes</TableHead>
+                        <TableHead className="w-[10%]">Nível</TableHead>
+                        <TableHead className="w-[20%] text-center">Ações</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {(!Array.isArray(funcionariosFiltrados) || funcionariosFiltrados.length === 0) ? (
-                        <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{termoBusca ? "Nenhum funcionario encontrado com esta pesquisa." : "Nenhum funcionario encontrado no banco."}</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum funcionário encontrado.</TableCell></TableRow>
                     ) : (
                         funcionariosFiltrados.map(f => (
-                            <TableRow key={f.id}>
-                                <TableCell onClick={() => abrirModalVisualizacao(f)} className="cursor-pointer font-semibold text-foreground hover:text-blue-400 transition-colors" title="Clique para ver detalhes">{f.nome}</TableCell>
+                            // 4. MUDANÇA VISUAL: Se f.ativo for falso, a linha ganha opacidade de 45% e um tom acinzentado
+                            <TableRow key={f.id} className={!f.ativo ? "opacity-45 bg-muted/20 hover:bg-muted/30 transition-opacity" : ""}>
+                                <TableCell onClick={() => abrirModalVisualizacao(f)} className={`cursor-pointer font-semibold transition-colors ${f.ativo ? 'text-foreground hover:text-blue-400' : 'text-muted-foreground line-through'}`} title="Clique para ver detalhes">
+                                    {f.nome} {!f.ativo && " (Inativo)"}
+                                </TableCell>
                                 <TableCell>{f.cpf}</TableCell>
                                 <TableCell>{f.rg}</TableCell>
                                 <TableCell className="uppercase">{f.setor}</TableCell>
-                                <TableCell>Nivel {f.nivelMotorista}</TableCell>
+                                <TableCell>Nível {f.nivelMotorista}</TableCell>
                                 <TableCell>
                                     <div className="flex gap-2 justify-center">
-                                        <Button size="sm" variant="outline" onClick={() => abrirModal(f)}>Editar</Button>
-                                        <Button size="sm" variant="destructive" onClick={() => handleExcluir(f.id)}>Excluir</Button>
+                                        {f.ativo ? (
+                                            <>
+                                                <Button size="sm" variant="outline" onClick={() => abrirModal(f)}>Editar</Button>
+                                                <Button size="sm" variant="destructive" onClick={() => setFuncionarioParaExcluir(f)}>Inativar</Button>
+                                            </>
+                                        ) : (
+                                            // Se já estiver inativo, você pode dar a opção de reativar no futuro!
+                                            <Button size="sm" variant="secondary" onClick={async () => {
+                                                try {
+                                                    await api.put(`/funcionarios/${f.id}`, { ...f, ativo: true });
+                                                    toast.success("Funcionário reativado!");
+                                                    carregar();
+                                                } catch(e) { toast.error("Erro ao reativar."); }
+                                            }}>Reativar</Button>
+                                        )}
                                     </div>
                                 </TableCell>
                             </TableRow>
@@ -216,6 +262,26 @@ function Funcionarios() {
                     )}
                 </TableBody>
             </Table>
+
+            {/* AlertDialog do Shadcn UI */}
+            <AlertDialog open={funcionarioParaExcluir !== null} onOpenChange={(open) => !open && setFuncionarioParaExcluir(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            <span>
+                                Deseja INATIVAR o funcionário <strong className="font-bold text-foreground">{funcionarioParaExcluir?.nome}.</strong>? Ele perderá seu acesso!
+                            </span>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={confirmarExclusao}>
+                            Sim, inativar
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+//import { ToastContainer } from 'react-toastify';
+//import 'react-toastify/dist/ReactToastify.css';
+import { Toaster } from 'sonner';
 import { Bell } from 'lucide-react';
 import { cn } from './lib/utils';
 import { Button } from './components/ui/button';
@@ -93,7 +94,8 @@ function App() {
                     </main>
                 </div>
 
-                <ToastContainer autoClose={3000} theme="colored" />
+                {/* <ToastContainer autoClose={3000} theme="colored" /> */}
+                <Toaster theme="dark" richColors position="bottom-center" />
             </div>
         </Router>
     );

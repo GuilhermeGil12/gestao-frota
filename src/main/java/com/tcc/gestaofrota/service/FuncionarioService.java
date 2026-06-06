@@ -66,13 +66,21 @@ public class FuncionarioService {
     public Funcionario atualizar(Long id, Funcionario funcionarioNovo){
         Funcionario funcionarioAntigo = buscarPorId(id);
 
+        funcionarioAntigo.setNome(funcionarioNovo.getNome());
         funcionarioAntigo.setCpf(funcionarioNovo.getCpf());
         funcionarioAntigo.setRg(funcionarioNovo.getRg());
-        funcionarioAntigo.setNome(funcionarioNovo.getNome());
-        funcionarioAntigo.setCartoes(funcionarioNovo.getCartoes());
-        funcionarioAntigo.setNivelMotorista(funcionarioNovo.getNivelMotorista());
-        funcionarioAntigo.setPermissao(funcionarioNovo.getPermissao());
+        funcionarioAntigo.setNumeroTelefone(funcionarioNovo.getNumeroTelefone());
+        funcionarioAntigo.setEmail(funcionarioNovo.getEmail());
+        funcionarioAntigo.setCargo(funcionarioNovo.getCargo());
+        funcionarioAntigo.setMatricula(funcionarioNovo.getMatricula());
         funcionarioAntigo.setSetor(funcionarioNovo.getSetor());
+        funcionarioAntigo.setNivelMotorista(funcionarioNovo.getNivelMotorista());
+        funcionarioAntigo.setNumCNH(funcionarioNovo.getNumCNH());
+        funcionarioAntigo.setCategoriaCNH(funcionarioNovo.getCategoriaCNH());
+        funcionarioAntigo.setValidadeCNH(funcionarioNovo.getValidadeCNH());
+        funcionarioAntigo.setPermissao(funcionarioNovo.getPermissao());
+        funcionarioAntigo.setCartoes(funcionarioNovo.getCartoes());
+        funcionarioAntigo.setAtivo(funcionarioNovo.getAtivo());
 
         return funcionarioRepository.save(funcionarioAntigo);
     }

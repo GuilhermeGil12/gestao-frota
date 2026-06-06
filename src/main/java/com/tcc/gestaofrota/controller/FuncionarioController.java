@@ -5,6 +5,7 @@ import com.tcc.gestaofrota.model.Funcionario;
 import com.tcc.gestaofrota.service.FuncionarioService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.tcc.gestaofrota.repository.FuncionarioRepository;
 
 import java.util.List;
 
@@ -68,9 +69,14 @@ public class FuncionarioController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Long id){
-        funcionarioService.deletar(id);
+    public ResponseEntity<Void> inativarFuncionario(@PathVariable Long id){
 
+        // O controller apenas delega para o Service realizar a inativação
+        funcionarioService.inativar(id);
+
+        // Retorna 204 No Content, que é o padrão correto para DELETE/exclusão com sucesso
         return ResponseEntity.noContent().build();
+
+
     }
 }

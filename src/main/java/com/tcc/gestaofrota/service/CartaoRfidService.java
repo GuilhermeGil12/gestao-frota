@@ -33,7 +33,14 @@ public class CartaoRfidService {
     public CartaoRfid salvar(CartaoRfid cartaoRfid){
         Optional<CartaoRfid> jaExiste = cartaoRfidRepository.findByUid(cartaoRfid.getUid());
         if (jaExiste.isPresent()){
-            throw new RuntimeException("Já existe um cartão com esse UID cadastrado!");
+            throw new RuntimeException("Já existe um cartão com o UID '" + cartaoRfid.getUid() + "' cadastrado no sistema.");
+        }
+
+        if (cartaoRfid.getFuncionario() != null && cartaoRfid.getFuncionario().getId() != null) {
+            com.tcc.gestaofrota.model.Funcionario funcionario = funcionarioService.buscarPorId(cartaoRfid.getFuncionario().getId());
+            if (Boolean.FALSE.equals(funcionario.getAtivo())) {
+                throw new RuntimeException("Não é possível vincular um cartão ao funcionário '" + funcionario.getNome() + "' pois ele está inativo.");
+            }
         }
 
         return cartaoRfidRepository.save(cartaoRfid);

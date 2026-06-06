@@ -1,7 +1,19 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
-import { toast } from "react-toastify";
-import Swal from "sweetalert2";
+import { toast } from 'sonner';
+
+
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "../components/ui/alert-dialog";
+
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -16,45 +28,60 @@ function Cartoes() {
     const [funcionarioSelecionado, setFuncionarioSelecionado] = useState(null);
     const [novoUid, setNovoUid] = useState("");
 
+    // 2. Estado para controlar qual cartão está sendo excluído no Shadcn
+    const [idCartaoParaExcluir, setIdCartaoParaExcluir] = useState(null);
+
     const carregarFuncionarios = async () => {
         try {
             const res = await api.get('/funcionarios');
             setFuncionarios(res.data);
             if (funcionarioSelecionado) {
-                const atualizado = res.data.find(f => f.id === funcionarioSelecionado.id);
-                setFuncionarioSelecionado(atualizado);
+                const updated = res.data.find(f => f.id === funcionarioSelecionado.id);
+                setFuncionarioSelecionado(updated);
             }
         } catch (e) { console.error(e); }
     };
 
     useEffect(() => { carregarFuncionarios(); }, []);
 
+    const erroMsg = (e, fallback) => e?.response?.data?.message || fallback;
+
     const abrirPainelCartoes = (f) => { setFuncionarioSelecionado(f); setNovoUid(""); setIsModalCartoesOpen(true); };
 
     const handleVincularCartao = async () => {
-        if (!novoUid.trim()) { return toast.warning("Digite ou aproxime o cartao no leitor RFID!"); }
+        if (!novoUid.trim()) return toast.warning("Digite ou aproxime o cartão no leitor RFID!");
+        if (!funcionarioSelecionado?.ativo) return toast.error("Não é possível vincular cartão a um funcionário inativo.");
         try {
             await api.post('/cartaorfid', { uid: novoUid.trim(), ativo: true, funcionario: { id: funcionarioSelecionado.id } });
-            toast.success("Cartao vinculado com sucesso!");
+            toast.success("Cartão vinculado com sucesso!");
             setNovoUid("");
             carregarFuncionarios();
-        } catch (e) { toast.error("Erro ao vincular cartao. Talvez o codigo ja exista?"); }
+        } catch (e) {
+            toast.error(erroMsg(e, "Erro ao vincular cartão."));
+        }
     };
 
     const handleAlternarStatus = async (cartao) => {
         try {
             if (cartao.ativo) await api.patch(`/cartaorfid/${cartao.id}/inativar`);
             else await api.patch(`/cartaorfid/${cartao.id}/ativar`);
-            toast.success(cartao.ativo ? "Cartao Inativado!" : "Cartao Reativado com sucesso!");
+            toast.success(cartao.ativo ? "Cartão inativado!" : "Cartão reativado!");
             carregarFuncionarios();
-        } catch (e) { toast.error("Erro ao mudar status do cartao."); }
+        } catch (e) {
+            toast.error(erroMsg(e, "Erro ao mudar status do cartão."));
+        }
     };
 
-    const handleExcluirCartao = async (idCartao) => {
-        const confirmacao = await Swal.fire({ title: 'Remover Cartao?', text: "O funcionario perdera o acesso deste cartao permanentemente.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'Sim, remover', cancelButtonText: 'Cancelar', background: '#1e1e1e', color: '#ffffff', didOpen: () => { document.querySelector('.swal2-container').style.zIndex = '99999'; } });
-        if (confirmacao.isConfirmed) {
-            try { await api.delete(`/cartaorfid/${idCartao}`); toast.success("Cartao removido!"); carregarFuncionarios(); }
-            catch (e) { toast.error("Erro ao remover o cartao."); }
+    const confirmarExclusao = async () => {
+        if (!idCartaoParaExcluir) return;
+        try {
+            await api.delete(`/cartaorfid/${idCartaoParaExcluir}`);
+            toast.success("Cartão removido!");
+            carregarFuncionarios();
+        } catch (e) {
+            toast.error(erroMsg(e, "Erro ao remover o cartão."));
+        } finally {
+            setIdCartaoParaExcluir(null);
         }
     };
 
@@ -95,8 +122,15 @@ function Cartoes() {
                                                     <Badge variant={cartao.ativo ? "default" : "destructive"} className={`text-xs mt-1 ${cartao.ativo ? 'bg-green-600' : ''}`}>{cartao.ativo ? "ATIVO" : "INATIVO"}</Badge>
                                                 </div>
                                                 <div className="flex gap-2">
-                                                    <Button size="sm" variant={cartao.ativo ? "secondary" : "default"} onClick={() => handleAlternarStatus(cartao)}>{cartao.ativo ? "Inativar" : "Ativar"}</Button>
-                                                    <Button size="sm" variant="destructive" onClick={() => handleExcluirCartao(cartao.id)}>Excluir</Button>
+                                                    {/* CORREÇÃO DO EVENTO AQUI (Passando o 'e' corretamente) */}
+                                                    <Button size="sm" variant={cartao.ativo ? "secondary" : "default"} onClick={(e) => { e.stopPropagation(); handleAlternarStatus(cartao); }}>
+                                                        {cartao.ativo ? "Inativar" : "Ativar"}
+                                                    </Button>
+                                                    
+                                                    {/* BOTÃO DE EXCLUIR APENAS ABRE O MODAL DO SHADCN */}
+                                                    <Button size="sm" variant="destructive" onClick={(e) => { e.stopPropagation(); setIdCartaoParaExcluir(cartao.id); }}>
+                                                        Excluir
+                                                    </Button>
                                                 </div>
                                             </div>
                                         ))}
@@ -106,14 +140,23 @@ function Cartoes() {
 
                             {/* Lado direito: novo cartao */}
                             <div className="flex-1 bg-card p-5 rounded-lg border border-border h-fit">
-                                <h3 className="text-sm font-semibold text-blue-400 mb-3">+ Novo Cartao</h3>
-                                <div className="space-y-3">
-                                    <div className="space-y-2">
-                                        <Label>Codigo RFID (Passe o cracha)</Label>
-                                        <Input type="text" placeholder="Ex: A1B2C3D4" value={novoUid} onChange={(e) => setNovoUid(e.target.value.toUpperCase())} />
+                                {funcionarioSelecionado?.ativo === false ? (
+                                    <div className="text-center space-y-2">
+                                        <p className="text-sm font-semibold text-red-400">Funcionário Inativo</p>
+                                        <p className="text-xs text-muted-foreground">Reative o funcionário antes de vincular novos cartões.</p>
                                     </div>
-                                    <Button className="w-full" onClick={handleVincularCartao}>Vincular</Button>
-                                </div>
+                                ) : (
+                                    <>
+                                        <h3 className="text-sm font-semibold text-blue-400 mb-3">+ Novo Cartão</h3>
+                                        <div className="space-y-3">
+                                            <div className="space-y-2">
+                                                <Label>Código RFID (Passe o crachá)</Label>
+                                                <Input type="text" placeholder="Ex: A1B2C3D4" value={novoUid} onChange={(e) => setNovoUid(e.target.value.toUpperCase())} />
+                                            </div>
+                                            <Button className="w-full" onClick={handleVincularCartao}>Vincular</Button>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     )}
@@ -140,6 +183,26 @@ function Cartoes() {
                     )}
                 </TableBody>
             </Table>
+
+            {/* 4. MODAL DE CONFIRMAÇÃO DO SHADCN UI (Substituindo o SweetAlert) */}
+            <AlertDialog open={idCartaoParaExcluir !== null} onOpenChange={(open) => !open && setIdCartaoParaExcluir(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Remover Cartao?</AlertDialogTitle>
+                            <AlertDialogDescription asChild>
+                                <span>
+                                O funcionario perderá o acesso deste cartao permanentemente.
+                                </span>
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={confirmarExclusao}>
+                            Sim, remover
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

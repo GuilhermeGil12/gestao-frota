@@ -9,7 +9,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/veiculos")
-@CrossOrigin(origins = "*") // Permite que o React acesse este Controller
 public class VeiculoController {
 
     private final VeiculoService veiculoService;

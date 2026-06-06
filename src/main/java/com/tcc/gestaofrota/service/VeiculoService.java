@@ -6,6 +6,7 @@ import com.tcc.gestaofrota.model.Veiculo;
 import com.tcc.gestaofrota.repository.ControladoraRepository;
 import com.tcc.gestaofrota.repository.VeiculoRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +37,7 @@ public class VeiculoService {
         return veiculoRepository.findByPlaca(placa);
     }
 
+    @Transactional
     public Veiculo salvar(Veiculo veiculo){
 
         Optional<Veiculo> jaExiste = veiculoRepository.findByPlaca(veiculo.getPlaca());
@@ -48,27 +50,21 @@ public class VeiculoService {
             throw new RuntimeException("Já existe Veículo com esse Renavam cadastrado!");
         }
 
-        // Lógica para vincular a controladora se ela vier preenchida
-        if (veiculo.getControladora() != null && veiculo.getControladora().getIdControladora() != null) {
-            Controladora controladora = controladoraRepository.findById(veiculo.getControladora().getIdControladora())
+        Long controladoraId = (veiculo.getControladora() != null) ? veiculo.getControladora().getIdControladora() : null;
+
+        // Remove a referência detached antes de salvar para evitar cascade em entidade detached
+        veiculo.setControladora(null);
+        Veiculo veiculoSalvo = veiculoRepository.save(veiculo);
+
+        if (controladoraId != null) {
+            Controladora controladora = controladoraRepository.findById(controladoraId)
                     .orElseThrow(() -> new RuntimeException("Controladora não encontrada"));
-            
-            // O relacionamento é bidirecional, mas o dono da chave é a Controladora (lado @OneToOne com @JoinColumn)
-            // Porém, como estamos salvando o Veículo, precisamos garantir que a controladora aponte para este veículo.
-            // Mas espere! O mapeamento diz que Controladora tem o @JoinColumn.
-            // Então precisamos salvar a controladora com o veículo setado nela.
-            
-            // Vamos salvar o veículo primeiro para ter um ID
-            Veiculo veiculoSalvo = veiculoRepository.save(veiculo);
-            
             controladora.setVeiculo(veiculoSalvo);
             controladoraRepository.save(controladora);
-            
             veiculoSalvo.setControladora(controladora);
-            return veiculoSalvo;
         }
 
-        return veiculoRepository.save(veiculo);
+        return veiculoSalvo;
     }
 
     public List<Veiculo> listarTodas(){
@@ -85,6 +81,7 @@ public class VeiculoService {
         return caixaMisteriosa.get();
     }
 
+    @Transactional
     public Veiculo atualizar(Long id, Veiculo veiculoNovo){
 
         Veiculo veiculoAntigo = buscarPorId(id);
@@ -128,6 +125,7 @@ public class VeiculoService {
         return veiculoRepository.save(veiculoAntigo);
     }
 
+    @Transactional
     public void deletar(Long id){
         Veiculo veiculo = buscarPorId(id);
         

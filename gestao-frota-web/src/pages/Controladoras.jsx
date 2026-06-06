@@ -1,12 +1,25 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
-import { toast } from 'react-toastify';
+//import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import { maskIP, maskMAC } from "../utils/mascaras.js";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
+import { toast } from 'sonner';
+
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "../components/ui/alert-dialog";
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../components/ui/dialog";
 
@@ -15,6 +28,8 @@ function Controladoras() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const initialState = { idControladora: null, ipControladora: "", macControladora: "", senha: "", ativo: true };
     const [formData, setFormData] = useState(initialState);
+
+    const [controladoraParaExcluir, setControladoraParaExcluir] = useState(null);
 
     const carregar = async () => {
         try {
@@ -25,32 +40,43 @@ function Controladoras() {
 
     useEffect(() => { carregar(); }, []);
 
+
+    const erroMsg = (e, fallback) => e?.response?.data?.message || fallback;
+
     const handleSalvar = async (e) => {
         e.preventDefault();
         try {
             if (formData.idControladora) await api.put(`/controladora/${formData.idControladora}`, formData);
             else await api.post('/controladora', formData);
-            setIsModalOpen(false); carregar();
+            setIsModalOpen(false);
+            carregar();
             toast.success("Controladora salva com sucesso!");
-        } catch (e) { toast.error("Erro ao salvar. Verifique se o IP ou MAC ja existem!"); }
+        } catch (e) { toast.error(erroMsg(e, "Erro ao salvar a controladora.")); }
     };
 
     const handleInativar = async (controladora) => {
-        const isAtivo = controladora.ativo;
-        const acao = isAtivo ? "INATIVAR" : "ATIVAR";
-        const confirmacao = await Swal.fire({ title: 'Tem certeza?', text: `Deseja ${acao} esta controladora?`, icon: 'warning', showCancelButton: true, confirmButtonColor: isAtivo ? '#d33' : '#28a745', cancelButtonColor: '#3085d6', confirmButtonText: `Sim, ${acao}!`, cancelButtonText: 'Cancelar', background: '#1e1e1e', color: '#ffffff' });
-        if (confirmacao.isConfirmed) {
-            try { await api.patch(`/controladora/${controladora.idControladora}/inativar`); carregar(); toast.success(`Controladora ${isAtivo ? 'inativada' : 'ativada'} com sucesso`); }
-            catch (e) { toast.error("Ops! Nao foi possivel alterar o status desta controladora."); }
+        try {
+            await api.patch(`/controladora/${controladora.idControladora}/inativar`);
+            toast.success(controladora.ativo ? "Controladora desativada!" : "Controladora ativada!");
+            carregar();
+        } catch(e) { toast.error(erroMsg(e, "Erro ao mudar status da controladora.")); }
+    };
+
+    const confirmarExclusao = async () => {
+        if (!controladoraParaExcluir) return;
+        try {
+            await api.delete(`/controladora/${controladoraParaExcluir}`);
+            toast.success("Controladora excluída com sucesso!");
+            carregar();
+        } catch (e) {
+            toast.error(erroMsg(e, "Não foi possível excluir a controladora."));
+        } finally {
+            setControladoraParaExcluir(null);
         }
     };
 
-    const handleExcluir = async (idControladora) => {
-        const confirmacao = await Swal.fire({ title: 'Tem certeza?', text: "Deseja EXCLUIR permanentemente esta controladora?", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'Sim, excluir!', cancelButtonText: 'Cancelar', background: '#1e1e1e', color: '#ffffff' });
-        if (confirmacao.isConfirmed) {
-            try { await api.delete(`/controladora/${idControladora}`); carregar(); toast.success("Controladora excluida com sucesso!"); }
-            catch (e) { toast.error("Ops! Nao foi possivel excluir esta controladora."); }
-        }
+    const handleExcluirClique = (idControladora) => {
+        setControladoraParaExcluir(idControladora);
     };
 
     const abrirModal = (c = null) => { setFormData(c || initialState); setIsModalOpen(true); };
@@ -64,7 +90,7 @@ function Controladoras() {
 
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="max-w-[600px]">
-                    <DialogHeader><DialogTitle>{formData.idControladora ? "Editar Controladora" : "Cadastrar Controladora"}</DialogTitle><DialogDescription>Preencha os dados da controladora GPS.</DialogDescription></DialogHeader>
+                    <DialogHeader><DialogTitle>{formData.idControladora ? "Editar Controladora" : "Cadastrar Controladora"}</DialogTitle><DialogDescription>Preencha os dados da controladora.</DialogDescription></DialogHeader>
                     <form onSubmit={handleSalvar} className="space-y-4">
                         <div className="space-y-2"><Label>Endereco IP</Label><Input placeholder="192.168.0.1" value={formData.ipControladora} onChange={e => setFormData({ ...formData, ipControladora: maskIP(e.target.value) })} required /></div>
                         <div className="grid grid-cols-2 gap-4">
@@ -94,8 +120,10 @@ function Controladoras() {
                                 <TableCell>
                                     <div className="flex gap-2 justify-center">
                                         <Button size="sm" variant="outline" onClick={() => abrirModal(c)}>Editar</Button>
-                                        <Button size="sm" variant={c.ativo ? "secondary" : "default"} onClick={() => handleInativar(c)}>{c.ativo ? "Inativar" : "Ativar"}</Button>
-                                        <Button size="sm" variant="destructive" onClick={() => handleExcluir(c.idControladora)}>Excluir</Button>
+                                        <Button size="sm" variant={c.ativo ? "secondary" : "default"} onClick={(e) =>{e.stopPropagation(); handleInativar(c)}}>
+                                            {c.ativo ? "Inativar" : "Ativar"
+                                        }</Button>
+                                        <Button size="sm" variant="destructive" onClick={() => handleExcluirClique(c.idControladora)}>Excluir</Button>
                                     </div>
                                 </TableCell>
                             </TableRow>
@@ -103,6 +131,25 @@ function Controladoras() {
                     )}
                 </TableBody>
             </Table>
+
+            <AlertDialog open={controladoraParaExcluir !== null} onOpenChange={(open) => !open && setControladoraParaExcluir(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir Controladora?</AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                            <span>
+                                Todas as informações vinculadas a ela serão apagadas!
+                            </span>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={confirmarExclusao}>
+                            Sim, remover
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

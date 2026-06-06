@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
-import { toast } from "react-toastify";
+//import { toast } from "react-toastify";
 import Swal from "sweetalert2";
+import {toast} from 'sonner';
 import { maskPlaca } from '../utils/mascaras';
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -10,11 +11,23 @@ import { Badge } from "../components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../components/ui/dialog";
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "../components/ui/alert-dialog";
+
 function Veiculos() {
     const [veiculos, setVeiculos] = useState([]);
     const [controladorasLivres, setControladorasLivres] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [termoBusca, setTermoBusca] = useState("");
+    const [carroParaExcluir, setCarroParaExcluir] = useState(null);
 
     const initialState = { id: null, nome: "", placa: "", renavam: "", kmAtual: "", velocidadeMaxima: "", ativo: true, controladoraId: "" };
     const [formData, setFormData] = useState(initialState);
@@ -30,6 +43,8 @@ function Veiculos() {
 
     useEffect(() => { carregarDados(); }, []);
 
+    const erroMsg = (e, fallback) => e?.response?.data?.message || fallback;
+
     const handleSalvar = async (e) => {
         e.preventDefault();
         try {
@@ -39,8 +54,8 @@ function Veiculos() {
             else await api.post('/veiculos', payload);
             setIsModalOpen(false);
             carregarDados();
-            toast.success("Veiculo salvo com sucesso!");
-        } catch (e) { toast.error("Ops! Nao foi possivel salvar este veiculo"); }
+            toast.success("Veículo salvo com sucesso!");
+        } catch (e) { toast.error(erroMsg(e, "Não foi possível salvar o veículo.")); }
     };
 
     const handleInativar = async (veiculo) => {
@@ -51,13 +66,24 @@ function Veiculos() {
         }
     };
 
-    const handleExcluir = async (id) => {
-        const confirmacao = await Swal.fire({ title: 'Tem certeza?', text: "Deseja EXCLUIR permanentemente este veiculo?", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'Sim, excluir!', cancelButtonText: 'Cancelar', background: '#1e1e1e', color: '#ffffff' });
-        if (confirmacao.isConfirmed) {
-            try { await api.delete(`/veiculos/${id}`); carregarDados(); toast.success("Veiculo excluido com sucesso"); }
-            catch (e) { toast.error("Ops! Nao foi possivel excluir este veiculo."); }
+  
+
+    const handleExcluirClique = (id) =>{
+        setCarroParaExcluir(id)
+    }
+
+    const confirmarExclusao = async () => {
+        if (!carroParaExcluir) return;
+        try {
+            await api.delete(`/veiculos/${carroParaExcluir}`);
+            toast.success("Veículo excluído com sucesso!");
+            carregarDados();
+        } catch (e) {
+            toast.error(erroMsg(e, "Não foi possível excluir o veículo."));
+        } finally {
+            setCarroParaExcluir(null);
         }
-    };
+    }
 
     const abrirModal = (v = null) => {
         if (v) setFormData({ ...v, controladoraId: v.controladora ? v.controladora.idControladora : "" });
@@ -124,7 +150,7 @@ function Veiculos() {
                                     <div className="flex gap-2 justify-center">
                                         <Button size="sm" variant="outline" onClick={() => abrirModal(v)}>Editar</Button>
                                         <Button size="sm" variant={v.ativo ? "secondary" : "default"} onClick={() => handleInativar(v)}>{v.ativo ? "Inativar" : "Ativar"}</Button>
-                                        <Button size="sm" variant="destructive" onClick={() => handleExcluir(v.id)}>Excluir</Button>
+                                        <Button size="sm" variant="destructive" onClick={(e) =>{e.stopPropagation(); handleExcluirClique(v.id)}}>Excluir</Button>
                                     </div>
                                 </TableCell>
                             </TableRow>
@@ -132,6 +158,25 @@ function Veiculos() {
                     )}
                 </TableBody>
             </Table>
+
+            <AlertDialog open={carroParaExcluir !== null} onOpenChange={(open) => !open && setCarroParaExcluir(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir Veículo?</AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                            <span>
+                                Todas as informações vinculadas a ele serão apagadas!
+                            </span>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={confirmarExclusao}>
+                            Sim, remover
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

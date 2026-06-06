@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/localizacao")
-@CrossOrigin(origins = "*")
 public class LocalizacaoController {
 
     private final LocalizacaoService localizacaoService;

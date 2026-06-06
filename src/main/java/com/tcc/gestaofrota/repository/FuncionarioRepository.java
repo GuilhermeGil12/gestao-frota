@@ -1,6 +1,6 @@
 package com.tcc.gestaofrota.repository;
 
-
+import java.util.List;
 
 import com.tcc.gestaofrota.model.Funcionario;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,6 +16,8 @@ public interface FuncionarioRepository  extends JpaRepository<Funcionario, Long>
     Optional<Funcionario> findByCpf(String cpf);
 
     Optional<Funcionario> findByRg(String rg);
+
+    List<Funcionario> findByAtivoTrue();
 
 
 }
