@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from "react-toastify";
 import axios from 'axios';
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { Card, CardContent } from "../components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { Card, CardContent } from "../../components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Search } from "lucide-react";
 
 function Alertas() {
@@ -66,6 +66,15 @@ function Alertas() {
                         <div className="flex-1 min-w-[200px] space-y-2">
                             <Label>Data Final</Label>
                             <Input type="date" value={dataFinal} onChange={(e) => setDataFinal(e.target.value)} />
+                        </div>
+                        <div className="flex-1 min-w-[200px] space-y-2">
+                            <Label>Tipo de alerta</Label>
+                            <select value={veiculoSelecionado} onChange={(e) => setVeiculoSelecionado(e.target.value)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                <option value="">Selecione</option>
+                                <option value="todos">Todos</option>
+                                <option value="visitas">visitas</option>
+                                <option value="velocidade">velocidade</option>
+                            </select>
                         </div>
                         <div className="flex-1 min-w-[200px] space-y-2">
                             <Label>Veiculo (Opcional)</Label>

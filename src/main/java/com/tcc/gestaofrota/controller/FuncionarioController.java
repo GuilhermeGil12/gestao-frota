@@ -24,7 +24,7 @@ public class FuncionarioController {
     public ResponseEntity<Funcionario> criar(@RequestBody Funcionario funcionario){
         //para ver oque está recebendo
 
-        System.out.println("Recebendo: " + funcionario.getNome() + " CPF: " + funcionario.getCpf());
+        System.out.println("Recebendo: " + funcionario.getNome());
 
         Funcionario novoFuncionario = funcionarioService.salvar(funcionario);
         return ResponseEntity.status(201).body(novoFuncionario);

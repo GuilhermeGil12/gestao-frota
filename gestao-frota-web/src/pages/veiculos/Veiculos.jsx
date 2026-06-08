@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import api from "../services/api";
+import api from "../../services/api";
 //import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import {toast} from 'sonner';
-import { maskPlaca } from '../utils/mascaras';
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { Badge } from "../components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../components/ui/dialog";
+import { maskPlaca } from '../../utils/mascaras';
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { Badge } from "../../components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../../components/ui/dialog";
 
 import {
     AlertDialog,
@@ -20,7 +20,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from "../components/ui/alert-dialog";
+} from "../../components/ui/alert-dialog";
 
 function Veiculos() {
     const [veiculos, setVeiculos] = useState([]);

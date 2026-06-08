@@ -53,6 +53,16 @@ function Funcionarios() {
 
     const handleSalvar = async (e) => {
         e.preventDefault();
+        if(!formData.nome.trim()) return toast.error("Nome é obrigatório.");
+        if(!formData.cpf.trim()) return toast.error("CPF é obrigatório.");
+        if(!formData.rg.trim()) return toast.error("RG é obrigatório.");
+        if(!formData.numeroTelefone.trim()) return toast.error("Telefone é obrigatório.");
+        if(!formData.email.trim()) return toast.error("E-mail é obrigatório.");
+        if(!formData.matricula.trim()) return toast.error("Matrícula é obrigatório.");
+        if(!formData.cargo.trim()) return toast.error("Cargo é obrigatório.");
+        if(!formData.setor) return toast.error("Setor é obrigatório.");
+
+        
         if (formData.email) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(formData.email)) {
@@ -101,9 +111,9 @@ function Funcionarios() {
             <div className="flex items-center justify-between mb-6 border-b border-border pb-4 gap-4">
                 <h1 className="text-xl font-semibold text-foreground">Gestão de Funcionários</h1>
                 
-                <div className="flex items-center gap-3 ml-auto">
+                <div className="flex items-center gap-3 flex-1 max-w-xl">
                     {/* Barra de Pesquisa */}
-                    <Input type="text" placeholder="Pesquisar por Nome ou CPF..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} className="w-full max-w-md" />
+                    <Input type="text" placeholder="Pesquisar por Nome ou CPF..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} className="w-full" />
                     
                     {/* 3. NOVO COMPONENTE: Filtro de exibição por status */}
                     <select 
@@ -138,6 +148,7 @@ function Funcionarios() {
                             <div className="space-y-2"><Label>RG</Label><Input value={formData.rg} onChange={e => setFormData({ ...formData, rg: maskRG(e.target.value) })} required /></div>
                             <div className="space-y-2"><Label>Telefone</Label><Input value={formData.numeroTelefone} onChange={e => setFormData({ ...formData, numeroTelefone: e.target.value })} placeholder="(17) 99999-9999" /></div>
                             <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="funcionario@empresa.com" /></div>
+                            
                         </div>
 
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados Corporativos</h3>
@@ -158,6 +169,7 @@ function Funcionarios() {
                                 <Label>Nível Motorista</Label>
                                 <select value={formData.nivelMotorista} onChange={e => setFormData({ ...formData, nivelMotorista: e.target.value })} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                                     <option value="">Selecione...</option>
+                                     <option value="0">Não possui</option>
                                     <option value="1">1 (Básico)</option>
                                     <option value="2">2 (Intermediário)</option>
                                     <option value="3">3 (Avançado)</option>
@@ -167,16 +179,16 @@ function Funcionarios() {
 
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados de Direção</h3>
                         <div className="grid grid-cols-3 gap-4">
-                            <div className="space-y-2"><Label>Número CNH</Label><Input value={formData.numCNH} onChange={e => setFormData({ ...formData, numCNH: e.target.value })} required /></div>
+                            <div className="space-y-2"><Label>Número CNH</Label><Input value={formData.numCNH} onChange={e => setFormData({ ...formData, numCNH: e.target.value })}disabled={formData.nivelMotorista === "0"} required /></div>
                             <div className="space-y-2">
                                 <Label>Categoria CNH</Label>
-                                <select value={formData.categoriaCNH} onChange={e => setFormData({ ...formData, categoriaCNH: e.target.value })} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                <select value={formData.categoriaCNH} onChange={e => setFormData({ ...formData, categoriaCNH: e.target.value })} disabled={formData.nivelMotorista === "0"} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                                     <option value="">Selecione...</option>
                                     <option value="A">A</option><option value="B">B</option><option value="AB">AB</option>
                                     <option value="C">C</option><option value="D">D</option><option value="naopossui">Não possui</option>
                                 </select>
                             </div>
-                            <div className="space-y-2"><Label>Validade CNH</Label><Input type="date" value={formData.validadeCNH} onChange={e => setFormData({ ...formData, validadeCNH: e.target.value })} /></div>
+                            <div className="space-y-2"><Label>Validade CNH</Label><Input type="date" value={formData.validadeCNH} onChange={e => setFormData({ ...formData, validadeCNH: e.target.value })} disabled={formData.nivelMotorista ==="0"} /></div>
                         </div>
 
                         <DialogFooter className="border-t border-border pt-4">
@@ -216,11 +228,13 @@ function Funcionarios() {
             <Table>
                 <TableHeader>
                     <TableRow>
+                        <TableHead className="w-[10%]">ID</TableHead>
                         <TableHead className="w-[25%]">Nome</TableHead>
                         <TableHead className="w-[15%]">CPF</TableHead>
                         <TableHead className="w-[15%]">RG</TableHead>
                         <TableHead className="w-[15%]">Setor</TableHead>
                         <TableHead className="w-[10%]">Nível</TableHead>
+                        <TableHead className="w-[10%]">Status</TableHead>
                         <TableHead className="w-[20%] text-center">Ações</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -231,6 +245,7 @@ function Funcionarios() {
                         funcionariosFiltrados.map(f => (
                             // 4. MUDANÇA VISUAL: Se f.ativo for falso, a linha ganha opacidade de 45% e um tom acinzentado
                             <TableRow key={f.id} className={!f.ativo ? "opacity-45 bg-muted/20 hover:bg-muted/30 transition-opacity" : ""}>
+                                <TableCell>#{f.id}</TableCell>
                                 <TableCell onClick={() => abrirModalVisualizacao(f)} className={`cursor-pointer font-semibold transition-colors ${f.ativo ? 'text-foreground hover:text-blue-400' : 'text-muted-foreground line-through'}`} title="Clique para ver detalhes">
                                     {f.nome} {!f.ativo && " (Inativo)"}
                                 </TableCell>
@@ -238,6 +253,7 @@ function Funcionarios() {
                                 <TableCell>{f.rg}</TableCell>
                                 <TableCell className="uppercase">{f.setor}</TableCell>
                                 <TableCell>Nível {f.nivelMotorista}</TableCell>
+                                <TableCell>{f.ativo ? "Ativo" : "Desativado"}</TableCell>
                                 <TableCell>
                                     <div className="flex gap-2 justify-center">
                                         {f.ativo ? (

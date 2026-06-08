@@ -19,12 +19,14 @@ import Menu from './components/Menu';
 
 import Dashboard     from './pages/Dashboard';
 import Funcionarios  from './pages/Funcionarios';
-import Veiculos      from './pages/Veiculos';
-import Rotas         from './pages/Rotas';
-import Alertas       from './pages/Alertas';
+import Veiculos      from './pages/veiculos/Veiculos';
+import Rotas         from './pages/veiculos/Rotas';
+import Alertas       from './pages/veiculos/Alertas';
+import Cercas        from './pages/veiculos/Cercas';
 import Controladoras from './pages/Controladoras';
 import Cartoes       from './pages/Cartoes';
-import Configuracoes from './pages/Configuracoes';
+import Configuracoes from './pages/configuracoes/Configuracoes';
+import Permissoes    from './pages/configuracoes/Permissoes';
 import Relatorios    from './pages/Relatorios';
 
 const W_OPEN   = 240;
@@ -85,10 +87,12 @@ function App() {
                             <Route path="/veiculos"      element={<Veiculos />}      />
                             <Route path="/rotas"         element={<Rotas />}         />
                             <Route path="/alertas"       element={<Alertas />}       />
+                            <Route path="/cercas"        element={<Cercas />} />
                             <Route path="/controladoras" element={<Controladoras />} />
                             <Route path="/cartoes"       element={<Cartoes />}       />
-                            <Route path="/configuracoes" element={<Configuracoes />} />
-                            <Route path="/relatorios"    element={<Relatorios />}    />
+                            <Route path="/configuracoes"            element={<Configuracoes />} />
+                            <Route path="/configuracoes/permissoes" element={<Permissoes />}    />
+                            <Route path="/relatorios"               element={<Relatorios />}    />
                             <Route path="/"              element={<Navigate to="/dashboard" />} />
                         </Routes>
                     </main>

@@ -3,10 +3,10 @@ import { toast } from "react-toastify";
 import { MapContainer, TileLayer, Polyline, Popup, CircleMarker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import axios from 'axios';
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { Card, CardContent } from "../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { Card, CardContent } from "../../components/ui/card";
 import { Search, Sun, Moon } from "lucide-react";
 
 delete L.Icon.Default.prototype._getIconUrl;

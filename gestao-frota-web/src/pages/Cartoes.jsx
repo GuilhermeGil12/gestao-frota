@@ -165,8 +165,8 @@ function Cartoes() {
 
             <Table>
                 <TableHeader><TableRow>
-                    <TableHead className="w-[30%]">Nome do Funcionario</TableHead><TableHead className="w-[20%]">CPF</TableHead>
-                    <TableHead className="w-[20%]">Setor</TableHead><TableHead className="w-[30%] text-center">Acao</TableHead>
+                    <TableHead className="w-[30%]">Nome do Funcionario</TableHead><TableHead className="w-[20%]">Cargo</TableHead>
+                    <TableHead className="w-[20%]">Setor</TableHead><TableHead className="w-[30%] text-center">Açao</TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
                     {(!Array.isArray(funcionariosFiltrados) || funcionariosFiltrados.length === 0) ? (
@@ -175,7 +175,7 @@ function Cartoes() {
                         funcionariosFiltrados.map(f => (
                             <TableRow key={f.id}>
                                 <TableCell className="font-semibold">{f.nome}</TableCell>
-                                <TableCell>{f.cpf}</TableCell>
+                                <TableCell>{f.cargo}</TableCell>
                                 <TableCell className="uppercase">{f.setor}</TableCell>
                                 <TableCell className="text-center"><Button size="sm" onClick={() => abrirPainelCartoes(f)}>Gerenciar Cartoes</Button></TableCell>
                             </TableRow>

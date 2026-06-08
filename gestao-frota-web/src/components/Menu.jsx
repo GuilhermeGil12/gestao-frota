@@ -13,6 +13,7 @@ const W_CLOSED =  56;
 
 function Menu({ isOpen, toggleMenu }) {
     const [veiculosOpen, setVeiculosOpen] = useState(false);
+    const [configOpen, setConfigOpen] = useState(false);
 
     const menuItems = [
         { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -23,14 +24,20 @@ function Menu({ isOpen, toggleMenu }) {
         { to: "/veiculos", label: "Lista de Veiculos" },
         { to: "/rotas", label: "Rotas" },
         { to: "/alertas", label: "Alertas" },
+        { to: "/cercas", label: "Cercas" },
     ];
 
     const bottomItems = [
         { to: "/controladoras", icon: Cpu, label: "Controladoras" },
         { to: "/cartoes", icon: CreditCard, label: "Cartoes" },
         { to: "/relatorios", icon: FileText, label: "Relatorios" },
-        { to: "/configuracoes", icon: Settings, label: "Configuracao" },
+        
     ];
+
+    const configSubMenu = [
+        {to: "/configuracoes", label: "Geral"},
+        {to: "configuracoes/permissoes", label: "Permissões"},
+    ]
 
     return (
         <nav
@@ -123,6 +130,42 @@ function Menu({ isOpen, toggleMenu }) {
                         </Link>
                     </li>
                 ))}
+
+                <li>
+                    <button
+                    //inverte o valor de c
+                    onClick={() => setConfigOpen(c => !c)}
+                    className={cn(
+                        "flex items-center gap-3.5 w-full px-3.5 py-2.5 text-sidebar-foreground/70 text-sm bg-transparent border-none cursos-pointer rounded-md transition-colors hover:bg-sidebar-accent hover:text-siderbar-foreground text-left ",
+                        !isOpen && "justify-center px-0 gap-0"
+                    )}>
+                        <Settings className="h-5 w-5 shrink-0"/>
+                        {isOpen && (
+                            <>
+                            <span>Configurações</span>
+                            <ChevronRight className={cn(
+                                 "h-3.5 w-3.5 ml-auto text-muted-foreground transition-transform duration-200",
+                                 configOpen && "rotate-90"
+                            )}/>
+                            </>
+                        )}
+                        
+                    </button>
+                    {configOpen && isOpen && (
+                        <ul className="list-none p-0 m-0 bg-sidebar-accent/50 rounded-md mt-0.5">
+                            {configSubMenu.map(sub => (
+                                <li key={sub.to}>
+                                    <Link
+                                        to={sub.to}
+                                        className="flex items-center pl-13 py-2 text-sidebar-foreground/60 text-[0.82rem] no-underline rounded-md transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                                    >
+                                        {sub.label}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </li>
 
                 {/* Sair */}
                 <li className="mt-2">
