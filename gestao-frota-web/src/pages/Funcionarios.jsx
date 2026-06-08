@@ -35,7 +35,8 @@ function Funcionarios() {
     const initialState = {
         id: null, nome: "", cpf: "", rg: "", numeroTelefone: "", email: "",
         matricula: "", cargo: "", setor: "", nivelMotorista: "",
-        numCNH: "", categoriaCNH: "", validadeCNH: "", ativo: true
+        numCNH: "", categoriaCNH: "", validadeCNH: "", ativo: true,
+        endereco: "", numero: "", bairro: "", cidade: "", cep: ""
     };
 
     const [formData, setFormData] = useState(initialState);
@@ -50,6 +51,34 @@ function Funcionarios() {
     useEffect(() => { carregar(); }, []);
 
     const erroMsg = (e, fallback) => e?.response?.data?.message || fallback;
+
+    const maskCEP = (v) => v.replace(/\D/g, "").replace(/^(\d{5})(\d)/, "$1-$2").slice(0, 9);
+
+    const handleCepChange = async (valor) => {
+        const cepFormatado = maskCEP(valor);
+        setFormData(prev => ({ ...prev, cep: cepFormatado }));
+
+        const apenasNumeros = cepFormatado.replace(/\D/g, "");
+        if (apenasNumeros.length === 8) {
+            try {
+                const res = await fetch(`https://viacep.com.br/ws/${apenasNumeros}/json/`);
+                const dados = await res.json();
+                if (!dados.erro) {
+                    setFormData(prev => ({
+                        ...prev,
+                        cep: cepFormatado,
+                        endereco: dados.logradouro || prev.endereco,
+                        bairro:   dados.bairro     || prev.bairro,
+                        cidade:   dados.localidade  || prev.cidade,
+                    }));
+                } else {
+                    toast.error("CEP não encontrado.");
+                }
+            } catch {
+                toast.error("Não foi possível buscar o CEP.");
+            }
+        }
+    };
 
     const handleSalvar = async (e) => {
         e.preventDefault();
@@ -148,6 +177,15 @@ function Funcionarios() {
                             <div className="space-y-2"><Label>RG</Label><Input value={formData.rg} onChange={e => setFormData({ ...formData, rg: maskRG(e.target.value) })} required /></div>
                             <div className="space-y-2"><Label>Telefone</Label><Input value={formData.numeroTelefone} onChange={e => setFormData({ ...formData, numeroTelefone: e.target.value })} placeholder="(17) 99999-9999" /></div>
                             <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="funcionario@empresa.com" /></div>
+                            <div className="space-y-2"><Label>Rua/Logradouro</Label><Input type="" value={formData.endereco} onChange={e => setFormData({ ...formData, endereco: e.target.value })} placeholder="Rua Amazonas" /></div>
+                            <div className="space-y-2"><Label>Número</Label><Input type="text" value={formData.numero} onChange={e => setFormData({ ...formData, numero: e.target.value })} placeholder="123" /></div>
+                            <div className="space-y-2"><Label>Bairro</Label><Input type="text" value={formData.bairro} onChange={e => setFormData({ ...formData, bairro: e.target.value })} placeholder="Centro" /></div>
+                            <div className="space-y-2"><Label>Cidade</Label><Input type="text" value={formData.cidade} onChange={e => setFormData({ ...formData, cidade: e.target.value })} placeholder="São Paulo" /></div>
+                            <div className="space-y-2"><Label>CEP</Label><Input type="text" value={formData.cep} onChange={e => handleCepChange(e.target.value)} placeholder="00000-000" maxLength={9} /></div>
+                            
+                            
+                            
+                            
                             
                         </div>
 

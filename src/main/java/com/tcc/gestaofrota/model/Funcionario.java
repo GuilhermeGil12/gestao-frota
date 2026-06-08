@@ -32,6 +32,30 @@ public class Funcionario {
     @Column(name = "end_email")
     private String email;
 
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public String getSenha() {
+        return senha;
+    }
+
+    public void setSenha(String senha) {
+        this.senha = senha;
+    }
+
     @Column(name = "func_cargo")
     private String cargo;
 
@@ -52,6 +76,30 @@ public class Funcionario {
 
     @Column(name = "setor")
     private String setor;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "senha")
+    private String senha;
+
+    @Column(name = "endereco")
+    private String endereco;
+
+    @Column(name = "numero_casa")
+    private String numero;
+
+    @Column(name = "bairro")
+    private String bairro;
+
+    @Column(name = "cidade")
+    private String cidade;
+
+    @Column(name = "cep")
+    private String cep;
 
     // AQUI ESTÁ A MÁGICA DA CHAVE ESTRANGEIRA (FK):
     @ManyToOne
@@ -222,5 +270,45 @@ public class Funcionario {
 
     public void setValidadeCNH(LocalDate validadeCNH) {
         this.validadeCNH = validadeCNH;
+    }
+
+    public String getEndereco() {
+        return endereco;
+    }
+
+    public void setEndereco(String endereco) {
+        this.endereco = endereco;
+    }
+
+    public String getNumero() {
+        return numero;
+    }
+
+    public void setNumero(String numero) {
+        this.numero = numero;
+    }
+
+    public String getBairro() {
+        return bairro;
+    }
+
+    public void setBairro(String bairro) {
+        this.bairro = bairro;
+    }
+
+    public String getCidade() {
+        return cidade;
+    }
+
+    public void setCidade(String cidade) {
+        this.cidade = cidade;
+    }
+
+    public String getCep() {
+        return cep;
+    }
+
+    public void setCep(String cep) {
+        this.cep = cep;
     }
 }

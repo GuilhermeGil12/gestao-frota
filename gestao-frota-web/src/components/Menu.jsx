@@ -36,7 +36,7 @@ function Menu({ isOpen, toggleMenu }) {
 
     const configSubMenu = [
         {to: "/configuracoes", label: "Geral"},
-        {to: "configuracoes/permissoes", label: "Permissões"},
+        {to: "/configuracoes/permissoes", label: "Permissões"},
     ]
 
     return (

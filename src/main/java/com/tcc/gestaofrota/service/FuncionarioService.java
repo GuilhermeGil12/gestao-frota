@@ -81,6 +81,14 @@ public class FuncionarioService {
         funcionarioAntigo.setPermissao(funcionarioNovo.getPermissao());
         funcionarioAntigo.setCartoes(funcionarioNovo.getCartoes());
         funcionarioAntigo.setAtivo(funcionarioNovo.getAtivo());
+        funcionarioAntigo.setSenha(funcionarioNovo.getSenha());
+        funcionarioAntigo.setLatitude(funcionarioNovo.getLatitude());
+        funcionarioAntigo.setLongitude(funcionarioNovo.getLongitude());
+        funcionarioAntigo.setEndereco(funcionarioNovo.getEndereco());
+        funcionarioAntigo.setNumero(funcionarioNovo.getNumero());
+        funcionarioAntigo.setBairro(funcionarioNovo.getBairro());
+        funcionarioAntigo.setCidade(funcionarioNovo.getCidade());
+        funcionarioAntigo.setCep(funcionarioNovo.getCep());
 
         return funcionarioRepository.save(funcionarioAntigo);
     }
