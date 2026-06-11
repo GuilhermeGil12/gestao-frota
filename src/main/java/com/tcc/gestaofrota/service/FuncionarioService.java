@@ -1,7 +1,9 @@
 package com.tcc.gestaofrota.service;
 
 
+import com.tcc.gestaofrota.model.Cerca;
 import com.tcc.gestaofrota.model.Funcionario;
+import com.tcc.gestaofrota.repository.CercaRepository;
 import com.tcc.gestaofrota.repository.FuncionarioRepository;
 import org.springframework.stereotype.Service;
 
@@ -12,9 +14,40 @@ import java.util.Optional;
 public class FuncionarioService {
 
     private final FuncionarioRepository funcionarioRepository;
+    private final CercaRepository cercaRepository;
 
-    public FuncionarioService(FuncionarioRepository funcionarioRepository) {
+    public FuncionarioService(FuncionarioRepository funcionarioRepository, CercaRepository cercaRepository) {
         this.funcionarioRepository = funcionarioRepository;
+        this.cercaRepository = cercaRepository;
+    }
+
+    private void criarOuAtualizarCercaCasa(Funcionario funcionario) {
+        if (funcionario.getLatitude() == null || funcionario.getLongitude() == null) return;
+
+        List<Cerca> cercasDoFuncionario = cercaRepository.findByFuncionarioId(funcionario.getId());
+
+        // Busca a cerca "Casa" já existente (criada automaticamente)
+        cercasDoFuncionario.stream()
+                .filter(c -> c.getNome() != null && c.getNome().startsWith("Casa - "))
+                .findFirst()
+                .ifPresentOrElse(
+                    cercaExistente -> {
+                        cercaExistente.setLatitude(funcionario.getLatitude());
+                        cercaExistente.setLongitude(funcionario.getLongitude());
+                        cercaExistente.setNome("Casa - " + funcionario.getNome());
+                        cercaRepository.save(cercaExistente);
+                    },
+                    () -> {
+                        Cerca nova = new Cerca();
+                        nova.setNome("Casa - " + funcionario.getNome());
+                        nova.setLatitude(funcionario.getLatitude());
+                        nova.setLongitude(funcionario.getLongitude());
+                        nova.setRaio(100.0);
+                        nova.setAtivo(true);
+                        nova.setFuncionario(funcionario);
+                        cercaRepository.save(nova);
+                    }
+                );
     }
 
     public Funcionario buscarPorNome(String nome) { //
@@ -45,7 +78,9 @@ public class FuncionarioService {
         }
 
         //caso não existir, ele retorna o valor e salva
-        return funcionarioRepository.save(funcionario);
+        Funcionario salvo = funcionarioRepository.save(funcionario);
+        criarOuAtualizarCercaCasa(salvo);
+        return salvo;
     }
 
     public List<Funcionario> listarTodas(){
@@ -90,7 +125,9 @@ public class FuncionarioService {
         funcionarioAntigo.setCidade(funcionarioNovo.getCidade());
         funcionarioAntigo.setCep(funcionarioNovo.getCep());
 
-        return funcionarioRepository.save(funcionarioAntigo);
+        Funcionario atualizado = funcionarioRepository.save(funcionarioAntigo);
+        criarOuAtualizarCercaCasa(atualizado);
+        return atualizado;
     }
 
     public void inativar(Long id){

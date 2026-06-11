@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
 import { toast } from 'sonner';
+import { MapPin } from "lucide-react";
+import MapaPicker from "../components/MapaPicker";
+
 
 import {
     AlertDialog,
@@ -23,14 +26,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 function Funcionarios() {
     const [funcionarios, setFuncionarios] = useState([]);
     const [termoBusca, setTermoBusca] = useState("");
-    
+    const [mapaAberto, setMapaAberto] = useState(false);
+    const [pinPos, setPinPos] = useState(null); // { lat, lng }
+
     // 1. NOVO ESTADO: Controla o filtro de status (todos, ativos, inativos)
-    const [filtroStatus, setFiltroStatus] = useState("ativos"); 
-    
+    const [filtroStatus, setFiltroStatus] = useState("ativos");
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [funcionarioSelecionado, setFuncionarioSelecionado] = useState(null);
     const [funcionarioParaExcluir, setFuncionarioParaExcluir] = useState(null);
+    const [buscandoLocal, setBuscandoLocal] = useState(false);
 
     const initialState = {
         id: null, nome: "", cpf: "", rg: "", numeroTelefone: "", email: "",
@@ -67,14 +73,16 @@ function Funcionarios() {
                     setFormData(prev => ({
                         ...prev,
                         cep: cepFormatado,
-                        endereco: dados.logradouro || prev.endereco,
-                        bairro:   dados.bairro     || prev.bairro,
-                        cidade:   dados.localidade  || prev.cidade,
+                        endereco: dados.logradouro || "",
+                        bairro: dados.bairro || "",
+                        cidade: dados.localidade || "",
                     }));
                 } else {
+                    setFormData(prev => ({ ...prev, endereco: "", bairro: "", cidade: "" }));
                     toast.error("CEP não encontrado.");
                 }
             } catch {
+                setFormData(prev => ({ ...prev, endereco: "", bairro: "", cidade: "" }));
                 toast.error("Não foi possível buscar o CEP.");
             }
         }
@@ -82,16 +90,16 @@ function Funcionarios() {
 
     const handleSalvar = async (e) => {
         e.preventDefault();
-        if(!formData.nome.trim()) return toast.error("Nome é obrigatório.");
-        if(!formData.cpf.trim()) return toast.error("CPF é obrigatório.");
-        if(!formData.rg.trim()) return toast.error("RG é obrigatório.");
-        if(!formData.numeroTelefone.trim()) return toast.error("Telefone é obrigatório.");
-        if(!formData.email.trim()) return toast.error("E-mail é obrigatório.");
-        if(!formData.matricula.trim()) return toast.error("Matrícula é obrigatório.");
-        if(!formData.cargo.trim()) return toast.error("Cargo é obrigatório.");
-        if(!formData.setor) return toast.error("Setor é obrigatório.");
+        if (!formData.nome.trim()) return toast.error("Nome é obrigatório.");
+        if (!formData.cpf.trim()) return toast.error("CPF é obrigatório.");
+        if (!formData.rg.trim()) return toast.error("RG é obrigatório.");
+        if (!formData.numeroTelefone.trim()) return toast.error("Telefone é obrigatório.");
+        if (!formData.email.trim()) return toast.error("E-mail é obrigatório.");
+        if (!formData.matricula.trim()) return toast.error("Matrícula é obrigatório.");
+        if (!formData.cargo.trim()) return toast.error("Cargo é obrigatório.");
+        if (!formData.setor) return toast.error("Setor é obrigatório.");
 
-        
+
         if (formData.email) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(formData.email)) {
@@ -125,28 +133,62 @@ function Funcionarios() {
         const buscaMinuscula = termoBusca.toLocaleLowerCase();
         const nome = f.nome ? f.nome.toLocaleLowerCase() : "";
         const cpf = f.cpf ? f.cpf.toLocaleLowerCase() : "";
-        
+
         // Regra do filtro de texto
         const bateTexto = nome.includes(buscaMinuscula) || cpf.includes(buscaMinuscula);
-        
+
         // Regra do filtro de status (Combobox)
         if (filtroStatus === "ativos") return bateTexto && f.ativo === true;
         if (filtroStatus === "inativos") return bateTexto && f.ativo === false;
         return bateTexto; // "todos"
     });
 
+    const buscarCoordenadas = async () => {
+        if (!formData.cidade) return toast.error("Preencha pelo menos a cidade.");
+
+        setBuscandoLocal(true);
+        const toastId = toast.loading("Buscando localização...");
+
+        const tentativas = [
+            `${formData.endereco}, ${formData.numero}, ${formData.bairro}, ${formData.cidade}, SP, Brasil`,
+            `${formData.endereco}, ${formData.cidade}, SP, Brasil`,
+            `${formData.cidade}, SP, Brasil`,
+        ];
+
+        try {
+            for (const query of tentativas) {
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
+                    { headers: { "Accept-Language": "pt-BR" } }
+                );
+                const dados = await res.json();
+
+                if (dados.length > 0) {
+                    setPinPos({ lat: parseFloat(dados[0].lat), lng: parseFloat(dados[0].lon) });
+                    setMapaAberto(true);
+                    toast.success("Localização encontrada!", { id: toastId });
+                    return;
+                }
+            }
+            toast.error("Endereço não encontrado no mapa.", { id: toastId });
+        } catch {
+            toast.error("Não foi possível buscar o endereço.", { id: toastId });
+        } finally {
+            setBuscandoLocal(false);
+        }
+    };
     return (
         <div className="w-full">
             <div className="flex items-center justify-between mb-6 border-b border-border pb-4 gap-4">
                 <h1 className="text-xl font-semibold text-foreground">Gestão de Funcionários</h1>
-                
+
                 <div className="flex items-center gap-3 flex-1 max-w-xl">
                     {/* Barra de Pesquisa */}
                     <Input type="text" placeholder="Pesquisar por Nome ou CPF..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} className="w-full" />
-                    
+
                     {/* 3. NOVO COMPONENTE: Filtro de exibição por status */}
-                    <select 
-                        value={filtroStatus} 
+                    <select
+                        value={filtroStatus}
                         onChange={(e) => setFiltroStatus(e.target.value)}
                         className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border-border text-foreground"
                     >
@@ -155,7 +197,7 @@ function Funcionarios() {
                         <option value="todos" className="bg-background text-foreground">Mostrar Todos</option>
                     </select>
                 </div>
-                
+
                 <Button onClick={() => abrirModal()}>+ Novo Funcionário</Button>
             </div>
 
@@ -166,7 +208,7 @@ function Funcionarios() {
                         <DialogTitle>{formData.id ? "Editar Funcionário" : "Cadastrar Funcionário"}</DialogTitle>
                         <DialogDescription>Preencha os dados do funcionário abaixo.</DialogDescription>
                     </DialogHeader>
-                    
+
                     <form onSubmit={handleSalvar} className="space-y-6" noValidate>
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados Pessoais</h3>
                         <div className="grid grid-cols-3 gap-4">
@@ -182,11 +224,44 @@ function Funcionarios() {
                             <div className="space-y-2"><Label>Bairro</Label><Input type="text" value={formData.bairro} onChange={e => setFormData({ ...formData, bairro: e.target.value })} placeholder="Centro" /></div>
                             <div className="space-y-2"><Label>Cidade</Label><Input type="text" value={formData.cidade} onChange={e => setFormData({ ...formData, cidade: e.target.value })} placeholder="São Paulo" /></div>
                             <div className="space-y-2"><Label>CEP</Label><Input type="text" value={formData.cep} onChange={e => handleCepChange(e.target.value)} placeholder="00000-000" maxLength={9} /></div>
-                            
-                            
-                            
-                            
-                            
+                            <div className="col-span-3 flex justify-end">
+                                <Button type="button" variant="outline" onClick={buscarCoordenadas} disabled={buscandoLocal}>
+                                    {buscandoLocal ? (
+                                        <>
+                                            <span className="h-4 w-4 mr-2 animate-spin border-2 border-current border-t-transparent rounded-full inline-block" />
+                                            Buscando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <MapPin className="h-4 w-4 mr-2" />
+                                            Localizar no Mapa
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+
+                            {mapaAberto && pinPos && (
+                                <div className="col-span-3 space-y-3">
+                                    <p className="text-sm text-muted-foreground">
+                                        Clique no mapa ou arraste o pin para ajustar a localização.
+                                    </p>
+                                    <MapaPicker
+                                        posicao={pinPos}
+                                        onMover={(novaPos) => setPinPos(novaPos)}
+                                    />
+                                    <Button
+                                        type="button"
+                                        onClick={() => {
+                                            setFormData(prev => ({ ...prev, latitude: pinPos.lat, longitude: pinPos.lng }));
+                                            setMapaAberto(false);
+                                            toast.success("Localização confirmada!");
+                                        }}
+                                    >
+                                        Confirmar Localização
+                                    </Button>
+                                </div>
+                            )}
+
                         </div>
 
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados Corporativos</h3>
@@ -207,7 +282,7 @@ function Funcionarios() {
                                 <Label>Nível Motorista</Label>
                                 <select value={formData.nivelMotorista} onChange={e => setFormData({ ...formData, nivelMotorista: e.target.value })} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                                     <option value="">Selecione...</option>
-                                     <option value="0">Não possui</option>
+                                    <option value="0">Não possui</option>
                                     <option value="1">1 (Básico)</option>
                                     <option value="2">2 (Intermediário)</option>
                                     <option value="3">3 (Avançado)</option>
@@ -217,7 +292,7 @@ function Funcionarios() {
 
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados de Direção</h3>
                         <div className="grid grid-cols-3 gap-4">
-                            <div className="space-y-2"><Label>Número CNH</Label><Input value={formData.numCNH} onChange={e => setFormData({ ...formData, numCNH: e.target.value })}disabled={formData.nivelMotorista === "0"} required /></div>
+                            <div className="space-y-2"><Label>Número CNH</Label><Input value={formData.numCNH} onChange={e => setFormData({ ...formData, numCNH: e.target.value })} disabled={formData.nivelMotorista === "0"} required /></div>
                             <div className="space-y-2">
                                 <Label>Categoria CNH</Label>
                                 <select value={formData.categoriaCNH} onChange={e => setFormData({ ...formData, categoriaCNH: e.target.value })} disabled={formData.nivelMotorista === "0"} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
@@ -226,7 +301,7 @@ function Funcionarios() {
                                     <option value="C">C</option><option value="D">D</option><option value="naopossui">Não possui</option>
                                 </select>
                             </div>
-                            <div className="space-y-2"><Label>Validade CNH</Label><Input type="date" value={formData.validadeCNH} onChange={e => setFormData({ ...formData, validadeCNH: e.target.value })} disabled={formData.nivelMotorista ==="0"} /></div>
+                            <div className="space-y-2"><Label>Validade CNH</Label><Input type="date" value={formData.validadeCNH} onChange={e => setFormData({ ...formData, validadeCNH: e.target.value })} disabled={formData.nivelMotorista === "0"} /></div>
                         </div>
 
                         <DialogFooter className="border-t border-border pt-4">
@@ -306,7 +381,7 @@ function Funcionarios() {
                                                     await api.put(`/funcionarios/${f.id}`, { ...f, ativo: true });
                                                     toast.success("Funcionário reativado!");
                                                     carregar();
-                                                } catch(e) { toast.error("Erro ao reativar."); }
+                                                } catch (e) { toast.error("Erro ao reativar."); }
                                             }}>Reativar</Button>
                                         )}
                                     </div>
