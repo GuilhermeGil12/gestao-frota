@@ -27,7 +27,7 @@ function Rotas() {
     const [veiculosReais, setVeiculosReais] = useState([]);
     const [veiculoSelecionado, setVeiculoSelecionado] = useState("");
     const [historicoRotas, setHistoricoRotas] = useState([]);
-    const [temaEscuro, setTemaEscuro] = useState(true);
+    const [temaEscuro, setTemaEscuro] = useState(false);
 
     useEffect(() => {
         axios.get("http://localhost:8080/api/veiculos")

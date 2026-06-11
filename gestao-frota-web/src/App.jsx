@@ -18,6 +18,7 @@ import { Badge } from './components/ui/badge';
 import Menu from './components/Menu';
 
 import Dashboard     from './pages/Dashboard';
+import MonitoramentoTempoReal from './pages/MonitoramentoTempoReal';
 import Funcionarios  from './pages/Funcionarios';
 import Veiculos      from './pages/veiculos/Veiculos';
 import Rotas         from './pages/veiculos/Rotas';
@@ -44,7 +45,7 @@ function App() {
 
     return (
         <Router>
-            <div className="dark flex h-screen bg-background overflow-hidden">
+            <div className="flex h-screen bg-background overflow-hidden">
                 <Menu isOpen={isMenuOpen} toggleMenu={toggleMenu} />
 
                 <div
@@ -83,6 +84,7 @@ function App() {
                     <main className="flex-1 overflow-y-auto p-6">
                         <Routes>
                             <Route path="/dashboard"     element={<Dashboard />}     />
+                            <Route path="/Monitoramento"   element={<MonitoramentoTempoReal/>} />
                             <Route path="/funcionarios"  element={<Funcionarios />}  />
                             <Route path="/veiculos"      element={<Veiculos />}      />
                             <Route path="/rotas"         element={<Rotas />}         />

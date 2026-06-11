@@ -1,12 +1,15 @@
 import { Link } from 'react-router-dom';
 import React, { useState } from 'react';
 import logoEmpresa from '../assets/logocompleta.svg';
+import logoLight from '../assets/logocompleta-light.svg';
+import logoDark from '../assets/logocompleta-dark.svg';
 import {
     Users, Car, LayoutDashboard, CreditCard,
-    FileText, Settings, LogOut, Cpu, Menu as MenuIcon, ChevronRight, User
+    FileText, Settings, Radio, LogOut, Cpu, Menu as MenuIcon, ChevronRight, User
 } from "lucide-react";
 import { cn } from '../lib/utils';
 import { Button } from './ui/button';
+import { useTheme } from '../context/ThemeContext';
 
 const W_OPEN   = 240;
 const W_CLOSED =  56;
@@ -14,9 +17,11 @@ const W_CLOSED =  56;
 function Menu({ isOpen, toggleMenu }) {
     const [veiculosOpen, setVeiculosOpen] = useState(false);
     const [configOpen, setConfigOpen] = useState(false);
+    const {tema} = useTheme()
 
     const menuItems = [
         { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+        { to: "/Monitoramento", icon: Radio, label: "Monitoramento"},
         { to: "/funcionarios", icon: Users, label: "Funcionarios" },
     ];
 
@@ -52,11 +57,10 @@ function Menu({ isOpen, toggleMenu }) {
                 isOpen ? "justify-between px-4 py-3.5" : "justify-center py-3.5"
             )}>
                 {isOpen && (
-                    <img
-                        src={logoEmpresa}
-                        alt="Logo"
-                        className="w-[130px] invert shrink-0"
-                    />
+                    tema == 'dark' ? 
+                    <img src={logoDark} alt="Logo" className="w-[130px] shrink-0" />
+                    : <img src={logoLight} alt="Logo" className="w-[130px] shrink-0" />
+                    
                 )}
                 <Button variant="ghost" size="icon" onClick={toggleMenu} className="text-muted-foreground hover:text-foreground">
                     <MenuIcon className="h-5 w-5" />
@@ -171,7 +175,7 @@ function Menu({ isOpen, toggleMenu }) {
                 <li className="mt-2">
                     <button
                         className={cn(
-                            "flex items-center gap-3.5 w-full px-3.5 py-2.5 text-red-400 text-sm bg-transparent border-none cursor-pointer rounded-md transition-colors hover:bg-red-900/50 hover:text-red-300",
+                            "flex items-center gap-3.5 w-full px-3.5 py-2.5 text-red-400 text-sm bg-transparent border-none cursor-pointer rounded-md transition-colors hover:bg-destructive hover:text-destructive-foreground",
                             !isOpen && "justify-center px-0 gap-0"
                         )}
                     >

@@ -6,6 +6,8 @@ import { Label } from "../../components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
 import { Switch } from "../../components/ui/switch";
 import { Save, Download } from "lucide-react";
+import { useTheme } from "../../context/ThemeContext";
+
 
 function Configuracoes() {
     const [diasCnh, setDiasCnh] = useState(30);
@@ -13,6 +15,7 @@ function Configuracoes() {
     const [bloquearCnhVencida, setBloquearCnhVencida] = useState(true);
     const [bloquearMadrugada, setBloquearMadrugada] = useState(false);
     const [nomeEmpresa, setNomeEmpresa] = useState("Transportes Silva Ltda");
+    const {tema, toggleTema} = useTheme()
 
     const handleSalvar = () => {
         console.log("Salvando:", { diasCnh, kmRevisao, bloquearCnhVencida, bloquearMadrugada, nomeEmpresa });
@@ -96,6 +99,18 @@ function Configuracoes() {
                         <CardTitle>Alertas</CardTitle>
                         <CardDescription>Visualizar alertas</CardDescription>
                     </CardHeader>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Personalização do Tema</CardTitle>
+                        <CardDescription>Escolha entre claro e escuro</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Switch checked={tema=='dark'} onCheckedChange={toggleTema} />
+                        </div>
+                    </CardContent>
                 </Card>
             </div>
         </div>
