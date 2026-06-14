@@ -29,9 +29,15 @@ public class LocalizacaoController {
     // 1. Recebe dados do ESP32
     @PostMapping("/enviar")
     public ResponseEntity<String> receberDadosDoEsp32(
-            @RequestHeader("codigo") String codigo,
-            @RequestHeader("senha") String senha,
+            @RequestParam String codigo,
+            @RequestParam String senha,
             @RequestBody List<CoordenadaEsp32DTO> loteDoEsp32){
+
+        System.out.println("=== RECEBIDO ===");
+        System.out.println("codigo: " + codigo);
+        System.out.println("senha: " + senha);
+        System.out.println("lote: " + loteDoEsp32.size());
+        System.out.println("lat: " + loteDoEsp32.get(0).getLatitude());
 
         localizacaoService.processarLoteDoEsp32(codigo, senha, loteDoEsp32);
         return ResponseEntity.ok("Dados recebidos e salvos com sucesso!");
@@ -50,10 +56,8 @@ public class LocalizacaoController {
             @RequestParam Long idVeiculo,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
 
-        // Busca os pontos no repositório
         List<Localizacao> pontos = repository.buscarRotaPorDia(idVeiculo, data);
 
-        // Formata para o React-Leaflet
         List<Map<String, Object>> response = pontos.stream().map(p -> {
             Map<String, Object> pontoMap = new HashMap<>();
             pontoMap.put("lat", p.getLatitude());
@@ -61,11 +65,7 @@ public class LocalizacaoController {
             pontoMap.put("velocidade", p.getVelocidade());
             pontoMap.put("hora", p.getDataHora().toLocalTime().toString().substring(0, 5));
             pontoMap.put("motorista", p.getMotorista());
-
-            // --- LINHA QUE ESTAVA FALTANDO ABAIXO ---
             pontoMap.put("status", p.getStatus());
-            // ---------------------------------------
-
             return pontoMap;
         }).collect(Collectors.toList());
 

@@ -1,6 +1,6 @@
 package com.tcc.gestaofrota.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -14,8 +14,9 @@ public class Controladora {
     @Column(name = "id_controladora")
     private Long idControladora;
 
-    // A MÁGICA ESTÁ AQUI: Isso impede o Java de ficar indo e voltando num loop infinito!
-    @JsonIgnore
+    // @JsonIgnoreProperties ignora só o campo "controladora" dentro do Veiculo,
+    // evitando o loop infinito sem esconder o veículo inteiro da resposta.
+    @JsonIgnoreProperties("controladora")
     @OneToOne
     @JoinColumn(name = "id_veiculo", referencedColumnName = "id_veiculo", unique = true)
     private Veiculo veiculo;

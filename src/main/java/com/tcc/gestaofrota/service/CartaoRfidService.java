@@ -96,6 +96,14 @@ public class CartaoRfidService {
                 .collect(Collectors.joining(";")); // Une tudo com ; entre eles
     }
 
+    // Retorna apenas os UIDs ativos em formato de lista.
+    // Usado pelo novo ESP (T-A7670G) que espera JSON: ["UID1","UID2",...]
+    public List<String> listarUidsAtivos() {
+        return cartaoRfidRepository.findByAtivoTrue().stream()
+                .map(cartao -> cartao.getUid().replace(" ", ""))
+                .collect(Collectors.toList());
+    }
+
 
 
 }

@@ -5,7 +5,8 @@ import logoLight from '../assets/logocompleta-light.svg';
 import logoDark from '../assets/logocompleta-dark.svg';
 import {
     Users, Car, LayoutDashboard, CreditCard,
-    FileText, Settings, Radio, LogOut, Cpu, Menu as MenuIcon, ChevronRight, User
+    FileText, Settings, Radio, LogOut, Cpu, Menu as MenuIcon, ChevronRight, User,
+    ShieldAlert
 } from "lucide-react";
 import { cn } from '../lib/utils';
 import { Button } from './ui/button';
@@ -23,6 +24,7 @@ function Menu({ isOpen, toggleMenu }) {
         { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
         { to: "/Monitoramento", icon: Radio, label: "Monitoramento"},
         { to: "/funcionarios", icon: Users, label: "Funcionarios" },
+        {to: "/comandos", icon: ShieldAlert, label: "Comandos"},
     ];
 
     const veiculosSubmenu = [

@@ -29,6 +29,7 @@ import Cartoes       from './pages/Cartoes';
 import Configuracoes from './pages/configuracoes/Configuracoes';
 import Permissoes    from './pages/configuracoes/Permissoes';
 import Relatorios    from './pages/Relatorios';
+import Comandos     from './pages/comandos';
 
 const W_OPEN   = 240;
 const W_CLOSED =  56;
@@ -85,6 +86,7 @@ function App() {
                         <Routes>
                             <Route path="/dashboard"     element={<Dashboard />}     />
                             <Route path="/Monitoramento"   element={<MonitoramentoTempoReal/>} />
+                            <Route path='/Comandos'       element={<Comandos/>} />
                             <Route path="/funcionarios"  element={<Funcionarios />}  />
                             <Route path="/veiculos"      element={<Veiculos />}      />
                             <Route path="/rotas"         element={<Rotas />}         />

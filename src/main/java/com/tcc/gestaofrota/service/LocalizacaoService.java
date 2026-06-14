@@ -89,8 +89,13 @@ public class LocalizacaoService {
                 // Tratamento da Data/Hora do GPS
                 try {
                     String dataHoraString = dto.getData_localizacao();
+                    // O ESP manda com fração de segundo (ex: "2026-06-14 19:44:44.000000").
+                    // Remove tudo a partir do ponto pra casar com o formato "yyyy-MM-dd HH:mm:ss".
+                    if (dataHoraString != null && dataHoraString.contains(".")) {
+                        dataHoraString = dataHoraString.substring(0, dataHoraString.indexOf("."));
+                    }
                     DateTimeFormatter formatador = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                    LocalDateTime dataHoraGps = LocalDateTime.parse(dataHoraString, formatador);
+                    LocalDateTime dataHoraGps = LocalDateTime.parse(dataHoraString.trim(), formatador);
                     novaLoc.setDataHora(dataHoraGps);
                 } catch (Exception e) {
                     // Fallback caso a data do GPS venha mal formatada

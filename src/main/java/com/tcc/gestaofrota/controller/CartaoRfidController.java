@@ -66,4 +66,11 @@ public class CartaoRfidController
         return ResponseEntity.noContent().build();
     }
 
+    // Endpoint para o novo ESP (T-A7670G) — retorna lista de UIDs ativos em JSON.
+    // GET /api/cartaorfid/liberados → ["A1B2C3D4","E5F6G7H8"]
+    @GetMapping("/liberados")
+    public ResponseEntity<List<String>> listarLiberados() {
+        return ResponseEntity.ok(cartaoRfidService.listarUidsAtivos());
+    }
+
 }
