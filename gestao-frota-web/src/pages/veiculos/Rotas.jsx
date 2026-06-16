@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import { MapContainer, TileLayer, Polyline, Popup, CircleMarker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import axios from 'axios';
@@ -74,7 +74,7 @@ function Rotas() {
             </Card>
 
             {/* Mapa */}
-            <div className="w-full h-[500px] rounded-xl overflow-hidden border border-border relative">
+            <div className="w-full h-[800px] rounded-xl overflow-hidden border border-border relative">
                 {/* Legenda */}
                 <div className="absolute top-3 right-3 z-[1000] bg-black/85 p-3 rounded-lg text-xs text-white border border-border">
                     <b className="text-blue-400">Legenda de Status:</b><br />

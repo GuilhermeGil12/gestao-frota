@@ -28,8 +28,8 @@ public class ComandoService {
         Controladora controladora = controladoraRepository.findById(idControladora)
                 .orElseThrow(() -> new RuntimeException("Controladora não encontrada!"));
 
-        if (!tipo.equals("BLOQUEAR") && !tipo.equals("DESBLOQUEAR")) {
-            throw new RuntimeException("Tipo de comando inválido. Use BLOQUEAR ou DESBLOQUEAR.");
+        if (!tipo.equals("BLOQUEAR") && !tipo.equals("DESBLOQUEAR") && !tipo.equals("APITAR")) {
+            throw new RuntimeException("Tipo de comando inválido. Use BLOQUEAR, DESBLOQUEAR ou APITAR.");
         }
 
         Comando comando = new Comando();

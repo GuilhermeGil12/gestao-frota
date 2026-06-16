@@ -15,8 +15,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class LocalizacaoService {
@@ -120,11 +123,98 @@ public class LocalizacaoService {
         LocalDateTime fim = dataFinal.atTime(23, 59, 59);
 
         if (idVeiculo == null) {
-            // AQUI: Troquei de 'repository' para 'localizacaoRepository'
             return localizacaoRepository.buscarTodosAlertasNoPeriodo(inicio, fim);
         } else {
-            // AQUI: Troquei de 'repository' para 'localizacaoRepository'
             return localizacaoRepository.buscarAlertaPorVeiculo(idVeiculo, inicio, fim);
         }
+    }
+
+    // Função interna para calcular a distância entre duas coordenadas (Fórmula de Haversine)
+    private double calcularDistancia(double lat1, double lon1, double lat2, double lon2) {
+        double raioTerraKm = 6371.0;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return raioTerraKm * c;
+    }
+
+    // Gera o relatório agregando e calculando as distâncias dos lotes do ESP32.
+    // idVeiculo opcional: se vier, considera só aquele carro; se for null, a frota toda.
+    public List<Map<String, Object>> gerarRelatorioQuilometragem(LocalDateTime inicio, LocalDateTime fim, Long idVeiculo) {
+        // 1. Busca todos os pontos enviados pelos ESP32 no período
+        List<Localizacao> registros = localizacaoRepository.findByDataHoraBetweenOrderByDataHoraAsc(inicio, fim);
+
+        // 2. Agrupa a lista de pontos pelo ID do veículo (filtrando nulos por segurança).
+        //    Se idVeiculo foi informado, mantém só os registros daquele veículo.
+        Map<Long, List<Localizacao>> locaisPorVeiculo = registros.stream()
+                .filter(l -> l.getVeiculo() != null && l.getVeiculo().getId() != null)
+                .filter(l -> idVeiculo == null || idVeiculo.equals(l.getVeiculo().getId()))
+                .collect(Collectors.groupingBy(l -> l.getVeiculo().getId()));
+
+        List<Map<String, Object>> relatorioFinal = new ArrayList<>();
+
+        // 3. Varre os pontos de cada veículo calculando a distância sequencial
+        locaisPorVeiculo.forEach((veicId, listaPontos) -> {
+            double kmTotal = 0.0;
+            double velMaxima = 0.0;
+            String placa = listaPontos.get(0).getVeiculo().getPlaca();
+
+            for (int i = 0; i < listaPontos.size() - 1; i++) {
+                Localizacao atual = listaPontos.get(i);
+                Localizacao proximo = listaPontos.get(i + 1);
+
+                if (atual.getVelocidade() != null && atual.getVelocidade() > velMaxima) {
+                    velMaxima = atual.getVelocidade();
+                }
+
+                if (atual.getLatitude() != null && atual.getLongitude() != null &&
+                        proximo.getLatitude() != null && proximo.getLongitude() != null) {
+
+                    kmTotal += calcularDistancia(
+                            atual.getLatitude(), atual.getLongitude(),
+                            proximo.getLatitude(), proximo.getLongitude()
+                    );
+                }
+            }
+
+            // Formata a resposta em um Map estruturado para o JSON
+            Map<String, Object> dadosVeiculo = new HashMap<>();
+            dadosVeiculo.put("idVeiculo", veicId);
+            dadosVeiculo.put("placa", placa);
+            dadosVeiculo.put("kmRodados", Math.round(kmTotal * 100.0) / 100.0); // Arredonda 2 casas
+            dadosVeiculo.put("totalRegistros", listaPontos.size());
+            dadosVeiculo.put("velocidadeMaxima", Math.round(velMaxima * 100.0) / 100.0);
+            // Pega o nome do último condutor registrado no período
+            dadosVeiculo.put("motorista", listaPontos.get(listaPontos.size() - 1).getMotorista());
+
+            relatorioFinal.add(dadosVeiculo);
+        });
+
+        return relatorioFinal;
+    }
+
+    public List<Map<String, Object>> buscarUltimasLocalizacoes() {
+        List<Localizacao> lista = localizacaoRepository.buscarUltimaDeCadaVeiculo();
+        List<Map<String, Object>> resposta = new ArrayList<>();
+
+        for (Localizacao l : lista) {
+            Map<String, Object> m = new HashMap<>();
+            m.put("idVeiculo", l.getVeiculo().getId());
+            m.put("placa", l.getVeiculo().getPlaca());
+            m.put("lat", l.getLatitude());
+            m.put("lng", l.getLongitude());
+            m.put("velocidade", l.getVelocidade());
+            m.put("status", l.getStatus());
+            m.put("motorista", l.getMotorista());
+            m.put("dataHora", l.getDataHora());
+
+            resposta.add(m);
+        }
+        return resposta;
     }
 }

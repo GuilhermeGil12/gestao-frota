@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDateTime;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -80,5 +81,26 @@ public class LocalizacaoController {
 
         List<Localizacao> alertas = localizacaoService.buscarAlerta(idVeiculo, dataInicio, dataFinal);
         return ResponseEntity.ok(alertas);
+    }
+
+
+    // Adicione este endpoint dentro do seu LocalizacaoController existente:
+    // Cole este endpoint dentro do seu LocalizacaoController atual:
+
+    @GetMapping("/relatorio-km")
+    public ResponseEntity<List<Map<String, Object>>> obterRelatorioKm(
+            @RequestParam("inicio") @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
+            @RequestParam("fim") @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim,
+            @RequestParam(value = "idVeiculo", required = false) Long idVeiculo) {
+
+        // idVeiculo opcional: se vier, filtra só aquele carro; se não vier, calcula a frota toda
+        List<Map<String, Object>> relatorio = localizacaoService.gerarRelatorioQuilometragem(inicio, fim, idVeiculo);
+        return ResponseEntity.ok(relatorio);
+    }
+
+    @GetMapping("/ultimas")
+    public ResponseEntity<List<Map<String, Object>>> buscarUltimas() {
+        List<Map<String, Object>> ultimas = localizacaoService.buscarUltimasLocalizacoes();
+        return ResponseEntity.ok(ultimas);
     }
 }

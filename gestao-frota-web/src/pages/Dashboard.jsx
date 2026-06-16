@@ -84,6 +84,21 @@ function Dashboard() {
     }
   };
 
+  // Faz o carro apitar (localizar/alertar) — não precisa de confirmação, é inofensivo
+  const apitarVeiculo = async (veiculo) => {
+    const idControladora = veiculo.controladora?.idControladora;
+    if (!idControladora) {
+      toast.error("Este veículo não tem controladora vinculada.");
+      return;
+    }
+    try {
+      await api.post(`/comandos/${idControladora}`, { tipo: "APITAR" });
+      toast.success(`Comando enviado! ${veiculo.placa} vai apitar em até ~10s.`);
+    } catch (e) {
+      toast.error("Não foi possível enviar o comando de apito.");
+    }
+  };
+
 
 
   useEffect(() => {
@@ -157,6 +172,9 @@ function Dashboard() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
                         <DropdownMenuItem>Ver no mapa</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => apitarVeiculo(veiculo)}>
+                          🔔 Apitar (localizar)
+                        </DropdownMenuItem>
                         <DropdownMenuItem className="text-red-500" onClick={() => setVeiculoBloquear(veiculo)}>
                           Bloquear veículo
                         </DropdownMenuItem>

@@ -27,15 +27,7 @@ public interface LocalizacaoRepository extends JpaRepository <Localizacao, Long>
     List<Localizacao> buscarRotaPorDia(@Param("idVeiculo") Long idVeiculo, @Param("data") LocalDate data);
 
 
-    /*findTop: Busque apenas o PRIMEIRO resultado (Limit 1).
 
-    ByVeiculoId: Onde o ID do veículo seja igual ao número que eu passar.
-
-    OrderByDataHoraDesc: Organize pela data e hora do GPS, do mais novo para o mais velho (Decrescente).
-
-    Optional<>: Como vimos antes, é a nossa "Caixa Misteriosa". Se o carro for zero km e nunca tiver andado, a caixa volta vazia e não quebra o sistema.
-
-     */
 
     Optional<Localizacao> findTopByVeiculoIdOrderByDataHoraDesc(Long veiculoId);
 
@@ -52,4 +44,10 @@ public interface LocalizacaoRepository extends JpaRepository <Localizacao, Long>
             @Param("inicio") LocalDateTime inicio,
             @Param("fim") LocalDateTime fim
     );
+
+    @Query("SELECT l FROM Localizacao l WHERE l.dataHora = " +
+            "(SELECT MAX(l2.dataHora) FROM Localizacao l2 WHERE l2.veiculo = l.veiculo)")
+    List<Localizacao> buscarUltimaDeCadaVeiculo();
+
+    List<Localizacao> findByDataHoraBetweenOrderByDataHoraAsc(LocalDateTime inicio, LocalDateTime fim);
 }
