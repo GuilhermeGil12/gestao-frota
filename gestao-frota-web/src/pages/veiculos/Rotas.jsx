@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { toast } from "sonner";
 import { MapContainer, TileLayer, Polyline, Popup, CircleMarker, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import axios from 'axios';
+import api from '../../services/api';
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Card, CardContent } from "../../components/ui/card";
 import { Search, Sun, Moon } from "lucide-react";
+
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -29,8 +31,10 @@ function Rotas() {
     const [historicoRotas, setHistoricoRotas] = useState([]);
     const [temaEscuro, setTemaEscuro] = useState(false);
 
+    const veiculo = veiculosReais.find(v => v.id == veiculoSelecionado)
+
     useEffect(() => {
-        axios.get("http://localhost:8080/api/veiculos")
+        api.get("/veiculos")
             .then(response => setVeiculosReais(response.data))
             .catch(error => { console.error("Erro ao carregar veiculos:", error); toast.error("Nao foi possivel carregar a lista de veiculos."); });
     }, []);
@@ -38,7 +42,7 @@ function Rotas() {
     const handleBuscarRotas = async () => {
         if (!dataBusca || !veiculoSelecionado) { toast.error("Selecione a data e o veiculo."); return; }
         try {
-            const response = await axios.get(`http://localhost:8080/api/localizacao/rota`, { params: { idVeiculo: veiculoSelecionado, data: dataBusca } });
+            const response = await api.get(`/localizacao/rota`, { params: { idVeiculo: veiculoSelecionado, data: dataBusca } });
             if (response.data.length === 0) { setHistoricoRotas([]); toast.warn("Nenhum dado encontrado para este veiculo nesse dia."); }
             else { setHistoricoRotas(response.data); toast.success(`${response.data.length} pontos de telemetria carregados!`); }
         } catch (error) { console.error("Erro Axios:", error); toast.error("Erro ao conectar com o servidor Spring Boot."); }
@@ -135,6 +139,34 @@ function Rotas() {
                     )}
                 </MapContainer>
             </div>
+
+            <Table>
+                <TableHeader>
+                <TableRow>
+                    <TableHead>Data/hora</TableHead>
+                    <TableHead>Veículo</TableHead>
+                    <TableHead>Motorista</TableHead>
+                    <TableHead>Velocidade</TableHead>
+                    
+                </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {(!Array.isArray(historicoRotas) || historicoRotas.length === 0)? (
+                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum veículo encontrado.</TableCell></TableRow>
+                    ) : (historicoRotas.map((h, index) =>{
+                        console.log(h)
+                        return (
+                        <TableRow>
+                            <TableCell>{h.hora}</TableCell>
+                            <TableCell>{veiculo.placa}</TableCell>
+                            <TableCell>{h.motorista}</TableCell>
+                            <TableCell>{h.velocidade}</TableCell>
+                        </TableRow>
+
+                    )}))}
+                    
+                </TableBody>
+            </Table>
         </div>
     );
 }

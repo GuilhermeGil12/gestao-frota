@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from "react-toastify";
-import axios from 'axios';
+import api from '../../services/api';
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
@@ -17,7 +17,7 @@ function Alertas() {
 
     const carregarDados = async (inicio, fim, veiculoId) => {
         try {
-            const response = await axios.get("http://localhost:8080/api/localizacao/alerta", {
+            const response = await api.get("/localizacao/alerta", {
                 params: { dataInicio: inicio, dataFinal: fim, idVeiculo: veiculoId || null }
             });
             setHistoricoAlertas(response.data);
@@ -30,7 +30,7 @@ function Alertas() {
     };
 
     useEffect(() => {
-        axios.get("http://localhost:8080/api/veiculos")
+        api.get("/veiculos")
             .then(res => setVeiculosReais(res.data))
             .catch(() => toast.error("Erro ao carregar veiculos."));
 

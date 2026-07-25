@@ -40,18 +40,29 @@ public class LocalizacaoService {
         this.cartaoRfidRepository = cartaoRfidRepository;
     }
 
+    // === Via HTTP (com senha) ===
     public void processarLoteDoEsp32(String codigoControladora, String senha, List<CoordenadaEsp32DTO> loteDoEsp32) {
-
-        // 1. Autenticação da Controladora
         Long id = Long.parseLong(codigoControladora);
         Optional<Controladora> controladoraBusca = controladoraRepository.findByIdControladoraAndSenha(id, senha);
-
         if (controladoraBusca.isEmpty()) {
             throw new RuntimeException("Credenciais inválidas! Controladora não encontrada ou senha incorreta.");
         }
+        salvarPontos(controladoraBusca.get().getVeiculo(), loteDoEsp32);
+    }
 
-        Controladora controladoraAutenticada = controladoraBusca.get();
-        Veiculo carroDoEsp32 = controladoraAutenticada.getVeiculo();
+    // === Via MQTT (sem senha — a identidade vem do tópico frota/<codigo>/telemetria) ===
+    public void salvarLoteMqtt(String codigoControladora, List<CoordenadaEsp32DTO> loteDoEsp32) {
+        Long id = Long.parseLong(codigoControladora);
+        Optional<Controladora> controladoraBusca = controladoraRepository.findById(id);
+        if (controladoraBusca.isEmpty()) {
+            System.out.println("[MQTT] Controladora " + codigoControladora + " não encontrada — ignorando lote.");
+            return;
+        }
+        salvarPontos(controladoraBusca.get().getVeiculo(), loteDoEsp32);
+    }
+
+    // Lógica de salvar os pontos — compartilhada entre HTTP e MQTT
+    private void salvarPontos(Veiculo carroDoEsp32, List<CoordenadaEsp32DTO> loteDoEsp32) {
 
         List<Localizacao> localizacoesParaSalvar = new ArrayList<>();
 

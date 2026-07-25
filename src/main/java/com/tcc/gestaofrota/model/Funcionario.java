@@ -124,9 +124,6 @@ public class Funcionario {
     @JsonIgnoreProperties("funcionario")
     private List<CartaoRfid> cartoes;
 
-    // ==========================================
-    // GETTERS E SETTERS (Atualizados)
-    // ==========================================
 
     public Long getId() {
         return id;

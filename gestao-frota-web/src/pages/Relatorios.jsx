@@ -4,9 +4,13 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
-import { Search, Download } from "lucide-react";
-import axios from 'axios';
+import { Search, Download, Grid } from "lucide-react";
+import api from '../services/api';
 import { toast } from "sonner";
+import  {  jsPDF  }  from  'jspdf' 
+import  {  autoTable  }  from  'jspdf-autotable'
+
+
 
 function Relatorios() {
 
@@ -22,12 +26,16 @@ function Relatorios() {
     const [veiculosReais, setVeiculosReais] = useState([]);
     const [veiculoSelecionado, setVeiculoSelecionado] = useState("TODOS");
 
+    
+
+    
+
     // Modifique estes dois para iniciarem vazios/dinâmicos:
     const [dadosRelatorio, setDadosRelatorio] = useState([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        axios.get("http://localhost:8080/api/veiculos")
+        api.get("/veiculos")
             .then(response => setVeiculosReais(response.data))
             .catch(error => { console.error("Erro ao carregar veiculos:", error); toast.error("Nao foi possivel carregar a lista de veiculos."); });
         handleGerarRelatorio();
@@ -58,11 +66,24 @@ function Relatorios() {
                     
                 };
 
-                const response = await axios.get("http://localhost:8080/api/localizacao/relatorio-km",
+                const response = await api.get("/localizacao/relatorio-km",
                     {params}
                 );
 
-                setDadosRelatorio(response.data);
+
+
+                if(response.data.length == 0){
+                    toast.error("Nenhum relatório encontrado no período selecionado")
+                    
+                }
+                else{
+                    setDadosRelatorio(response.data);
+                    toast.success("Relatório carregado com sucesso!")
+                }
+
+                
+
+                
             
         
              } catch (error) {
@@ -76,11 +97,25 @@ function Relatorios() {
             }
     };
 
+    const handleBaixarPDF = async () => {
+        if(dadosRelatorio.length == 0){
+            toast.error("É necessário gerar o relatório para fazer o download")
+            return;
+        };
+
+        const  doc  =  new  jsPDF ( )
+
+        autoTable ( doc,  {theme: 'grid',  html : '#tabela-relatorio'  } )
+        doc.save('relatorio.pdf')
+        
+            
+    };
+
     return (
         <div className="w-full space-y-6">
             <div className="flex items-center justify-between border-b border-border pb-4">
                 <h1 className="text-xl font-semibold text-foreground">Relatorios de Telemetria</h1>
-                <Button variant= "outline"><Download className="h-4 w-4 mr-2" />Baixar</Button>
+                <Button variant= "outline" onClick={handleBaixarPDF}><Download className="h-4 w-4 mr-2" />Baixar</Button>
             </div>
 
             {/* Filtros */}
@@ -140,7 +175,7 @@ function Relatorios() {
             <Card>
                 <CardHeader><CardTitle>Detalhamento das Viagens</CardTitle></CardHeader>
                 <CardContent>
-                    <Table>
+                    <Table id="tabela-relatorio">
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Data/Hora</TableHead><TableHead>Veiculo</TableHead>

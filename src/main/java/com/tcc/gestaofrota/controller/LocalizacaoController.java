@@ -64,7 +64,7 @@ public class LocalizacaoController {
             pontoMap.put("lat", p.getLatitude());
             pontoMap.put("lng", p.getLongitude());
             pontoMap.put("velocidade", p.getVelocidade());
-            pontoMap.put("hora", p.getDataHora().toLocalTime().toString().substring(0, 5));
+            pontoMap.put("hora", p.getDataHora().toLocalTime().toString().substring(0, 8));
             pontoMap.put("motorista", p.getMotorista());
             pontoMap.put("status", p.getStatus());
             return pontoMap;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import axios from 'axios';
+import api from '../services/api';
 
 // Conserta os ícones padrão do Leaflet (mesma correção do Rotas.jsx)
 delete L.Icon.Default.prototype._getIconUrl;
@@ -65,7 +65,7 @@ function MonitoramentoTempoReal() {
 
     // Lista de veículos pro filtro (uma vez)
     useEffect(() => {
-        axios.get("http://localhost:8080/api/veiculos")
+        api.get("/veiculos")
             .then(r => setVeiculos(r.data))
             .catch(e => console.error("Erro ao carregar veículos:", e));
     }, []);
@@ -77,16 +77,23 @@ function MonitoramentoTempoReal() {
         const buscar = async () => {
             try {
                 if (veiculoSelecionado === "TODOS") {
-                    const r = await axios.get("http://localhost:8080/api/localizacao/ultimas");
+                    const r = await api.get("/localizacao/ultimas");
                     // Remove duplicados: 1 ponto por veículo
                     const porVeiculo = new Map();
                     r.data.forEach(p => porVeiculo.set(p.idVeiculo, p));
                     if (ativo) { setPosicoes([...porVeiculo.values()]); setRota([]); }
                 } else {
-                    const r = await axios.get("http://localhost:8080/api/localizacao/rota", {
+                    const r = await api.get("/localizacao/rota", {
                         params: { idVeiculo: veiculoSelecionado, data: hojeLocal() }
                     });
-                    if (ativo) { setRota(r.data); setPosicoes([]); }
+                    if (r.data.length == 0){
+                        const ultimaVeiculo = await api.get("/localizacao/ultimas");   
+                        const encontrado = ultimaVeiculo.data.find(p => p.idVeiculo == veiculoSelecionado);
+                        setRota([encontrado]);
+                        setPosicoes([]);
+
+                    }
+                    else  { setRota(r.data); setPosicoes([]); }
                 }
             } catch (e) {
                 console.error("Erro no monitoramento:", e);

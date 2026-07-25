@@ -51,7 +51,9 @@ function Funcionarios() {
         try {
             const res = await api.get('/funcionarios');
             setFuncionarios(res.data);
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            toast.error("Erro ao carregar os funcionários!")
+            console.error(e); }
     };
 
     useEffect(() => { carregar(); }, []);

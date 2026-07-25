@@ -16,10 +16,14 @@ public class ComandoService {
 
     private final ComandoRepository comandoRepository;
     private final ControladoraRepository controladoraRepository;
+    private final MqttService mqttService;
 
-    public ComandoService(ComandoRepository comandoRepository, ControladoraRepository controladoraRepository) {
+    public ComandoService(ComandoRepository comandoRepository,
+                          ControladoraRepository controladoraRepository,
+                          MqttService mqttService) {
         this.comandoRepository = comandoRepository;
         this.controladoraRepository = controladoraRepository;
+        this.mqttService = mqttService;
     }
 
     // Frontend chama isso para enviar um comando a um veículo.
@@ -37,8 +41,12 @@ public class ComandoService {
         comando.setTipo(tipo);
         comando.setStatus("PENDENTE");
         comando.setCriadoEm(LocalDateTime.now());
+        Comando salvo = comandoRepository.save(comando);
 
-        return comandoRepository.save(comando);
+        // Publica no MQTT pro ESP receber NA HORA (o save acima mantém o HTTP funcionando também)
+        mqttService.publicarComando(String.valueOf(idControladora), tipo);
+
+        return salvo;
     }
 
     // ESP chama isso no polling. Retorna o comando mais antigo ainda pendente.

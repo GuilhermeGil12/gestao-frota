@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import api from '../services/api';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -23,10 +24,8 @@ function Comandos() {
 
     async function buscarComandos() {
         try {
-            const resp = await fetch("http://localhost:8080/api/comandos");
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            const dados = await resp.json();
-            setComandos(Array.isArray(dados) ? dados : []);
+            const resp = await api.get('/comandos');
+            setComandos(Array.isArray(resp.data) ? resp.data : []);
         } catch (err) {
             toast.error("Erro ao buscar comandos: " + err.message);
         }
@@ -34,9 +33,8 @@ function Comandos() {
 
     async function buscarControladoras() {
         try {
-            const resp = await fetch("http://localhost:8080/api/controladora");
-            const dados = await resp.json();
-            setControladoras(dados);
+            const resp = await api.get('/controladora');
+            setControladoras(resp.data);
         } catch (err) {
             toast.error("Erro ao buscar controladoras.");
         }
@@ -50,13 +48,7 @@ function Comandos() {
 
         setCarregando(true);
         try {
-            const resp = await fetch(`http://localhost:8080/api/comandos/${idControladoraSelecionada}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ tipo: tipoSelecionado }),
-            });
-
-            if (!resp.ok) throw new Error();
+            await api.post(`/comandos/${idControladoraSelecionada}`, { tipo: tipoSelecionado });
 
             toast.success("Comando enviado! O veículo receberá em até 10 segundos.");
             setDialogAberto(false);
