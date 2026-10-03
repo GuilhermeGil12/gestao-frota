@@ -149,7 +149,7 @@ function Cercas() {
 
             {/* MAPA PRINCIPAL */}
             <MapContainer center={centro} zoom={13} style={{ height: "600px", width: "100%", borderRadius: "8px" }}>
-                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 <VoarPara posicao={voarPara} />
                 {cercas.map(c => c.latitude && c.longitude && (
                     <Fragment key={c.id}>
@@ -247,7 +247,7 @@ function Cercas() {
                         {/* Mini mapa dentro do modal */}
                         <div style={{ height: 320, borderRadius: 8, overflow: "hidden" }}>
                             <MapContainer center={centro} zoom={13} style={{ height: "100%", width: "100%" }}>
-                                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                                 <CliqueMapaAdicao onClick={pos => setNovaPos(pos)} />
                                 {novaPos && (
                                     <Fragment>

@@ -27,7 +27,7 @@ import {
     AlertDialogTitle,
 } from "../components/ui/alert-dialog";
 
-import { Ellipsis } from "lucide-react";
+import { Ellipsis, BellRing } from "lucide-react";
 
 function Dashboard() {
     const [veiculoBloquear, setVeiculoBloquear] = useState(null)
@@ -172,8 +172,8 @@ function Dashboard() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
                         <DropdownMenuItem>Ver no mapa</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => apitarVeiculo(veiculo)}>
-                          🔔 Apitar (localizar)
+                        <DropdownMenuItem className="items-center" onClick={() => apitarVeiculo(veiculo)}>
+                         <BellRing/>  localizar
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-red-500" onClick={() => setVeiculoBloquear(veiculo)}>
                           Bloquear veículo

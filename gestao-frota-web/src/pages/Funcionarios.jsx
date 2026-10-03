@@ -22,12 +22,14 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../components/ui/dialog";
+import Setores from "./configuracoes/Setores";
 
 function Funcionarios() {
     const [funcionarios, setFuncionarios] = useState([]);
     const [termoBusca, setTermoBusca] = useState("");
     const [mapaAberto, setMapaAberto] = useState(false);
     const [pinPos, setPinPos] = useState(null); // { lat, lng }
+    const [setor, setSetores] = useState([]);
 
     // 1. NOVO ESTADO: Controla o filtro de status (todos, ativos, inativos)
     const [filtroStatus, setFiltroStatus] = useState("ativos");
@@ -56,7 +58,20 @@ function Funcionarios() {
             console.error(e); }
     };
 
+    const carregarSetores = async () =>{
+
+        try{
+        const res = await api.get('/setores');
+        setSetores(res.data);
+
+        }
+        catch(e){
+            console.log("Erro ao carregar setores " + e)
+        }
+    }
+
     useEffect(() => { carregar(); }, []);
+    useEffect(() => { carregarSetores(); }, []);
 
     const erroMsg = (e, fallback) => e?.response?.data?.message || fallback;
 
@@ -272,12 +287,14 @@ function Funcionarios() {
                             <div className="space-y-2"><Label>Cargo</Label><Input value={formData.cargo} onChange={e => setFormData({ ...formData, cargo: e.target.value })} required /></div>
                             <div className="space-y-2">
                                 <Label>Setor</Label>
-                                <select value={formData.setor} onChange={e => setFormData({ ...formData, setor: e.target.value })} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                                    <option value="">Selecione...</option>
-                                    <option value="dev">DEV</option>
-                                    <option value="vendas">Vendas</option>
-                                    <option value="estoque">Estoque</option>
-                                    <option value="financeiro">Financeiro</option>
+                                
+                                <select value={formData.setor?.id} onChange={e => setFormData({ ...formData, setor: {id: Number(e.target.value)} })} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                    {setor.map (s => (
+
+                                        <option value={s.id}>{s.nome}</option>
+
+                                    ))}
+                                   
                                 </select>
                             </div>
                             <div className="space-y-2">
@@ -366,7 +383,7 @@ function Funcionarios() {
                                 </TableCell>
                                 <TableCell>{f.cpf}</TableCell>
                                 <TableCell>{f.rg}</TableCell>
-                                <TableCell className="uppercase">{f.setor}</TableCell>
+                                <TableCell className="">{f.setor?.nome}</TableCell>
                                 <TableCell>Nível {f.nivelMotorista}</TableCell>
                                 <TableCell>{f.ativo ? "Ativo" : "Desativado"}</TableCell>
                                 <TableCell>

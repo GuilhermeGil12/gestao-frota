@@ -176,7 +176,7 @@ function Cartoes() {
                             <TableRow key={f.id}>
                                 <TableCell className="font-semibold">{f.nome}</TableCell>
                                 <TableCell>{f.cargo}</TableCell>
-                                <TableCell className="uppercase">{f.setor}</TableCell>
+                                <TableCell className="uppercase">{f.setor?.nome}</TableCell>
                                 <TableCell className="text-center"><Button size="sm" onClick={() => abrirPainelCartoes(f)}>Gerenciar Cartoes</Button></TableCell>
                             </TableRow>
                         ))

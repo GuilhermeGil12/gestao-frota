@@ -74,8 +74,9 @@ public class Funcionario {
     @Column(name = "rg")
     private String rg;
 
-    @Column(name = "setor")
-    private String setor;
+    @ManyToOne
+    @JoinColumn(name = "id_setor", referencedColumnName = "id_setor")
+    private Setor setor; // Alterado de String para a Classe Permissao
 
     @Column(name = "longitude")
     private Double longitude;
@@ -157,11 +158,11 @@ public class Funcionario {
         this.rg = rg;
     }
 
-    public String getSetor() {
+    public Setor getSetor() {
         return setor;
     }
 
-    public void setSetor(String setor) {
+    public void setSetor(Setor setor) {
         this.setor = setor;
     }
 

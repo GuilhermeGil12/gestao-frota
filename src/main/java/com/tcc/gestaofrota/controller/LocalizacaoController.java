@@ -8,9 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDateTime;
-
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -57,14 +57,17 @@ public class LocalizacaoController {
             @RequestParam Long idVeiculo,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
 
-        List<Localizacao> pontos = repository.buscarRotaPorDia(idVeiculo, data);
+        LocalDateTime inicio = data.atStartOfDay();
+        LocalDateTime fim = data.plusDays(1).atStartOfDay();
+        List<Localizacao> pontos = repository.buscarRotaPorDia(idVeiculo, inicio, fim);
 
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("HH:mm:ss");
         List<Map<String, Object>> response = pontos.stream().map(p -> {
             Map<String, Object> pontoMap = new HashMap<>();
             pontoMap.put("lat", p.getLatitude());
             pontoMap.put("lng", p.getLongitude());
             pontoMap.put("velocidade", p.getVelocidade());
-            pontoMap.put("hora", p.getDataHora().toLocalTime().toString().substring(0, 8));
+            pontoMap.put("hora", p.getDataHora() != null ? p.getDataHora().toLocalTime().format(fmt) : null);
             pontoMap.put("motorista", p.getMotorista());
             pontoMap.put("status", p.getStatus());
             return pontoMap;

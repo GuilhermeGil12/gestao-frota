@@ -5,7 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -22,9 +21,11 @@ public interface LocalizacaoRepository extends JpaRepository <Localizacao, Long>
     Optional<Localizacao> findByDataHora(Date dataHora);
 
     @Query("SELECT l FROM Localizacao l WHERE l.veiculo.id = :idVeiculo " +
-            "AND CAST(l.dataHora AS date) = :data " +
+            "AND l.dataHora >= :inicio AND l.dataHora < :fim " +
             "ORDER BY l.dataHora ASC")
-    List<Localizacao> buscarRotaPorDia(@Param("idVeiculo") Long idVeiculo, @Param("data") LocalDate data);
+    List<Localizacao> buscarRotaPorDia(@Param("idVeiculo") Long idVeiculo,
+                                       @Param("inicio") LocalDateTime inicio,
+                                       @Param("fim") LocalDateTime fim);
 
 
 

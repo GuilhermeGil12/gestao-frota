@@ -157,8 +157,8 @@ function MonitoramentoTempoReal() {
             <div className="w-full h-[800px] rounded-xl overflow-hidden border border-border">
                 <MapContainer center={[-15.78, -47.93]} zoom={4} style={{ height: "100%", width: "100%" }}>
                     <TileLayer
-                        attribution='&copy; CARTO'
-                        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
 
                     {/* MODO TODOS: cada carro pulsando, com os 2 últimos dígitos da placa */}

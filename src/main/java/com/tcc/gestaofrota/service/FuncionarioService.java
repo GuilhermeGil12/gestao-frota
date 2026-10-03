@@ -6,15 +6,19 @@ import com.tcc.gestaofrota.model.Funcionario;
 import com.tcc.gestaofrota.repository.CercaRepository;
 import com.tcc.gestaofrota.repository.FuncionarioRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
+
+import javax.management.RuntimeErrorException;
 
 @Service
 public class FuncionarioService {
 
     private final FuncionarioRepository funcionarioRepository;
     private final CercaRepository cercaRepository;
+    
 
     public FuncionarioService(FuncionarioRepository funcionarioRepository, CercaRepository cercaRepository) {
         this.funcionarioRepository = funcionarioRepository;
@@ -98,6 +102,15 @@ public class FuncionarioService {
         return caixaMisteriosa.get();
     }
 
+    public Funcionario buscarPorEmail(String email){
+        Optional<Funcionario> caixaMisteriosa = funcionarioRepository.findByEmail(email);
+
+        if(caixaMisteriosa.isEmpty()){
+            throw new RuntimeException( "Nenhum email encontrado no banco de dados!");
+        }
+        return caixaMisteriosa.get();
+    }
+
     public Funcionario atualizar(Long id, Funcionario funcionarioNovo){
         Funcionario funcionarioAntigo = buscarPorId(id);
 
@@ -142,6 +155,14 @@ public class FuncionarioService {
         buscarPorId(id);
 
         funcionarioRepository.deleteById(id);
+    }
+
+
+    public void autenticar( String email, String senha){
+        buscarPorEmail(email);
+
+        
+
     }
 
 }

@@ -43,7 +43,7 @@ function Rotas() {
         if (!dataBusca || !veiculoSelecionado) { toast.error("Selecione a data e o veiculo."); return; }
         try {
             const response = await api.get(`/localizacao/rota`, { params: { idVeiculo: veiculoSelecionado, data: dataBusca } });
-            if (response.data.length === 0) { setHistoricoRotas([]); toast.warn("Nenhum dado encontrado para este veiculo nesse dia."); }
+            if (response.data.length === 0) { setHistoricoRotas([]); toast.warning("Nenhum dado encontrado para este veiculo nesse dia."); }
             else { setHistoricoRotas(response.data); toast.success(`${response.data.length} pontos de telemetria carregados!`); }
         } catch (error) { console.error("Erro Axios:", error); toast.error("Erro ao conectar com o servidor Spring Boot."); }
     };
@@ -91,11 +91,8 @@ function Rotas() {
 
                 <MapContainer center={[-23.5505, -46.6333]} zoom={13} style={{ height: "100%", width: "100%" }}>
                     <TileLayer
-                        attribution='&copy; CARTO'
-                        url={temaEscuro
-                            ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                            : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                        }
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
                     {historicoRotas.length > 0 && <ChangeView center={[historicoRotas[0].lat, historicoRotas[0].lng]} />}
                     {historicoRotas.length > 0 && (
