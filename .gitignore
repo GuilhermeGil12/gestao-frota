@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Node ###
+node_modules/
+gestao-frota-web/node_modules/
+
+### Claude ###
+.claude/worktrees/
