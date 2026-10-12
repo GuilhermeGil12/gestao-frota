@@ -7,8 +7,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
+import { useAuth } from "../context/AuthContext";
 
 function Comandos() {
+    const { temPermissao } = useAuth();
+    const podeEnviarComando =
+        temPermissao("comandos.bloquear") || temPermissao("comandos.desbloquear");
     const [comandos, setComandos] = useState([]);
     const [controladoras, setControladoras] = useState([]);
     const [dialogAberto, setDialogAberto] = useState(false);
@@ -77,7 +81,9 @@ function Comandos() {
             {/* Cabeçalho */}
             <div className="flex items-center justify-between border-b border-border pb-4">
                 <h1 className="text-xl font-semibold text-foreground">Comandos Remotos</h1>
-                <Button onClick={() => setDialogAberto(true)}>Novo Comando</Button>
+                {podeEnviarComando && (
+                    <Button onClick={() => setDialogAberto(true)}>Novo Comando</Button>
+                )}
             </div>
 
             {/* Tabela de histórico */}
@@ -153,8 +159,12 @@ function Comandos() {
                                     <SelectValue placeholder="Selecione o comando..." />
                                 </SelectTrigger>
                                 <SelectContent className="">
-                                    <SelectItem value="BLOQUEAR">Bloquear veículo</SelectItem>
-                                    <SelectItem value="DESBLOQUEAR">Desbloquear veículo</SelectItem>
+                                    {temPermissao("comandos.bloquear") && (
+                                        <SelectItem value="BLOQUEAR">Bloquear veículo</SelectItem>
+                                    )}
+                                    {temPermissao("comandos.desbloquear") && (
+                                        <SelectItem value="DESBLOQUEAR">Desbloquear veículo</SelectItem>
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>

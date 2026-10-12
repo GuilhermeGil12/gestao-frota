@@ -30,13 +30,37 @@ import Comandos           from './pages/comandos';
 import Login              from './pages/login';
 import Setores            from './pages/configuracoes/Setores';
 import Usuario from './pages/configuracoes/Usuario';
+import { useAuth } from './context/AuthContext';
 
 const W_OPEN   = 240;
 const W_CLOSED =  56;
 
+/** Sem sessao volta para o login; sem a permissao exigida mostra o aviso. */
+function RotaProtegida({ permissao, children }) {
+    const { autenticado, temPermissao } = useAuth();
+
+    if (!autenticado) return <Navigate to="/login" replace />;
+
+    if (permissao && !temPermissao(permissao)) {
+        return (
+            <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
+                <h2 className="text-lg font-semibold text-foreground">Acesso negado</h2>
+                <p className="text-sm text-muted-foreground">
+                    Você não tem permissão para acessar esta tela.
+                </p>
+            </div>
+        );
+    }
+
+    return children;
+}
+
 function LayoutPrincipal() {
     const [isMenuOpen, setIsMenuOpen] = useState(true);
     const toggleMenu = () => setIsMenuOpen(prev => !prev);
+    const { autenticado } = useAuth();
+
+    if (!autenticado) return <Navigate to="/login" replace />;
 
     const notificacoes = [
         { id: 1, texto: "A CNH do motorista Guilherme Gil vence em 5 dias.",       tempo: "Ha 2 horas" },
@@ -81,23 +105,22 @@ function LayoutPrincipal() {
 
                 <main className="flex-1 overflow-y-auto p-6">
                     <Routes>
-                        <Route path="/dashboard"                    element={<Dashboard />}             />
-                        <Route path="/Monitoramento"                element={<MonitoramentoTempoReal />} />
-                        <Route path="/Comandos"                     element={<Comandos />}              />
-                        <Route path="/funcionarios"                 element={<Funcionarios />}          />
-                        <Route path="/veiculos"                     element={<Veiculos />}              />
-                        <Route path="/rotas"                        element={<Rotas />}                 />
-                        <Route path="/alertas"                      element={<Alertas />}               />
-                        <Route path="/cercas"                       element={<Cercas />}                />
-                        <Route path="/controladoras"                element={<Controladoras />}         />
-                        <Route path="/cartoes"                      element={<Cartoes />}               />
-                        <Route path="/configuracoes"                element={<Configuracoes />}         />
-                        <Route path="/configuracoes/permissoes"     element={<Permissoes />}            />
-                        <Route path="/relatorios"                   element={<Relatorios />}            />
-                        <Route path="/"                             element={<Navigate to="/dashboard" />} />
-                        <Route path="configuracoes/setores"                      element={<Setores/>}       />
-                        <Route path="configuracoes/usuario"                      element={<Usuario/>}       />
-
+                        <Route path="/dashboard"                element={<RotaProtegida permissao="dashboard.visualizar"><Dashboard /></RotaProtegida>} />
+                        <Route path="/Monitoramento"            element={<RotaProtegida permissao="monitoramento.visualizar"><MonitoramentoTempoReal /></RotaProtegida>} />
+                        <Route path="/Comandos"                 element={<RotaProtegida permissao="comandos.visualizar"><Comandos /></RotaProtegida>} />
+                        <Route path="/funcionarios"             element={<RotaProtegida permissao="funcionarios.visualizar"><Funcionarios /></RotaProtegida>} />
+                        <Route path="/veiculos"                 element={<RotaProtegida permissao="veiculos.visualizar"><Veiculos /></RotaProtegida>} />
+                        <Route path="/rotas"                    element={<RotaProtegida permissao="veiculos.rotas"><Rotas /></RotaProtegida>} />
+                        <Route path="/alertas"                  element={<RotaProtegida permissao="veiculos.alertas"><Alertas /></RotaProtegida>} />
+                        <Route path="/cercas"                   element={<RotaProtegida permissao="veiculos.cercas"><Cercas /></RotaProtegida>} />
+                        <Route path="/controladoras"            element={<RotaProtegida permissao="controladoras.visualizar"><Controladoras /></RotaProtegida>} />
+                        <Route path="/cartoes"                  element={<RotaProtegida permissao="cartoes.visualizar"><Cartoes /></RotaProtegida>} />
+                        <Route path="/configuracoes"            element={<RotaProtegida permissao="configuracoes.geral"><Configuracoes /></RotaProtegida>} />
+                        <Route path="/configuracoes/permissoes" element={<RotaProtegida permissao="configuracoes.permissoes"><Permissoes /></RotaProtegida>} />
+                        <Route path="/configuracoes/setores"    element={<RotaProtegida permissao="configuracoes.setores"><Setores /></RotaProtegida>} />
+                        <Route path="/configuracoes/usuario"    element={<RotaProtegida permissao="configuracoes.usuarios"><Usuario /></RotaProtegida>} />
+                        <Route path="/relatorios"               element={<RotaProtegida permissao="relatorios.visualizar"><Relatorios /></RotaProtegida>} />
+                        <Route path="/"                         element={<Navigate to="/dashboard" />} />
                     </Routes>
                 </main>
             </div>

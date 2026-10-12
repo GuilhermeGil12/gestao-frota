@@ -1,6 +1,5 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
-import logoEmpresa from '../assets/logocompleta.svg';
 import logoLight from '../assets/logocompleta-light.svg';
 import logoDark from '../assets/logocompleta-dark.svg';
 import {
@@ -10,43 +9,62 @@ import {
 } from "lucide-react";
 import { cn } from '../lib/utils';
 import { Button } from './ui/button';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from './ui/alert-dialog';
 import { useTheme } from '../context/ThemeContext';
-
-const W_OPEN   = 240;
-const W_CLOSED =  56;
+import { useAuth } from '../context/AuthContext';
 
 function Menu({ isOpen, toggleMenu }) {
     const [veiculosOpen, setVeiculosOpen] = useState(false);
     const [configOpen, setConfigOpen] = useState(false);
-    const {tema} = useTheme()
+    const [confirmarSaida, setConfirmarSaida] = useState(false);
+    const { tema } = useTheme();
+    const { usuario, logout, temPermissao } = useAuth();
+    const navigate = useNavigate();
+
+    const sair = async () => {
+        setConfirmarSaida(false);
+        await logout();
+        navigate("/login", { replace: true });
+    };
 
     const menuItems = [
-        { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-        { to: "/Monitoramento", icon: Radio, label: "Monitoramento"},
-        { to: "/funcionarios", icon: Users, label: "Funcionarios" },
-        {to: "/comandos", icon: ShieldAlert, label: "Comandos"},
-    ];
+        { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", permissao: "dashboard.visualizar" },
+        { to: "/Monitoramento", icon: Radio, label: "Monitoramento", permissao: "monitoramento.visualizar" },
+        { to: "/funcionarios", icon: Users, label: "Funcionarios", permissao: "funcionarios.visualizar" },
+        { to: "/comandos", icon: ShieldAlert, label: "Comandos", permissao: "comandos.visualizar" },
+    ].filter(item => temPermissao(item.permissao));
 
     const veiculosSubmenu = [
-        { to: "/veiculos", label: "Lista de Veiculos" },
-        { to: "/rotas", label: "Rotas" },
-        { to: "/alertas", label: "Alertas" },
-        { to: "/cercas", label: "Cercas" },
-    ];
+        { to: "/veiculos", label: "Lista de Veiculos", permissao: "veiculos.visualizar" },
+        { to: "/rotas", label: "Rotas", permissao: "veiculos.rotas" },
+        { to: "/alertas", label: "Alertas", permissao: "veiculos.alertas" },
+        { to: "/cercas", label: "Cercas", permissao: "veiculos.cercas" },
+    ].filter(item => temPermissao(item.permissao));
 
     const bottomItems = [
-        { to: "/controladoras", icon: Cpu, label: "Controladoras" },
-        { to: "/cartoes", icon: CreditCard, label: "Cartoes" },
-        { to: "/relatorios", icon: FileText, label: "Relatorios" },
-        
-    ];
+        { to: "/controladoras", icon: Cpu, label: "Controladoras", permissao: "controladoras.visualizar" },
+        { to: "/cartoes", icon: CreditCard, label: "Cartoes", permissao: "cartoes.visualizar" },
+        { to: "/relatorios", icon: FileText, label: "Relatorios", permissao: "relatorios.visualizar" },
+    ].filter(item => temPermissao(item.permissao));
 
     const configSubMenu = [
-        {to: "/configuracoes", label: "Geral"},
-        {to: "/configuracoes/permissoes", label: "Permissões"},
-        {to: "/configuracoes/setores", label: "Setores"},
-        {to: "/configuracoes/usuario", label: "Usuários"}
-    ]
+        { to: "/configuracoes", label: "Geral", permissao: "configuracoes.geral" },
+        { to: "/configuracoes/permissoes", label: "Permissões", permissao: "configuracoes.permissoes" },
+        { to: "/configuracoes/setores", label: "Setores", permissao: "configuracoes.setores" },
+        { to: "/configuracoes/usuario", label: "Usuários", permissao: "configuracoes.usuarios" },
+    ].filter(item => temPermissao(item.permissao));
+
+    const mostrarVeiculos = veiculosSubmenu.length > 0;
+    const mostrarConfig = configSubMenu.length > 0;
 
     return (
         <nav
@@ -61,10 +79,10 @@ function Menu({ isOpen, toggleMenu }) {
                 isOpen ? "justify-between px-4 py-3.5" : "justify-center py-3.5"
             )}>
                 {isOpen && (
-                    tema == 'dark' ? 
+                    tema == 'dark' ?
                     <img src={logoDark} alt="Logo" className="w-[130px] shrink-0" />
                     : <img src={logoLight} alt="Logo" className="w-[130px] shrink-0" />
-                    
+
                 )}
                 <Button variant="ghost" size="icon" onClick={toggleMenu} className="text-muted-foreground hover:text-foreground">
                     <MenuIcon className="h-5 w-5" />
@@ -89,6 +107,7 @@ function Menu({ isOpen, toggleMenu }) {
                 ))}
 
                 {/* Veiculos com submenu */}
+                {mostrarVeiculos && (
                 <li>
                     <button
                         onClick={() => setVeiculosOpen(v => !v)}
@@ -123,6 +142,7 @@ function Menu({ isOpen, toggleMenu }) {
                         </ul>
                     )}
                 </li>
+                )}
 
                 {bottomItems.map(item => (
                     <li key={item.to}>
@@ -139,12 +159,13 @@ function Menu({ isOpen, toggleMenu }) {
                     </li>
                 ))}
 
+                {mostrarConfig && (
                 <li>
                     <button
                     //inverte o valor de c
                     onClick={() => setConfigOpen(c => !c)}
                     className={cn(
-                        "flex items-center gap-3.5 w-full px-3.5 py-2.5 text-sidebar-foreground/70 text-sm bg-transparent border-none cursos-pointer rounded-md transition-colors hover:bg-sidebar-accent hover:text-siderbar-foreground text-left ",
+                        "flex items-center gap-3.5 w-full px-3.5 py-2.5 text-sidebar-foreground/70 text-sm bg-transparent border-none cursor-pointer rounded-md transition-colors hover:bg-sidebar-accent hover:text-siderbar-foreground text-left ",
                         !isOpen && "justify-center px-0 gap-0"
                     )}>
                         <Settings className="h-5 w-5 shrink-0"/>
@@ -157,7 +178,7 @@ function Menu({ isOpen, toggleMenu }) {
                             )}/>
                             </>
                         )}
-                        
+
                     </button>
                     {configOpen && isOpen && (
                         <ul className="list-none p-0 m-0 bg-sidebar-accent/50 rounded-md mt-0.5">
@@ -174,10 +195,12 @@ function Menu({ isOpen, toggleMenu }) {
                         </ul>
                     )}
                 </li>
+                )}
 
                 {/* Sair */}
                 <li className="mt-2">
                     <button
+                        onClick={() => setConfirmarSaida(true)}
                         className={cn(
                             "flex items-center gap-3.5 w-full px-3.5 py-2.5 text-red-400 text-sm bg-transparent border-none cursor-pointer rounded-md transition-colors hover:bg-destructive hover:text-destructive-foreground",
                             !isOpen && "justify-center px-0 gap-0"
@@ -199,9 +222,31 @@ function Menu({ isOpen, toggleMenu }) {
                     )}
                 >
                     <User className="h-5 w-5 shrink-0" />
-                    {isOpen && <span>Perfil</span>}
+                    {isOpen && (
+                        <span className="truncate">{usuario?.nomeUsuario ?? "Perfil"}</span>
+                    )}
                 </Link>
             </div>
+
+            <AlertDialog open={confirmarSaida} onOpenChange={setConfirmarSaida}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Sair do sistema?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Você precisará entrar novamente com seu e-mail e senha.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={sair}
+                        >
+                            Sim, sair
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </nav>
     );
 }

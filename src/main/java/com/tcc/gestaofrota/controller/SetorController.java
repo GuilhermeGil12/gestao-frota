@@ -4,6 +4,7 @@ package com.tcc.gestaofrota.controller;
 import com.tcc.gestaofrota.model.Setor;
 import com.tcc.gestaofrota.service.SetorService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,7 @@ public class SetorController {
         this.setorService = setorService;
     }
 
+    @PreAuthorize("hasAuthority('configuracoes.setores')")
     @GetMapping
     public ResponseEntity<List<Setor>> listarSetores(){
 
@@ -28,6 +30,7 @@ public class SetorController {
 
     }
 
+    @PreAuthorize("hasAuthority('configuracoes.setores')")
     @PostMapping
     public Setor salvar(@RequestBody  Setor setor){
 

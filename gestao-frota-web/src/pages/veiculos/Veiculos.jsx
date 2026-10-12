@@ -11,6 +11,8 @@ import { Badge } from "../../components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../../components/ui/dialog";
 
+import { useAuth } from "../../context/AuthContext";
+
 import {
     AlertDialog,
     AlertDialogAction,
@@ -23,6 +25,7 @@ import {
 } from "../../components/ui/alert-dialog";
 
 function Veiculos() {
+    const { temPermissao } = useAuth();
     const [veiculos, setVeiculos] = useState([]);
     const [controladorasLivres, setControladorasLivres] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -103,7 +106,9 @@ function Veiculos() {
             <div className="flex items-center justify-between mb-6 border-b border-border pb-4 gap-4">
                 <h1 className="text-xl font-semibold text-foreground">Gestao de Veiculos</h1>
                 <Input type="text" placeholder="Pesquisar por Nome ou Placa..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} className="max-w-xs" />
-                <Button onClick={() => abrirModal()}>+ Novo Veiculo</Button>
+                {temPermissao("veiculos.cadastrar") && (
+                    <Button onClick={() => abrirModal()}>+ Novo Veiculo</Button>
+                )}
             </div>
 
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -148,9 +153,15 @@ function Veiculos() {
                                 <TableCell>{v.controladora ? `IP: ${v.controladora.ipControladora}` : "Desvinculado"}</TableCell>
                                 <TableCell>
                                     <div className="flex gap-2 justify-center">
-                                        <Button size="sm" variant="outline" onClick={() => abrirModal(v)}>Editar</Button>
-                                        <Button size="sm" variant={v.ativo ? "secondary" : "default"} onClick={() => handleInativar(v)}>{v.ativo ? "Inativar" : "Ativar"}</Button>
-                                        <Button size="sm" variant="destructive" onClick={(e) =>{e.stopPropagation(); handleExcluirClique(v.id)}}>Excluir</Button>
+                                        {temPermissao("veiculos.editar") && (
+                                            <Button size="sm" variant="outline" onClick={() => abrirModal(v)}>Editar</Button>
+                                        )}
+                                        {temPermissao("veiculos.inativar") && (
+                                            <Button size="sm" variant={v.ativo ? "secondary" : "default"} onClick={() => handleInativar(v)}>{v.ativo ? "Inativar" : "Ativar"}</Button>
+                                        )}
+                                        {temPermissao("veiculos.inativar") && (
+                                            <Button size="sm" variant="destructive" onClick={(e) =>{e.stopPropagation(); handleExcluirClique(v.id)}}>Excluir</Button>
+                                        )}
                                     </div>
                                 </TableCell>
                             </TableRow>

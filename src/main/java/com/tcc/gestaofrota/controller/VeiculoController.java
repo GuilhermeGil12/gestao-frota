@@ -3,6 +3,7 @@ package com.tcc.gestaofrota.controller;
 import com.tcc.gestaofrota.model.Veiculo;
 import com.tcc.gestaofrota.service.VeiculoService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,7 @@ public class VeiculoController {
     }
 
     // 1. Método para cadastrar um novo veículo
+    @PreAuthorize("hasAuthority('veiculos.cadastrar')")
     @PostMapping
     public ResponseEntity<Veiculo> criar(@RequestBody Veiculo veiculo) {
         Veiculo novoVeiculo = veiculoService.salvar(veiculo);
@@ -25,6 +27,7 @@ public class VeiculoController {
     }
 
     // 2. Método que o React usará para preencher o Select de Rotas
+    @PreAuthorize("hasAuthority('veiculos.visualizar')")
     @GetMapping
     public ResponseEntity<List<Veiculo>> listarTodas() {
         // O garçom (Controller) pede para o cozinheiro (Service) a lista
@@ -34,6 +37,7 @@ public class VeiculoController {
     }
 
     // 3. Método para buscar um veículo específico pela placa
+    @PreAuthorize("hasAuthority('veiculos.visualizar')")
     @GetMapping("/placa/{placa}")
     public ResponseEntity<Veiculo> buscarPorPlaca(@PathVariable String placa) {
         return veiculoService.buscarPorPlaca(placa)
@@ -42,6 +46,7 @@ public class VeiculoController {
     }
 
     // 4. Método para atualizar dados de um veículo existente
+    @PreAuthorize("hasAuthority('veiculos.editar')")
     @PutMapping("/{id}")
     public ResponseEntity<Veiculo> atualizar(@PathVariable Long id, @RequestBody Veiculo veiculoNovo) {
         Veiculo veiculoAtualizado = veiculoService.atualizar(id, veiculoNovo);
@@ -49,6 +54,7 @@ public class VeiculoController {
     }
 
     // 5. Método para remover um veículo do sistema
+    @PreAuthorize("hasAuthority('veiculos.inativar')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         veiculoService.deletar(id);

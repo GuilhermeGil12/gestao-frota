@@ -20,8 +20,10 @@ import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../components/ui/dialog";
+import { useAuth } from "../context/AuthContext";
 
 function Cartoes() {
+    const { temPermissao } = useAuth();
     const [funcionarios, setFuncionarios] = useState([]);
     const [termoBusca, setTermoBusca] = useState("");
     const [isModalCartoesOpen, setIsModalCartoesOpen] = useState(false);
@@ -146,6 +148,7 @@ function Cartoes() {
                                         <p className="text-xs text-muted-foreground">Reative o funcionário antes de vincular novos cartões.</p>
                                     </div>
                                 ) : (
+                                    temPermissao("cartoes.vincular") && (
                                     <>
                                         <h3 className="text-sm font-semibold text-blue-400 mb-3">+ Novo Cartão</h3>
                                         <div className="space-y-3">
@@ -156,6 +159,7 @@ function Cartoes() {
                                             <Button className="w-full" onClick={handleVincularCartao}>Vincular</Button>
                                         </div>
                                     </>
+                                    )
                                 )}
                             </div>
                         </div>

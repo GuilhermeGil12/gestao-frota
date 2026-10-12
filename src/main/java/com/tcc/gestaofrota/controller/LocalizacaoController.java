@@ -7,6 +7,7 @@ import com.tcc.gestaofrota.service.LocalizacaoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -45,6 +46,7 @@ public class LocalizacaoController {
     }
 
     // 2. Busca a última localização (Usado no Dashboard)
+    @PreAuthorize("hasAuthority('monitoramento.visualizar')")
     @GetMapping("/ultima/{idVeiculo}")
     public ResponseEntity<Localizacao> buscarUltimaLocalizacao(@PathVariable Long idVeiculo) {
         Optional<Localizacao> ultimaLoc = localizacaoService.buscarUltimaLocalizacao(idVeiculo);
@@ -52,6 +54,7 @@ public class LocalizacaoController {
     }
 
     // 3. Busca a rota completa do dia (Usado na tela de Rotas/Mapa)
+    @PreAuthorize("hasAuthority('veiculos.rotas')")
     @GetMapping("/rota")
     public ResponseEntity<List<Map<String, Object>>> obterRota(
             @RequestParam Long idVeiculo,
@@ -76,6 +79,7 @@ public class LocalizacaoController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAuthority('veiculos.alertas')")
     @GetMapping("/alerta")
     public ResponseEntity<List<Localizacao>> obterAlerta(
             @RequestParam(required = false) Long idVeiculo,
@@ -90,6 +94,7 @@ public class LocalizacaoController {
     // Adicione este endpoint dentro do seu LocalizacaoController existente:
     // Cole este endpoint dentro do seu LocalizacaoController atual:
 
+    @PreAuthorize("hasAuthority('relatorios.visualizar')")
     @GetMapping("/relatorio-km")
     public ResponseEntity<List<Map<String, Object>>> obterRelatorioKm(
             @RequestParam("inicio") @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
@@ -101,6 +106,7 @@ public class LocalizacaoController {
         return ResponseEntity.ok(relatorio);
     }
 
+    @PreAuthorize("hasAuthority('monitoramento.visualizar')")
     @GetMapping("/ultimas")
     public ResponseEntity<List<Map<String, Object>>> buscarUltimas() {
         List<Map<String, Object>> ultimas = localizacaoService.buscarUltimasLocalizacoes();

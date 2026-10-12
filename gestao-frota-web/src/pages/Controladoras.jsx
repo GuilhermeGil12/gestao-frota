@@ -22,8 +22,10 @@ import {
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../components/ui/dialog";
+import { useAuth } from "../context/AuthContext";
 
 function Controladoras() {
+    const { temPermissao } = useAuth();
     const [controladoras, setControladoras] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const initialState = { idControladora: null, ipControladora: "", macControladora: "", senha: "", ativo: true };
@@ -85,7 +87,9 @@ function Controladoras() {
         <div className="w-full">
             <div className="flex items-center justify-between mb-6 border-b border-border pb-4">
                 <h1 className="text-xl font-semibold text-foreground">Gestao de Controladoras</h1>
-                <Button onClick={() => abrirModal()}>+ Nova Controladora</Button>
+                {temPermissao("controladoras.cadastrar") && (
+                    <Button onClick={() => abrirModal()}>+ Nova Controladora</Button>
+                )}
             </div>
 
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -119,11 +123,17 @@ function Controladoras() {
                                 <TableCell>{c.macControladora}</TableCell>
                                 <TableCell>
                                     <div className="flex gap-2 justify-center">
-                                        <Button size="sm" variant="outline" onClick={() => abrirModal(c)}>Editar</Button>
-                                        <Button size="sm" variant={c.ativo ? "secondary" : "default"} onClick={(e) =>{e.stopPropagation(); handleInativar(c)}}>
-                                            {c.ativo ? "Inativar" : "Ativar"
-                                        }</Button>
-                                        <Button size="sm" variant="destructive" onClick={() => handleExcluirClique(c.idControladora)}>Excluir</Button>
+                                        {temPermissao("controladoras.editar") && (
+                                            <Button size="sm" variant="outline" onClick={() => abrirModal(c)}>Editar</Button>
+                                        )}
+                                        {temPermissao("controladoras.editar") && (
+                                            <Button size="sm" variant={c.ativo ? "secondary" : "default"} onClick={(e) =>{e.stopPropagation(); handleInativar(c)}}>
+                                                {c.ativo ? "Inativar" : "Ativar"}
+                                            </Button>
+                                        )}
+                                        {temPermissao("controladoras.editar") && (
+                                            <Button size="sm" variant="destructive" onClick={() => handleExcluirClique(c.idControladora)}>Excluir</Button>
+                                        )}
                                     </div>
                                 </TableCell>
                             </TableRow>

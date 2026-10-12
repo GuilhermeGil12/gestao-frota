@@ -3,6 +3,7 @@ package com.tcc.gestaofrota.controller;
 import com.tcc.gestaofrota.model.Cerca;
 import com.tcc.gestaofrota.service.CercaService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,26 +18,31 @@ public class CercaController {
         this.cercaService = cercaService;
     }
 
+    @PreAuthorize("hasAuthority('veiculos.cercas')")
     @GetMapping
     public List<Cerca> listar() {
         return cercaService.listarTodas();
     }
 
+    @PreAuthorize("hasAuthority('veiculos.cercas')")
     @GetMapping("/{id}")
     public Cerca buscarPorId(@PathVariable Long id) {
         return cercaService.buscarPorId(id);
     }
 
+    @PreAuthorize("hasAuthority('veiculos.cercas')")
     @PostMapping
     public Cerca salvar(@RequestBody Cerca cerca) {
         return cercaService.salvar(cerca);
     }
 
+    @PreAuthorize("hasAuthority('veiculos.cercas')")
     @PutMapping("/{id}")
     public Cerca atualizar(@PathVariable Long id, @RequestBody Cerca cerca) {
         return cercaService.atualizar(id, cerca);
     }
 
+    @PreAuthorize("hasAuthority('veiculos.cercas')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         cercaService.deletar(id);

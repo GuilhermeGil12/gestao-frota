@@ -23,8 +23,10 @@ import { Label } from "../components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../components/ui/dialog";
 import Setores from "./configuracoes/Setores";
+import { useAuth } from "../context/AuthContext";
 
 function Funcionarios() {
+    const { temPermissao } = useAuth();
     const [funcionarios, setFuncionarios] = useState([]);
     const [termoBusca, setTermoBusca] = useState("");
     const [mapaAberto, setMapaAberto] = useState(false);
@@ -215,7 +217,9 @@ function Funcionarios() {
                     </select>
                 </div>
 
-                <Button onClick={() => abrirModal()}>+ Novo Funcionário</Button>
+                {temPermissao("funcionarios.cadastrar") && (
+                    <Button onClick={() => abrirModal()}>+ Novo Funcionário</Button>
+                )}
             </div>
 
             {/* Modal de Cadastro/Edicao */}
@@ -390,11 +394,15 @@ function Funcionarios() {
                                     <div className="flex gap-2 justify-center">
                                         {f.ativo ? (
                                             <>
-                                                <Button size="sm" variant="outline" onClick={() => abrirModal(f)}>Editar</Button>
-                                                <Button size="sm" variant="destructive" onClick={() => setFuncionarioParaExcluir(f)}>Inativar</Button>
+                                                {temPermissao("funcionarios.editar") && (
+                                                    <Button size="sm" variant="outline" onClick={() => abrirModal(f)}>Editar</Button>
+                                                )}
+                                                {temPermissao("funcionarios.inativar") && (
+                                                    <Button size="sm" variant="destructive" onClick={() => setFuncionarioParaExcluir(f)}>Inativar</Button>
+                                                )}
                                             </>
                                         ) : (
-                                            // Se já estiver inativo, você pode dar a opção de reativar no futuro!
+                                            temPermissao("funcionarios.inativar") && (
                                             <Button size="sm" variant="secondary" onClick={async () => {
                                                 try {
                                                     await api.put(`/funcionarios/${f.id}`, { ...f, ativo: true });
@@ -402,6 +410,7 @@ function Funcionarios() {
                                                     carregar();
                                                 } catch (e) { toast.error("Erro ao reativar."); }
                                             }}>Reativar</Button>
+                                            )
                                         )}
                                     </div>
                                 </TableCell>

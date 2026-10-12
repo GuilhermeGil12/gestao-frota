@@ -1,6 +1,7 @@
 package com.tcc.gestaofrota.controller;
 
 
+import com.tcc.gestaofrota.config.CatalogoPermissoes;
 import com.tcc.gestaofrota.model.Permissao;
 import com.tcc.gestaofrota.service.PermissaoService;
 import com.tcc.gestaofrota.service.VeiculoService;
@@ -20,6 +21,12 @@ public class PermissaoController {
     public PermissaoController(PermissaoService permissaoService, VeiculoService veiculoService){
         this.permissaoService = permissaoService;
         this.veiculoService = veiculoService;
+    }
+
+    /** Arvore de telas e acoes que o frontend usa para montar a tela de permissoes. */
+    @GetMapping("/catalogo")
+    public ResponseEntity<List<CatalogoPermissoes.Grupo>> catalogo(){
+        return ResponseEntity.ok(CatalogoPermissoes.GRUPOS);
     }
 
     @GetMapping

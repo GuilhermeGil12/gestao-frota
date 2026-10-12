@@ -8,6 +8,7 @@ import com.tcc.gestaofrota.service.CartaoRfidService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,12 +23,14 @@ public class CartaoRfidController
         this.cartaoRfidService = cartaoRfidService;
     }
 
+    @PreAuthorize("hasAuthority('cartoes.cadastrar')")
     @PostMapping
     public ResponseEntity<CartaoRfid> criar(@RequestBody CartaoRfid cartaoRfid){
         CartaoRfid novoCartao = cartaoRfidService.salvar(cartaoRfid);
         return ResponseEntity.ok(novoCartao);
     }
 
+    @PreAuthorize("hasAuthority('cartoes.visualizar')")
     @GetMapping("/uid/{uid}")
     public ResponseEntity<CartaoRfid> buscarPorUid(@PathVariable String uid){
         return cartaoRfidService.buscarPorUid(uid)
@@ -35,18 +38,21 @@ public class CartaoRfidController
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("hasAuthority('cartoes.visualizar')")
     @GetMapping("/funcionario/{funcionarioId}")
     public ResponseEntity<List<CartaoRfid>> listarPorFuncionario(@PathVariable Long funcionarioId) {
         List<CartaoRfid> cartoes = cartaoRfidService.listarPorFuncionario(funcionarioId);
         return ResponseEntity.ok(cartoes);
     }
 
+    @PreAuthorize("hasAuthority('cartoes.editar')")
     @PatchMapping("/{id}/inativar")
     public ResponseEntity<Void> inativar(@PathVariable Long id){
         cartaoRfidService.inativar(id);
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAuthority('cartoes.editar')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id){
         cartaoRfidService.deletar(id);
@@ -60,6 +66,7 @@ public class CartaoRfidController
         return ResponseEntity.ok(dados);
     }
 
+    @PreAuthorize("hasAuthority('cartoes.editar')")
     @PatchMapping("/{id}/ativar")
     public ResponseEntity<Void> ativar(@PathVariable Long id){
         cartaoRfidService.ativar(id);

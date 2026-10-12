@@ -11,6 +11,15 @@ public class CoordenadaEsp32DTO {
     private String qtd_satelite;
     private String ign;
     private String crachastr;
+    private String tensao;
+
+    public String getTensao() {
+        return tensao;
+    }
+
+    public void setTensao(String tensao) {
+        this.tensao = tensao;
+    }
 
     public String getData_localizacao() {
         return data_localizacao;

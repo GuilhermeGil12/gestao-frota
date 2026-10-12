@@ -1,0 +1,64 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: gestao-frota-web/package-lock.json
+
+      - name: Instalar dependências do frontend
+        working-directory: gestao-frota-web
+        run: npm ci
+
+      - name: Build do frontend
+        working-directory: gestao-frota-web
+        run: npm run build
+
+      # O Spring Boot serve o frontend de dentro do jar, entao o build vai para static/
+      - name: Embutir o frontend no backend
+        run: |
+          rm -rf src/main/resources/static/*
+          cp -r gestao-frota-web/dist/* src/main/resources/static/
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
+
+      - name: Build do backend
+        run: ./mvnw clean package -DskipTests
+
+      - name: Enviar para o servidor
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: target/gestao-frota-0.0.1-SNAPSHOT.jar
+          target: /opt/frotasystem
+          strip_components: 1
+
+      - name: Reiniciar a aplicação
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            mv /opt/frotasystem/gestao-frota-0.0.1-SNAPSHOT.jar /opt/frotasystem/app.jar
+            sudo systemctl restart frotasystem
