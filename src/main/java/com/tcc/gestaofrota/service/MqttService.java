@@ -6,6 +6,7 @@ import com.tcc.gestaofrota.dto.CoordenadaEsp32DTO;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,30 +16,43 @@ import java.util.List;
  *  - Inscreve em frota/+/telemetria  → recebe os pontos do ESP e salva no banco
  *  - Publica em  frota/<codigo>/comando → manda comando (BLOQUEAR/APITAR/...) pro ESP
  *
- * Broker de TESTE: broker.emqx.io. Troque por "tcp://SEU_IP:1883" (Mosquitto) depois.
  * Não destrói nada do HTTP — é um caminho a mais. Pra reverter, é só remover este arquivo.
  */
 @Service
 public class MqttService {
 
-    private static final String BROKER = "tcp://broker.emqx.io:1883";
     private static final String TOPICO_TELEMETRIA = "frota/+/telemetria"; // + = qualquer controladora
 
     private final LocalizacaoService localizacaoService;
     private final ObjectMapper mapper = new ObjectMapper();
     private MqttClient client;
 
-    public MqttService(LocalizacaoService localizacaoService) {
+    private final String broker;
+    private final String usuario;
+    private final String senha;
+
+    public MqttService(LocalizacaoService localizacaoService,
+                       @Value("${app.mqtt.broker}") String broker,
+                       @Value("${app.mqtt.usuario}") String usuario,
+                       @Value("${app.mqtt.senha}") String senha) {
         this.localizacaoService = localizacaoService;
+        this.broker = broker;
+        this.usuario = usuario;
+        this.senha = senha;
     }
 
     @PostConstruct
     public void iniciar() {
         try {
-            client = new MqttClient(BROKER, "backend-frota-" + System.currentTimeMillis(), new MemoryPersistence());
+            client = new MqttClient(broker, "backend-frota-" + System.currentTimeMillis(), new MemoryPersistence());
             MqttConnectOptions opts = new MqttConnectOptions();
             opts.setCleanSession(true);
             opts.setAutomaticReconnect(true);
+
+            if (usuario != null && !usuario.isBlank()) {
+                opts.setUserName(usuario);
+                opts.setPassword(senha.toCharArray());
+            }
 
             client.setCallback(new MqttCallback() {
                 @Override
