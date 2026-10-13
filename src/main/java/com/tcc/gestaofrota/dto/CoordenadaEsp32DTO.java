@@ -12,6 +12,8 @@ public class CoordenadaEsp32DTO {
     private String ign;
     private String crachastr;
     private String tensao;
+    private String tensao_pos_chave;
+    private String tensao_sistema;
 
     public String getTensao() {
         return tensao;
@@ -19,6 +21,22 @@ public class CoordenadaEsp32DTO {
 
     public void setTensao(String tensao) {
         this.tensao = tensao;
+    }
+
+    public String getTensao_pos_chave() {
+        return tensao_pos_chave;
+    }
+
+    public void setTensao_pos_chave(String tensao_pos_chave) {
+        this.tensao_pos_chave = tensao_pos_chave;
+    }
+
+    public String getTensao_sistema() {
+        return tensao_sistema;
+    }
+
+    public void setTensao_sistema(String tensao_sistema) {
+        this.tensao_sistema = tensao_sistema;
     }
 
     public String getData_localizacao() {

@@ -204,6 +204,37 @@ function Dashboard() {
                       : "Aguardando sinal..."}
                   </div>
 
+                  <div className="grid grid-cols-2 gap-2 border-t border-border pt-2">
+                    <div className="flex flex-col text-sm">
+                      <span className="text-xs text-muted-foreground">Pós-chave</span>
+                      <span
+                        className={
+                          loc?.tensaoPosChave >= 6
+                            ? "font-medium text-green-500"
+                            : "font-medium text-muted-foreground"
+                        }
+                      >
+                        {loc?.tensaoPosChave != null
+                          ? `${loc.tensaoPosChave.toFixed(1)} V`
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col text-sm">
+                      <span className="text-xs text-muted-foreground">Bateria</span>
+                      <span
+                        className={
+                          loc?.tensaoSistema != null && loc.tensaoSistema < 11.8
+                            ? "font-medium text-red-500"
+                            : "font-medium text-foreground"
+                        }
+                      >
+                        {loc?.tensaoSistema != null
+                          ? `${loc.tensaoSistema.toFixed(1)} V`
+                          : "—"}
+                      </span>
+                    </div>
+                  </div>
+
                   <div className="flex gap-2 pt-3">
                     {/* <Button variant="destructive" className="flex-1" size="sm">
                       Ver no Mapa

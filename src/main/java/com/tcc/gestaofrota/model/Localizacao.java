@@ -44,6 +44,12 @@ public class Localizacao {
     @Column(name = "recebido_em")
     private LocalDateTime recebidoEM;
 
+    @Column(name = "tensao_pos_chave")
+    private Double tensaoPosChave;
+
+    @Column(name = "tensao_sistema")
+    private Double tensaoSistema;
+
     public Long getId() {
         return id;
     }
@@ -122,5 +128,21 @@ public class Localizacao {
 
     public void setRecebidoEM(LocalDateTime recebidoEM) {
         this.recebidoEM = recebidoEM;
+    }
+
+    public Double getTensaoPosChave() {
+        return tensaoPosChave;
+    }
+
+    public void setTensaoPosChave(Double tensaoPosChave) {
+        this.tensaoPosChave = tensaoPosChave;
+    }
+
+    public Double getTensaoSistema() {
+        return tensaoSistema;
+    }
+
+    public void setTensaoSistema(Double tensaoSistema) {
+        this.tensaoSistema = tensaoSistema;
     }
 }

@@ -61,6 +61,16 @@ public class LocalizacaoService {
         salvarPontos(controladoraBusca.get().getVeiculo(), loteDoEsp32);
     }
 
+    // Firmwares antigos nao mandam as tensoes: nesse caso o campo fica nulo em vez de quebrar.
+    private Double paraDouble(String valor) {
+        if (valor == null || valor.isBlank()) return null;
+        try {
+            return Double.parseDouble(valor);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     // Lógica de salvar os pontos — compartilhada entre HTTP e MQTT
     private void salvarPontos(Veiculo carroDoEsp32, List<CoordenadaEsp32DTO> loteDoEsp32) {
 
@@ -83,6 +93,8 @@ public class LocalizacaoService {
                 novaLoc.setVelocidade(Double.parseDouble(dto.getVelocidade()));
                 novaLoc.setStatus(Integer.parseInt(dto.getIgn()));
                 novaLoc.setRecebidoEM(LocalDateTime.now());
+                novaLoc.setTensaoPosChave(paraDouble(dto.getTensao_pos_chave()));
+                novaLoc.setTensaoSistema(paraDouble(dto.getTensao_sistema()));
 
                 // --- LÓGICA DE IDENTIFICAÇÃO DO MOTORISTA ---
                 String uidCartao = dto.getCrachastr(); // Código enviado pelo ESP32
@@ -223,6 +235,8 @@ public class LocalizacaoService {
             m.put("status", l.getStatus());
             m.put("motorista", l.getMotorista());
             m.put("dataHora", l.getDataHora());
+            m.put("tensaoPosChave", l.getTensaoPosChave());
+            m.put("tensaoSistema", l.getTensaoSistema());
 
             resposta.add(m);
         }
