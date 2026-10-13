@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../../components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../../components/ui/alert-dialog";
 import L from "leaflet";
+import Paginacao from "../../components/Paginacao";
+import { usePaginacao } from "../../utils/usePaginacao";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -140,6 +142,8 @@ function Cercas() {
         ? [cercas.find(c => c.latitude).latitude, cercas.find(c => c.longitude).longitude]
         : [-20.5, -49.0];
 
+    const paginacao = usePaginacao(cercas, 20);
+
     return (
         <div className="w-full space-y-6">
             <div className="flex items-center justify-between border-b border-border pb-4">
@@ -194,7 +198,7 @@ function Cercas() {
                             <TableCell colSpan={4} className="text-center text-muted-foreground">Nenhuma cerca cadastrada.</TableCell>
                         </TableRow>
                     ) : (
-                        cercas.map(c => (
+                        paginacao.visiveis.map(c => (
                             <TableRow key={c.id}>
                                 <TableCell>{c.nome}</TableCell>
                                 <TableCell>{c.funcionario?.nome || "—"}</TableCell>
@@ -209,6 +213,14 @@ function Cercas() {
                     )}
                 </TableBody>
             </Table>
+            <Paginacao
+                pagina={paginacao.pagina}
+                totalPaginas={paginacao.totalPaginas}
+                totalItens={paginacao.totalItens}
+                inicio={paginacao.inicio}
+                fim={paginacao.fim}
+                onChange={paginacao.setPagina}
+            />
 
             {/* MODAL NOVA CERCA — usa portal, fica acima de tudo */}
             <Dialog open={modalNova} onOpenChange={setModalNova}>

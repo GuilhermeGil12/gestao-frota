@@ -10,6 +10,8 @@ import { Card, CardContent } from "../../components/ui/card";
 import { Search, Sun, Moon } from "lucide-react";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
+import Paginacao from "../../components/Paginacao";
+import { usePaginacao } from "../../utils/usePaginacao";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -32,6 +34,7 @@ function Rotas() {
     const [temaEscuro, setTemaEscuro] = useState(false);
 
     const veiculo = veiculosReais.find(v => v.id == veiculoSelecionado)
+    const paginacao = usePaginacao(historicoRotas, 25);
 
     useEffect(() => {
         api.get("/veiculos")
@@ -148,22 +151,27 @@ function Rotas() {
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {(!Array.isArray(historicoRotas) || historicoRotas.length === 0)? (
-                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum veículo encontrado.</TableCell></TableRow>
-                    ) : (historicoRotas.map((h, index) =>{
-                        console.log(h)
-                        return (
-                        <TableRow>
+                    {paginacao.totalItens === 0 ? (
+                    <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Nenhum ponto de rota carregado.</TableCell></TableRow>
+                    ) : (paginacao.visiveis.map((h, index) => (
+                        <TableRow key={`${h.hora}-${index}`}>
                             <TableCell>{h.hora}</TableCell>
-                            <TableCell>{veiculo.placa}</TableCell>
+                            <TableCell>{veiculo?.placa}</TableCell>
                             <TableCell>{h.motorista}</TableCell>
                             <TableCell>{h.velocidade}</TableCell>
                         </TableRow>
-
-                    )}))}
-                    
+                    )))}
                 </TableBody>
             </Table>
+
+            <Paginacao
+                pagina={paginacao.pagina}
+                totalPaginas={paginacao.totalPaginas}
+                totalItens={paginacao.totalItens}
+                inicio={paginacao.inicio}
+                fim={paginacao.fim}
+                onChange={paginacao.setPagina}
+            />
         </div>
     );
 }

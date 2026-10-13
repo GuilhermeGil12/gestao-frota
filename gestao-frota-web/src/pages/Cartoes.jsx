@@ -21,6 +21,8 @@ import { Badge } from "../components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../components/ui/dialog";
 import { useAuth } from "../context/AuthContext";
+import Paginacao from "../components/Paginacao";
+import { usePaginacao } from "../utils/usePaginacao";
 
 function Cartoes() {
     const { temPermissao } = useAuth();
@@ -94,6 +96,8 @@ function Cartoes() {
         const temCartaoBuscado = f.cartoes && f.cartoes.some(cartao => cartao.uid && cartao.uid.toLocaleLowerCase().includes(buscaMinuscula));
         return nome.includes(buscaMinuscula) || cpf.includes(buscaMinuscula) || temCartaoBuscado;
     });
+
+    const paginacao = usePaginacao(funcionariosFiltrados, 20);
 
     return (
         <div className="w-full">
@@ -176,7 +180,7 @@ function Cartoes() {
                     {(!Array.isArray(funcionariosFiltrados) || funcionariosFiltrados.length === 0) ? (
                         <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Nenhum funcionario encontrado.</TableCell></TableRow>
                     ) : (
-                        funcionariosFiltrados.map(f => (
+                        paginacao.visiveis.map(f => (
                             <TableRow key={f.id}>
                                 <TableCell className="font-semibold">{f.nome}</TableCell>
                                 <TableCell>{f.cargo}</TableCell>
@@ -187,6 +191,14 @@ function Cartoes() {
                     )}
                 </TableBody>
             </Table>
+            <Paginacao
+                pagina={paginacao.pagina}
+                totalPaginas={paginacao.totalPaginas}
+                totalItens={paginacao.totalItens}
+                inicio={paginacao.inicio}
+                fim={paginacao.fim}
+                onChange={paginacao.setPagina}
+            />
 
             {/* 4. MODAL DE CONFIRMAÇÃO DO SHADCN UI (Substituindo o SweetAlert) */}
             <AlertDialog open={idCartaoParaExcluir !== null} onOpenChange={(open) => !open && setIdCartaoParaExcluir(null)}>

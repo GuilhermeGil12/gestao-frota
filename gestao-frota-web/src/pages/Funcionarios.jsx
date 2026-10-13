@@ -24,6 +24,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../components/ui/dialog";
 import Setores from "./configuracoes/Setores";
 import { useAuth } from "../context/AuthContext";
+import Paginacao from "../components/Paginacao";
+import { usePaginacao } from "../utils/usePaginacao";
 
 function Funcionarios() {
     const { temPermissao } = useAuth();
@@ -196,6 +198,8 @@ function Funcionarios() {
             setBuscandoLocal(false);
         }
     };
+    const paginacao = usePaginacao(funcionariosFiltrados, 20);
+
     return (
         <div className="w-full">
             <div className="flex items-center justify-between mb-6 border-b border-border pb-4 gap-4">
@@ -378,7 +382,7 @@ function Funcionarios() {
                     {(!Array.isArray(funcionariosFiltrados) || funcionariosFiltrados.length === 0) ? (
                         <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum funcionário encontrado.</TableCell></TableRow>
                     ) : (
-                        funcionariosFiltrados.map(f => (
+                        paginacao.visiveis.map(f => (
                             // 4. MUDANÇA VISUAL: Se f.ativo for falso, a linha ganha opacidade de 45% e um tom acinzentado
                             <TableRow key={f.id} className={!f.ativo ? "opacity-45 bg-muted/20 hover:bg-muted/30 transition-opacity" : ""}>
                                 <TableCell>#{f.id}</TableCell>
@@ -419,6 +423,14 @@ function Funcionarios() {
                     )}
                 </TableBody>
             </Table>
+            <Paginacao
+                pagina={paginacao.pagina}
+                totalPaginas={paginacao.totalPaginas}
+                totalItens={paginacao.totalItens}
+                inicio={paginacao.inicio}
+                fim={paginacao.fim}
+                onChange={paginacao.setPagina}
+            />
 
             {/* AlertDialog do Shadcn UI */}
             <AlertDialog open={funcionarioParaExcluir !== null} onOpenChange={(open) => !open && setFuncionarioParaExcluir(null)}>

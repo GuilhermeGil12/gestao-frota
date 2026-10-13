@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
+import Paginacao from "../components/Paginacao";
+import { usePaginacao } from "../utils/usePaginacao";
 
 function Comandos() {
     const { temPermissao } = useAuth();
@@ -76,6 +78,8 @@ function Comandos() {
         return `Controladora ${controladora.idControladora} — ${placa}`;
     }
 
+    const paginacao = usePaginacao(comandos, 20);
+
     return (
         <div className="w-full space-y-6">
             {/* Cabeçalho */}
@@ -105,7 +109,7 @@ function Comandos() {
                             </TableCell>
                         </TableRow>
                     ) : (
-                        comandos.map((cmd) => (
+                        paginacao.visiveis.map((cmd) => (
                             <TableRow key={cmd.idComando}>
                                 <TableCell>{formatarData(cmd.criadoEm)}</TableCell>
                                 <TableCell>
@@ -127,6 +131,14 @@ function Comandos() {
                     )}
                 </TableBody>
             </Table>
+            <Paginacao
+                pagina={paginacao.pagina}
+                totalPaginas={paginacao.totalPaginas}
+                totalItens={paginacao.totalItens}
+                inicio={paginacao.inicio}
+                fim={paginacao.fim}
+                onChange={paginacao.setPagina}
+            />
 
             {/* Dialog — Novo Comando */}
             <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>

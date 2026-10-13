@@ -23,6 +23,8 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "../../components/ui/alert-dialog";
+import Paginacao from "../../components/Paginacao";
+import { usePaginacao } from "../../utils/usePaginacao";
 
 function Veiculos() {
     const { temPermissao } = useAuth();
@@ -101,6 +103,8 @@ function Veiculos() {
         return placa.includes(buscaMinuscula) || nome.includes(buscaMinuscula);
     });
 
+    const paginacao = usePaginacao(veiculosFiltrados, 20);
+
     return (
         <div className="w-full">
             <div className="flex items-center justify-between mb-6 border-b border-border pb-4 gap-4">
@@ -144,7 +148,7 @@ function Veiculos() {
                     {(!Array.isArray(veiculosFiltrados) || veiculosFiltrados.length === 0) ? (
                         <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{termoBusca ? "Nenhum veiculo encontrado com esta pesquisa." : "Nenhum veiculo encontrado no banco."}</TableCell></TableRow>
                     ) : (
-                        veiculosFiltrados.map(v => (
+                        paginacao.visiveis.map(v => (
                             <TableRow key={v.id}>
                                 <TableCell><Badge variant={v.ativo ? "default" : "secondary"} className={v.ativo ? "bg-green-600" : ""}>{v.ativo ? "Ativo" : "Inativo"}</Badge></TableCell>
                                 <TableCell>{v.nome}</TableCell>
@@ -169,6 +173,14 @@ function Veiculos() {
                     )}
                 </TableBody>
             </Table>
+            <Paginacao
+                pagina={paginacao.pagina}
+                totalPaginas={paginacao.totalPaginas}
+                totalItens={paginacao.totalItens}
+                inicio={paginacao.inicio}
+                fim={paginacao.fim}
+                onChange={paginacao.setPagina}
+            />
 
             <AlertDialog open={carroParaExcluir !== null} onOpenChange={(open) => !open && setCarroParaExcluir(null)}>
                 <AlertDialogContent>

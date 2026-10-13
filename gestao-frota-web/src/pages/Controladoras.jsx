@@ -23,6 +23,8 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../components/ui/dialog";
 import { useAuth } from "../context/AuthContext";
+import Paginacao from "../components/Paginacao";
+import { usePaginacao } from "../utils/usePaginacao";
 
 function Controladoras() {
     const { temPermissao } = useAuth();
@@ -83,6 +85,8 @@ function Controladoras() {
 
     const abrirModal = (c = null) => { setFormData(c || initialState); setIsModalOpen(true); };
 
+    const paginacao = usePaginacao(controladoras, 20);
+
     return (
         <div className="w-full">
             <div className="flex items-center justify-between mb-6 border-b border-border pb-4">
@@ -115,7 +119,7 @@ function Controladoras() {
                     {(!Array.isArray(controladoras) || controladoras.length === 0) ? (
                         <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhuma controladora encontrada no banco.</TableCell></TableRow>
                     ) : (
-                        controladoras.map(c => (
+                        paginacao.visiveis.map(c => (
                             <TableRow key={c.idControladora}>
                                 <TableCell><Badge variant={c.ativo ? "default" : "secondary"} className={c.ativo ? "bg-green-600" : ""}>{c.ativo ? "Ativo" : "Inativo"}</Badge></TableCell>
                                 <TableCell>#{c.idControladora}</TableCell>
@@ -141,6 +145,14 @@ function Controladoras() {
                     )}
                 </TableBody>
             </Table>
+            <Paginacao
+                pagina={paginacao.pagina}
+                totalPaginas={paginacao.totalPaginas}
+                totalItens={paginacao.totalItens}
+                inicio={paginacao.inicio}
+                fim={paginacao.fim}
+                onChange={paginacao.setPagina}
+            />
 
             <AlertDialog open={controladoraParaExcluir !== null} onOpenChange={(open) => !open && setControladoraParaExcluir(null)}>
                 <AlertDialogContent>

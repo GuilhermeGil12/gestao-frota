@@ -7,6 +7,8 @@ import { Label } from "../../components/ui/label";
 import { Card, CardContent } from "../../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Search } from "lucide-react";
+import Paginacao from "../../components/Paginacao";
+import { usePaginacao } from "../../utils/usePaginacao";
 
 function Alertas() {
     const [dataInicio, setDataInicio] = useState("");
@@ -48,6 +50,8 @@ function Alertas() {
         if (!dataInicio || !dataFinal) { toast.error("Selecione as datas de inicio e fim."); return; }
         carregarDados(dataInicio, dataFinal, veiculoSelecionado);
     };
+
+    const paginacao = usePaginacao(historicoAlertas, 20);
 
     return (
         <div className="w-full space-y-6">
@@ -98,7 +102,7 @@ function Alertas() {
                 </TableHeader>
                 <TableBody>
                     {historicoAlertas.length > 0 ? (
-                        historicoAlertas.map((alerta, index) => {
+                        paginacao.visiveis.map((alerta, index) => {
                             const placa = alerta.controladora?.veiculo?.placa || alerta.veiculo?.placa || "N/A";
                             return (
                                 <TableRow key={index}>
@@ -115,6 +119,14 @@ function Alertas() {
                     )}
                 </TableBody>
             </Table>
+            <Paginacao
+                pagina={paginacao.pagina}
+                totalPaginas={paginacao.totalPaginas}
+                totalItens={paginacao.totalItens}
+                inicio={paginacao.inicio}
+                fim={paginacao.fim}
+                onChange={paginacao.setPagina}
+            />
         </div>
     );
 }

@@ -9,6 +9,8 @@ import api from '../services/api';
 import { toast } from "sonner";
 import  {  jsPDF  }  from  'jspdf' 
 import  {  autoTable  }  from  'jspdf-autotable'
+import Paginacao from "../components/Paginacao";
+import { usePaginacao } from "../utils/usePaginacao";
 
 
 
@@ -111,6 +113,8 @@ function Relatorios() {
             
     };
 
+    const paginacao = usePaginacao(dadosRelatorio, 20);
+
     return (
         <div className="w-full space-y-6">
             <div className="flex items-center justify-between border-b border-border pb-4">
@@ -183,7 +187,7 @@ function Relatorios() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {dadosRelatorio.map((item) => (
+                            {paginacao.visiveis.map((item) => (
                                 <TableRow key={item.idVeiculo}>
                                     <TableCell>{dataInicio} até {dataFim}</TableCell> {/* Período */}
                                     <TableCell className="font-bold">{item.placa}</TableCell>
@@ -201,6 +205,14 @@ function Relatorios() {
                             ))}
                         </TableBody>
                     </Table>
+                    <Paginacao
+                        pagina={paginacao.pagina}
+                        totalPaginas={paginacao.totalPaginas}
+                        totalItens={paginacao.totalItens}
+                        inicio={paginacao.inicio}
+                        fim={paginacao.fim}
+                        onChange={paginacao.setPagina}
+                    />
                 </CardContent>
             </Card>
         </div>

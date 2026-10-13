@@ -55,6 +55,8 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import Paginacao from "../../components/Paginacao";
+import { usePaginacao } from "../../utils/usePaginacao";
 
 function Usuario() {
     const { temPermissao } = useAuth();
@@ -312,6 +314,8 @@ function Usuario() {
         return nome.includes(busca) || email.includes(busca);
     });
 
+    const paginacao = usePaginacao(usuariosFiltrados, 20);
+
     return (
         <div className="w-full">
             <div className="flex items-center justify-between mb-6 border-b border-border pb-4 gap-4">
@@ -345,7 +349,7 @@ function Usuario() {
                                 Nenhum usuário encontrado.
                             </TableCell>
                         </TableRow>
-                    ) : usuariosFiltrados.map((u) => (
+                    ) : paginacao.visiveis.map((u) => (
                         <TableRow key={u.id}>
                             <TableCell>{u.id}</TableCell>
                             <TableCell>{u.nomeUsuario}</TableCell>
@@ -366,6 +370,14 @@ function Usuario() {
                     ))}
                 </TableBody>
             </Table>
+            <Paginacao
+                pagina={paginacao.pagina}
+                totalPaginas={paginacao.totalPaginas}
+                totalItens={paginacao.totalItens}
+                inicio={paginacao.inicio}
+                fim={paginacao.fim}
+                onChange={paginacao.setPagina}
+            />
 
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="max-w-[600px] max-h-[85vh] overflow-y-auto">
