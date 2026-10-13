@@ -40,8 +40,11 @@ jobs:
           distribution: temurin
           cache: maven
 
+      # O repositorio foi criado no Windows, onde a flag de executavel nao existe.
       - name: Build do backend
-        run: ./mvnw clean package -DskipTests
+        run: |
+          chmod +x mvnw
+          ./mvnw clean package -DskipTests
 
       - name: Enviar para o servidor
         uses: appleboy/scp-action@v0.1.7
