@@ -73,6 +73,8 @@ public class LocalizacaoController {
             pontoMap.put("hora", p.getDataHora() != null ? p.getDataHora().toLocalTime().format(fmt) : null);
             pontoMap.put("motorista", p.getMotorista());
             pontoMap.put("status", p.getStatus());
+            pontoMap.put("tensaoPosChave", p.getTensaoPosChave());
+            pontoMap.put("tensaoSistema", p.getTensaoSistema());
             return pontoMap;
         }).collect(Collectors.toList());
 
