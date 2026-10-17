@@ -4,15 +4,27 @@ import { MapContainer, TileLayer, Polyline, Popup, CircleMarker, useMap } from '
 import L from 'leaflet';
 import api from '../../services/api';
 import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
+import DataPicker from "../../components/DataPicker";
+
 import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
 import { Search, MapPin, Route, Gauge, Clock, AlertTriangle, User } from "lucide-react";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import Paginacao from "../../components/Paginacao";
 import { usePaginacao } from "../../utils/usePaginacao";
+
+
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -161,15 +173,29 @@ function Rotas() {
                 <CardContent className="pt-6">
                     <div className="flex gap-4 items-end flex-wrap">
                         <div className="flex-1 min-w-[200px] space-y-2">
-                            <Label>Data da viagem</Label>
-                            <Input type="date" value={dataBusca} onChange={(e) => setDataBusca(e.target.value)} />
+                            <Label htmlFor="data-viagem">Data da viagem</Label>
+                            <DataPicker id="data-viagem" value={dataBusca} onChange={setDataBusca} />
                         </div>
                         <div className="flex-1 min-w-[200px] space-y-2">
                             <Label>Veículo</Label>
-                            <select value={veiculoSelecionado} onChange={(e) => setVeiculoSelecionado(e.target.value)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            
+
+                            <Select value={veiculoSelecionado} onValueChange={setVeiculoSelecionado}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Selecione um veículo"/>
+                                </SelectTrigger>
+                                <SelectContent className="z-[1001]">
+                                    {veiculosReais.map((v) => (
+                                        <SelectItem key={v.id} value={String(v.id)}>
+                                            {v.placa}
+                                        </SelectItem>
+                                    ))}
+                                    </SelectContent>
+                            </Select>
+                            {/* <select value={veiculoSelecionado} onChange={(e) => setVeiculoSelecionado(e.target.value)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                                 <option value="">Selecione a placa...</option>
                                 {veiculosReais.map((v) => (<option key={v.id} value={v.id}>{v.placa}{v.nome ? ` - ${v.nome}` : ''}</option>))}
-                            </select>
+                            </select> */}
                         </div>
                         <Button onClick={handleBuscarRotas}><Search className="h-4 w-4 mr-2" />Gerar trajeto</Button>
                     </div>
