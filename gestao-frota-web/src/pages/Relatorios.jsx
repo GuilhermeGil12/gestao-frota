@@ -39,7 +39,7 @@ function Relatorios() {
     useEffect(() => {
         api.get("/veiculos")
             .then(response => setVeiculosReais(response.data))
-            .catch(error => { console.error("Erro ao carregar veiculos:", error); toast.error("Nao foi possivel carregar a lista de veiculos."); });
+            .catch(error => { console.error("Erro ao carregar veiculos:", error); toast.error("Não foi possível carregar a lista de veículos."); });
         handleGerarRelatorio();
     }, []);
 
@@ -118,7 +118,7 @@ function Relatorios() {
     return (
         <div className="w-full space-y-6">
             <div className="flex items-center justify-between border-b border-border pb-4">
-                <h1 className="text-xl font-semibold text-foreground">Relatorios de Telemetria</h1>
+                <h1 className="text-xl font-semibold text-foreground">Relatórios de Telemetria</h1>
                 <Button variant= "outline" onClick={handleBaixarPDF}><Download className="h-4 w-4 mr-2" />Baixar</Button>
             </div>
 
@@ -135,9 +135,9 @@ function Relatorios() {
                             <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
                         </div>
                         <div className="flex-1 min-w-[200px] space-y-2">
-                            <Label>Veiculo</Label>
+                            <Label>Veículo</Label>
                             <select value={veiculoSelecionado} onChange={(e) => setVeiculoSelecionado(e.target.value)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                                <option value="TODOS">Todos os Veiculos</option>
+                                <option value="TODOS">Todos os Veículos</option>
                                 {veiculosReais.map((v) => (<option key={v.id_veiculo || v.id} value={v.id_veiculo || v.id}>{v.placa} - {v.modelo}</option>))}
 
                             </select>
@@ -151,13 +151,13 @@ function Relatorios() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="border-l-4 border-l-blue-500">
                     <CardContent className="pt-6">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Distancia Percorrida</p>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Distância Percorrida</p>
                         <p className="text-3xl font-bold text-foreground">{dadosRelatorio.reduce((acc, curr) => acc + curr.kmRodados, 0).toFixed(2)} <span className="text-base text-muted-foreground">km</span></p>
                     </CardContent>
                 </Card>
                 <Card className="border-l-4 border-l-red-500">
                     <CardContent className="pt-6">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Velocidade Maxima</p>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Velocidade Máxima</p>
                         <p className="text-3xl font-bold text-foreground">
                             {dadosRelatorio.length > 0
                                 ? Math.max(...dadosRelatorio.map(item => item.velocidadeMaxima || 0)).toFixed(0)
@@ -182,8 +182,8 @@ function Relatorios() {
                     <Table id="tabela-relatorio">
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Data/Hora</TableHead><TableHead>Veiculo</TableHead>
-                                <TableHead>Motorista</TableHead><TableHead>Vel. Maxima</TableHead><TableHead>Distancia</TableHead>
+                                <TableHead>Data/Hora</TableHead><TableHead>Veículo</TableHead>
+                                <TableHead>Motorista</TableHead><TableHead>Vel. Máxima</TableHead><TableHead>Distância</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

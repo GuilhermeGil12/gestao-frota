@@ -39,12 +39,12 @@ function Menu({ isOpen, toggleMenu }) {
     const menuItems = [
         { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", permissao: "dashboard.visualizar" },
         { to: "/Monitoramento", icon: Radio, label: "Monitoramento", permissao: "monitoramento.visualizar" },
-        { to: "/funcionarios", icon: Users, label: "Funcionarios", permissao: "funcionarios.visualizar" },
+        { to: "/funcionarios", icon: Users, label: "Funcionários", permissao: "funcionarios.visualizar" },
         { to: "/comandos", icon: ShieldAlert, label: "Comandos", permissao: "comandos.visualizar" },
     ].filter(item => temPermissao(item.permissao));
 
     const veiculosSubmenu = [
-        { to: "/veiculos", label: "Lista de Veiculos", permissao: "veiculos.visualizar" },
+        { to: "/veiculos", label: "Lista de Veículos", permissao: "veiculos.visualizar" },
         { to: "/rotas", label: "Rotas", permissao: "veiculos.rotas" },
         { to: "/alertas", label: "Alertas", permissao: "veiculos.alertas" },
         { to: "/cercas", label: "Cercas", permissao: "veiculos.cercas" },
@@ -52,8 +52,8 @@ function Menu({ isOpen, toggleMenu }) {
 
     const bottomItems = [
         { to: "/controladoras", icon: Cpu, label: "Controladoras", permissao: "controladoras.visualizar" },
-        { to: "/cartoes", icon: CreditCard, label: "Cartoes", permissao: "cartoes.visualizar" },
-        { to: "/relatorios", icon: FileText, label: "Relatorios", permissao: "relatorios.visualizar" },
+        { to: "/cartoes", icon: CreditCard, label: "Cartões", permissao: "cartoes.visualizar" },
+        { to: "/relatorios", icon: FileText, label: "Relatórios", permissao: "relatorios.visualizar" },
     ].filter(item => temPermissao(item.permissao));
 
     const configSubMenu = [
@@ -119,7 +119,7 @@ function Menu({ isOpen, toggleMenu }) {
                         <Car className="h-5 w-5 shrink-0" />
                         {isOpen && (
                             <>
-                                <span>Veiculos</span>
+                                <span>Veículos</span>
                                 <ChevronRight className={cn(
                                     "h-3.5 w-3.5 ml-auto text-muted-foreground transition-transform duration-200",
                                     veiculosOpen && "rotate-90"

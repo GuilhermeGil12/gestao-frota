@@ -23,7 +23,7 @@ function Alertas() {
                 params: { dataInicio: inicio, dataFinal: fim, idVeiculo: veiculoId || null }
             });
             setHistoricoAlertas(response.data);
-            if (response.data.length === 0) toast.warn("Nenhum alerta encontrado para este periodo.");
+            if (response.data.length === 0) toast.warn("Nenhum alerta encontrado para este período.");
             else toast.success(`${response.data.length} alertas carregados.`);
         } catch (error) {
             console.error("Erro ao buscar alertas:", error);
@@ -34,7 +34,7 @@ function Alertas() {
     useEffect(() => {
         api.get("/veiculos")
             .then(res => setVeiculosReais(res.data))
-            .catch(() => toast.error("Erro ao carregar veiculos."));
+            .catch(() => toast.error("Erro ao carregar veículos."));
 
         const hoje = new Date();
         const seteDiasAtras = new Date();
@@ -47,7 +47,7 @@ function Alertas() {
     }, []);
 
     const handleBuscarAlertas = () => {
-        if (!dataInicio || !dataFinal) { toast.error("Selecione as datas de inicio e fim."); return; }
+        if (!dataInicio || !dataFinal) { toast.error("Selecione as datas de início e fim."); return; }
         carregarDados(dataInicio, dataFinal, veiculoSelecionado);
     };
 
@@ -56,7 +56,7 @@ function Alertas() {
     return (
         <div className="w-full space-y-6">
             <div className="flex items-center justify-between border-b border-border pb-4">
-                <h1 className="text-xl font-semibold text-foreground">Historico de Alertas (Velocidade &gt; 110km/h)</h1>
+                <h1 className="text-xl font-semibold text-foreground">Histórico de Alertas (Velocidade &gt; 110km/h)</h1>
             </div>
 
             {/* Filtros */}
@@ -64,7 +64,7 @@ function Alertas() {
                 <CardContent className="pt-6">
                     <div className="flex gap-4 items-end flex-wrap">
                         <div className="flex-1 min-w-[200px] space-y-2">
-                            <Label>Data Inicio</Label>
+                            <Label>Data Início</Label>
                             <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
                         </div>
                         <div className="flex-1 min-w-[200px] space-y-2">
@@ -81,9 +81,9 @@ function Alertas() {
                             </select>
                         </div>
                         <div className="flex-1 min-w-[200px] space-y-2">
-                            <Label>Veiculo (Opcional)</Label>
+                            <Label>Veículo (Opcional)</Label>
                             <select value={veiculoSelecionado} onChange={(e) => setVeiculoSelecionado(e.target.value)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                                <option value="">Todos os Veiculos</option>
+                                <option value="">Todos os Veículos</option>
                                 {veiculosReais.map((v) => (<option key={v.id_veiculo || v.id} value={v.id_veiculo || v.id}>{v.placa} - {v.modelo}</option>))}
                             </select>
                         </div>
@@ -115,7 +115,7 @@ function Alertas() {
                             );
                         })
                     ) : (
-                        <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Nenhum alerta encontrado para o periodo selecionado.</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Nenhum alerta encontrado para o período selecionado.</TableCell></TableRow>
                     )}
                 </TableBody>
             </Table>

@@ -102,23 +102,23 @@ function Cartoes() {
     return (
         <div className="w-full">
             <div className="flex items-center justify-between mb-6 border-b border-border pb-4 gap-4">
-                <h1 className="text-xl font-semibold text-foreground">Vinculo de Cartoes RFID</h1>
-                <Input type="text" placeholder="Buscar por Nome, CPF ou Codigo do Cracha..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} className="max-w-sm" />
+                <h1 className="text-xl font-semibold text-foreground">Vínculo de Cartões RFID</h1>
+                <Input type="text" placeholder="Buscar por Nome, CPF ou Código do Crachá..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} className="max-w-sm" />
             </div>
 
             <Dialog open={isModalCartoesOpen} onOpenChange={setIsModalCartoesOpen}>
                 <DialogContent className="max-w-[850px]">
                     <DialogHeader>
-                        <DialogTitle>Cartoes de: <span className="text-blue-400">{funcionarioSelecionado?.nome}</span></DialogTitle>
-                        <DialogDescription>Gerencie os cartoes RFID vinculados a este funcionario.</DialogDescription>
+                        <DialogTitle>Cartões de: <span className="text-blue-400">{funcionarioSelecionado?.nome}</span></DialogTitle>
+                        <DialogDescription>Gerencie os cartões RFID vinculados a este funcionário.</DialogDescription>
                     </DialogHeader>
                     {funcionarioSelecionado && (
                         <div className="flex gap-6 mt-4">
                             {/* Lado esquerdo: lista de cartoes */}
                             <div className="flex-[2]">
-                                <h3 className="text-sm text-muted-foreground border-b border-border pb-2 mb-3">Cartoes Vinculados</h3>
+                                <h3 className="text-sm text-muted-foreground border-b border-border pb-2 mb-3">Cartões Vinculados</h3>
                                 {(!funcionarioSelecionado.cartoes || funcionarioSelecionado.cartoes.length === 0) ? (
-                                    <div className="bg-muted/50 p-4 rounded-lg text-center text-muted-foreground text-sm">Nenhum cartao vinculado no momento.</div>
+                                    <div className="bg-muted/50 p-4 rounded-lg text-center text-muted-foreground text-sm">Nenhum cartão vinculado no momento.</div>
                                 ) : (
                                     <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                                         {funcionarioSelecionado.cartoes.map(cartao => (
@@ -173,19 +173,19 @@ function Cartoes() {
 
             <Table>
                 <TableHeader><TableRow>
-                    <TableHead className="w-[30%]">Nome do Funcionario</TableHead><TableHead className="w-[20%]">Cargo</TableHead>
+                    <TableHead className="w-[30%]">Nome do Funcionário</TableHead><TableHead className="w-[20%]">Cargo</TableHead>
                     <TableHead className="w-[20%]">Setor</TableHead><TableHead className="w-[30%] text-center">Açao</TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
                     {(!Array.isArray(funcionariosFiltrados) || funcionariosFiltrados.length === 0) ? (
-                        <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Nenhum funcionario encontrado.</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Nenhum funcionário encontrado.</TableCell></TableRow>
                     ) : (
                         paginacao.visiveis.map(f => (
                             <TableRow key={f.id}>
                                 <TableCell className="font-semibold">{f.nome}</TableCell>
                                 <TableCell>{f.cargo}</TableCell>
                                 <TableCell className="uppercase">{f.setor?.nome}</TableCell>
-                                <TableCell className="text-center"><Button size="sm" onClick={() => abrirPainelCartoes(f)}>Gerenciar Cartoes</Button></TableCell>
+                                <TableCell className="text-center"><Button size="sm" onClick={() => abrirPainelCartoes(f)}>Gerenciar Cartões</Button></TableCell>
                             </TableRow>
                         ))
                     )}
@@ -204,7 +204,7 @@ function Cartoes() {
             <AlertDialog open={idCartaoParaExcluir !== null} onOpenChange={(open) => !open && setIdCartaoParaExcluir(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Remover Cartao?</AlertDialogTitle>
+                        <AlertDialogTitle>Remover Cartão?</AlertDialogTitle>
                             <AlertDialogDescription asChild>
                                 <span>
                                 O funcionario perderá o acesso deste cartao permanentemente.

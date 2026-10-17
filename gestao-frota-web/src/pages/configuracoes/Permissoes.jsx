@@ -112,7 +112,7 @@ function Permissoes() {
                             <TableRow>
                                 <TableHead className="w-[20%]">ID</TableHead>
                                 <TableHead className="w-[30%]">Setor</TableHead>
-                                <TableHead className="w-[30%]">Qntd Colaborador</TableHead>
+                                <TableHead className="w-[30%]">Qtd. Colaboradores</TableHead>
                                 <TableHead className="w-[20%]">Permissões</TableHead>
                             </TableRow>
                         ) : (

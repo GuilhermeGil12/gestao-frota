@@ -19,7 +19,7 @@ function Configuracoes() {
 
     const handleSalvar = () => {
         console.log("Salvando:", { diasCnh, kmRevisao, bloquearCnhVencida, bloquearMadrugada, nomeEmpresa });
-        toast.success("Configuracoes salvas com sucesso!");
+        toast.success("Configurações salvas com sucesso!");
     };
 
     const handleBackup = () => { toast.info("Gerando arquivo de backup (.csv)..."); };
@@ -27,29 +27,29 @@ function Configuracoes() {
     return (
         <div className="w-full space-y-6">
             <div className="flex items-center justify-between border-b border-border pb-4">
-                <h1 className="text-xl font-semibold text-foreground">Configuracoes do Sistema</h1>
-                <Button onClick={handleSalvar}><Save className="h-4 w-4 mr-2" />Salvar Alteracoes</Button>
+                <h1 className="text-xl font-semibold text-foreground">Configurações do Sistema</h1>
+                <Button onClick={handleSalvar}><Save className="h-4 w-4 mr-2" />Salvar Alterações</Button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {/* Card 1: Regras de Seguranca */}
+                {/* Card 1: Regras de Segurança */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Regras de Seguranca</CardTitle>
-                        <CardDescription>Controle os bloqueios automaticos dos crachas.</CardDescription>
+                        <CardTitle>Regras de Segurança</CardTitle>
+                        <CardDescription>Controle os bloqueios automáticos dos crachás.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="flex items-center justify-between">
                             <div className="space-y-0.5">
                                 <Label className="text-base">Bloquear CNH Vencida</Label>
-                                <p className="text-xs text-muted-foreground max-w-[250px]">Impede o motorista de acessar o veiculo se a CNH expirar.</p>
+                                <p className="text-xs text-muted-foreground max-w-[250px]">Impede o motorista de acessar o veículo se a CNH expirar.</p>
                             </div>
                             <Switch checked={bloquearCnhVencida} onCheckedChange={setBloquearCnhVencida} />
                         </div>
                         <div className="flex items-center justify-between border-t border-border pt-4">
                             <div className="space-y-0.5">
                                 <Label className="text-base">Bloqueio de Madrugada</Label>
-                                <p className="text-xs text-muted-foreground max-w-[250px]">Bloqueia acessos fora do horario comercial (22h - 06h).</p>
+                                <p className="text-xs text-muted-foreground max-w-[250px]">Bloqueia acessos fora do horário comercial (22h - 06h).</p>
                             </div>
                             <Switch checked={bloquearMadrugada} onCheckedChange={setBloquearMadrugada} />
                         </div>
@@ -64,25 +64,25 @@ function Configuracoes() {
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="flex items-center justify-between">
-                            <Label>Aviso previo de CNH (Dias)</Label>
+                            <Label>Aviso prévio de CNH (Dias)</Label>
                             <Input type="number" value={diasCnh} onChange={(e) => setDiasCnh(e.target.value)} className="w-24 text-center" />
                         </div>
                         <div className="flex items-center justify-between border-t border-border pt-4">
-                            <Label>Aviso de Revisao (A cada X km)</Label>
+                            <Label>Aviso de Revisão (A cada X km)</Label>
                             <Input type="number" value={kmRevisao} onChange={(e) => setKmRevisao(e.target.value)} className="w-28 text-center" step="1000" />
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Card 3: Personalizacao e Dados */}
+                {/* Card 3: Personalização e Dados */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Personalizacao e Dados</CardTitle>
-                        <CardDescription>Ajustes gerais e backup de informacoes.</CardDescription>
+                        <CardTitle>Personalização e Dados</CardTitle>
+                        <CardDescription>Ajustes gerais e backup de informações.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Nome da Empresa (Para relatorios)</Label>
+                            <Label>Nome da Empresa (Para relatórios)</Label>
                             <Input type="text" value={nomeEmpresa} onChange={(e) => setNomeEmpresa(e.target.value)} />
                         </div>
                         <div className="border-t border-border pt-4">

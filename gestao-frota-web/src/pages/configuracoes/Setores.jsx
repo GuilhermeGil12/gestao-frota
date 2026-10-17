@@ -107,7 +107,7 @@ function Setores() {
                     <TableRow>
                         <TableHead className="w-[30%]">ID</TableHead>
                         <TableHead className="w-[30%]">Nome</TableHead>
-                        <TableHead className="w-[20%]">Qntd Funcionários</TableHead>
+                        <TableHead className="w-[20%]">Qtd. Funcionários</TableHead>
                         <TableHead className="w-[20%]">Ações</TableHead>
                     </TableRow>
                 </TableHeader>

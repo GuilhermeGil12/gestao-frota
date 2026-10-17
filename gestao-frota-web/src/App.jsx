@@ -63,9 +63,9 @@ function LayoutPrincipal() {
     if (!autenticado) return <Navigate to="/login" replace />;
 
     const notificacoes = [
-        { id: 1, texto: "A CNH do motorista Guilherme Gil vence em 5 dias.",       tempo: "Ha 2 horas" },
-        { id: 2, texto: "Veiculo ABC-1234 atingiu a quilometragem para revisao.", tempo: "Ha 4 horas" },
-        { id: 3, texto: "Tentativa de acesso negada fora do horario.",             tempo: "Ontem"      },
+        { id: 1, texto: "A CNH do motorista Guilherme Gil vence em 5 dias.",       tempo: "Há 2 horas" },
+        { id: 2, texto: "Veículo ABC-1234 atingiu a quilometragem para revisão.", tempo: "Há 4 horas" },
+        { id: 3, texto: "Tentativa de acesso negada fora do horário.",             tempo: "Ontem"      },
     ];
 
     return (
@@ -89,7 +89,7 @@ function LayoutPrincipal() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-80">
-                            <DropdownMenuLabel>Notificacoes Recentes</DropdownMenuLabel>
+                            <DropdownMenuLabel>Notificações Recentes</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <div className="max-h-80 overflow-y-auto">
                                 {notificacoes.map(notif => (

@@ -90,7 +90,7 @@ function Controladoras() {
     return (
         <div className="w-full">
             <div className="flex items-center justify-between mb-6 border-b border-border pb-4">
-                <h1 className="text-xl font-semibold text-foreground">Gestao de Controladoras</h1>
+                <h1 className="text-xl font-semibold text-foreground">Gestão de Controladoras</h1>
                 {temPermissao("controladoras.cadastrar") && (
                     <Button onClick={() => abrirModal()}>+ Nova Controladora</Button>
                 )}
@@ -100,9 +100,9 @@ function Controladoras() {
                 <DialogContent className="max-w-[600px]">
                     <DialogHeader><DialogTitle>{formData.idControladora ? "Editar Controladora" : "Cadastrar Controladora"}</DialogTitle><DialogDescription>Preencha os dados da controladora.</DialogDescription></DialogHeader>
                     <form onSubmit={handleSalvar} className="space-y-4">
-                        <div className="space-y-2"><Label>Endereco IP</Label><Input placeholder="192.168.0.1" value={formData.ipControladora} onChange={e => setFormData({ ...formData, ipControladora: maskIP(e.target.value) })} required /></div>
+                        <div className="space-y-2"><Label>Endereço IP</Label><Input placeholder="192.168.0.1" value={formData.ipControladora} onChange={e => setFormData({ ...formData, ipControladora: maskIP(e.target.value) })} required /></div>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2"><Label>Endereco MAC</Label><Input placeholder="00:1B:44:11:3A:B7" value={formData.macControladora} onChange={e => setFormData({ ...formData, macControladora: maskMAC(e.target.value) })} required /></div>
+                            <div className="space-y-2"><Label>Endereço MAC</Label><Input placeholder="00:1B:44:11:3A:B7" value={formData.macControladora} onChange={e => setFormData({ ...formData, macControladora: maskMAC(e.target.value) })} required /></div>
                             <div className="space-y-2"><Label>Senha</Label><Input type="password" placeholder="Senha do equipamento" value={formData.senha} onChange={e => setFormData({ ...formData, senha: e.target.value })} required /></div>
                         </div>
                         <DialogFooter className="border-t border-border pt-4"><Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button><Button type="submit">Confirmar</Button></DialogFooter>
@@ -113,7 +113,7 @@ function Controladoras() {
             <Table>
                 <TableHeader><TableRow>
                     <TableHead className="w-[10%]">Status</TableHead><TableHead className="w-[15%]">ID Banco</TableHead>
-                    <TableHead className="w-[25%]">IP Controladora</TableHead><TableHead className="w-[25%]">MAC Controladora</TableHead><TableHead className="w-[25%] text-center">Acoes</TableHead>
+                    <TableHead className="w-[25%]">IP Controladora</TableHead><TableHead className="w-[25%]">MAC Controladora</TableHead><TableHead className="w-[25%] text-center">Ações</TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
                     {(!Array.isArray(controladoras) || controladoras.length === 0) ? (

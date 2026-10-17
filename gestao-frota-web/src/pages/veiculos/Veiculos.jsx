@@ -64,10 +64,10 @@ function Veiculos() {
     };
 
     const handleInativar = async (veiculo) => {
-        const confirmacao = await Swal.fire({ title: 'Tem certeza?', text: "Deseja alterar o status deste veiculo?", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'Sim!', cancelButtonText: 'Cancelar', background: '#1e1e1e', color: '#ffffff' });
+        const confirmacao = await Swal.fire({ title: 'Tem certeza?', text: "Deseja alterar o status deste veículo?", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'Sim!', cancelButtonText: 'Cancelar', background: '#1e1e1e', color: '#ffffff' });
         if (confirmacao.isConfirmed) {
             try { await api.put(`/veiculos/${veiculo.id}`, { ...veiculo, ativo: !veiculo.ativo }); carregarDados(); toast.success("Status alterado com sucesso!"); }
-            catch (e) { toast.error("Ops! Nao foi possivel alterar este veiculo."); }
+            catch (e) { toast.error("Ops! Não foi possível alterar este veículo."); }
         }
     };
 
@@ -108,24 +108,24 @@ function Veiculos() {
     return (
         <div className="w-full">
             <div className="flex items-center justify-between mb-6 border-b border-border pb-4 gap-4">
-                <h1 className="text-xl font-semibold text-foreground">Gestao de Veiculos</h1>
+                <h1 className="text-xl font-semibold text-foreground">Gestão de Veículos</h1>
                 <Input type="text" placeholder="Pesquisar por Nome ou Placa..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} className="max-w-xs" />
                 {temPermissao("veiculos.cadastrar") && (
-                    <Button onClick={() => abrirModal()}>+ Novo Veiculo</Button>
+                    <Button onClick={() => abrirModal()}>+ Novo Veículo</Button>
                 )}
             </div>
 
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="max-w-[700px]">
-                    <DialogHeader><DialogTitle>{formData.id ? "Editar Veiculo" : "Cadastrar Veiculo"}</DialogTitle><DialogDescription>Preencha os dados do veiculo.</DialogDescription></DialogHeader>
+                    <DialogHeader><DialogTitle>{formData.id ? "Editar Veículo" : "Cadastrar Veículo"}</DialogTitle><DialogDescription>Preencha os dados do veículo.</DialogDescription></DialogHeader>
                     <form onSubmit={handleSalvar} className="space-y-4">
-                        <div className="space-y-2"><Label>Nome do Veiculo</Label><Input value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} required /></div>
+                        <div className="space-y-2"><Label>Nome do Veículo</Label><Input value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} required /></div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2"><Label>Placa</Label><Input value={formData.placa} onChange={e => setFormData({ ...formData, placa: maskPlaca(e.target.value) })} required /></div>
                             <div className="space-y-2"><Label>Renavam</Label><Input value={formData.renavam} onChange={e => setFormData({ ...formData, renavam: e.target.value })} required /></div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2"><Label>Vel. Maxima (km/h)</Label><Input type="number" value={formData.velocidadeMaxima} onChange={e => setFormData({ ...formData, velocidadeMaxima: e.target.value })} /></div>
+                            <div className="space-y-2"><Label>Vel. Máxima (km/h)</Label><Input type="number" value={formData.velocidadeMaxima} onChange={e => setFormData({ ...formData, velocidadeMaxima: e.target.value })} /></div>
                             <div className="space-y-2">
                                 <Label>Vincular Controladora</Label>
                                 <select value={formData.controladoraId} onChange={e => setFormData({ ...formData, controladoraId: e.target.value })} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
@@ -142,11 +142,11 @@ function Veiculos() {
             <Table>
                 <TableHeader><TableRow>
                     <TableHead className="w-[10%]">Status</TableHead><TableHead className="w-[20%]">Nome</TableHead><TableHead className="w-[15%]">Placa</TableHead>
-                    <TableHead className="w-[15%]">Renavam</TableHead><TableHead className="w-[20%]">Controladora</TableHead><TableHead className="w-[20%] text-center">Acoes</TableHead>
+                    <TableHead className="w-[15%]">Renavam</TableHead><TableHead className="w-[20%]">Controladora</TableHead><TableHead className="w-[20%] text-center">Ações</TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
                     {(!Array.isArray(veiculosFiltrados) || veiculosFiltrados.length === 0) ? (
-                        <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{termoBusca ? "Nenhum veiculo encontrado com esta pesquisa." : "Nenhum veiculo encontrado no banco."}</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{termoBusca ? "Nenhum veículo encontrado com esta pesquisa." : "Nenhum veículo encontrado no banco."}</TableCell></TableRow>
                     ) : (
                         paginacao.visiveis.map(v => (
                             <TableRow key={v.id}>

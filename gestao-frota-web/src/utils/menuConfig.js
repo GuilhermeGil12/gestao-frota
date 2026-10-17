@@ -12,7 +12,7 @@ import {
 
         { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
         { to: "/Monitoramento", icon: Radio, label: "Monitoramento"},
-        { to: "/funcionarios", icon: Users, label: "Funcionarios" },
+        { to: "/funcionarios", icon: Users, label: "Funcionários" },
         {to: "/comandos", icon: ShieldAlert, label: "Comandos"},
         {to: "/veiculos", label: "Veículos", icon: Car, children: [
             {to: "/rotas", label: "Lista de Veículos"}, 
