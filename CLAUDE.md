@@ -16,6 +16,7 @@ O projeto é dividido em dois módulos independentes:
 - **Build:** Maven — usar `./mvnw`, nunca `mvn` direto
 - **ORM:** Spring Data JPA + Hibernate — queries via repository interfaces; evitar `@Query` nativo salvo quando necessário
 - **Banco:** PostgreSQL na porta **5433** (não 5432)
+- **Perfis locais:** `application-casa.properties` e `application-flash.properties` ficam fora do git (têm a senha do banco local) — cada máquina mantém o seu; `application-prod.properties` lê tudo de variáveis de ambiente
 - **REST:** Controllers com `@CrossOrigin`; respostas em JSON; sem autenticação implementada ainda
 - **Nomenclatura:** entidades e campos em português (ex: `Veiculo`, `placa`, `funcionario`)
 

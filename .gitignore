@@ -38,3 +38,10 @@ gestao-frota-web/node_modules/
 
 ### Claude ###
 .claude/worktrees/
+
+### Configuracoes locais e dados pessoais (nao versionar) ###
+# Perfis de desenvolvimento com senha do banco local — cada maquina tem o seu.
+src/main/resources/application-casa.properties
+src/main/resources/application-flash.properties
+# Requisicoes de teste com dados pessoais
+*.http
