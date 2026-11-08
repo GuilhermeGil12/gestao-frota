@@ -4,6 +4,7 @@ import com.tcc.gestaofrota.dto.CoordenadaEsp32DTO;
 import com.tcc.gestaofrota.model.Localizacao;
 import com.tcc.gestaofrota.repository.LocalizacaoRepository;
 import com.tcc.gestaofrota.service.LocalizacaoService;
+import com.tcc.gestaofrota.service.RelatorioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -20,12 +21,14 @@ import java.util.stream.Collectors;
 public class LocalizacaoController {
 
     private final LocalizacaoService localizacaoService;
+    private final RelatorioService relatorioService;
 
     @Autowired
     private LocalizacaoRepository repository;
 
-    public LocalizacaoController(LocalizacaoService localizacaoService) {
+    public LocalizacaoController(LocalizacaoService localizacaoService, RelatorioService relatorioService) {
         this.localizacaoService = localizacaoService;
+        this.relatorioService = relatorioService;
     }
 
     // 1. Recebe dados do ESP32
@@ -108,6 +111,26 @@ public class LocalizacaoController {
         // idVeiculo opcional: se vier, filtra só aquele carro; se não vier, calcula a frota toda
         List<Map<String, Object>> relatorio = localizacaoService.gerarRelatorioQuilometragem(inicio, fim, idVeiculo);
         return ResponseEntity.ok(relatorio);
+    }
+
+    // Relatório detalhado: todos os pontos do período. Resposta: { pontos, total, limitado, maximo }
+    @PreAuthorize("hasAuthority('relatorios.visualizar')")
+    @GetMapping("/relatorio-pontos")
+    public ResponseEntity<Map<String, Object>> obterRelatorioPontos(
+            @RequestParam("inicio") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
+            @RequestParam("fim") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim,
+            @RequestParam(value = "idVeiculo", required = false) Long idVeiculo) {
+        return ResponseEntity.ok(relatorioService.pontos(inicio, fim, idVeiculo));
+    }
+
+    // Relatório de visitas: entradas e saídas dos veículos nas cercas.
+    @PreAuthorize("hasAuthority('relatorios.visualizar')")
+    @GetMapping("/relatorio-visitas")
+    public ResponseEntity<List<Map<String, Object>>> obterRelatorioVisitas(
+            @RequestParam("inicio") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
+            @RequestParam("fim") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim,
+            @RequestParam(value = "idVeiculo", required = false) Long idVeiculo) {
+        return ResponseEntity.ok(relatorioService.visitas(inicio, fim, idVeiculo));
     }
 
     @PreAuthorize("hasAuthority('monitoramento.visualizar')")

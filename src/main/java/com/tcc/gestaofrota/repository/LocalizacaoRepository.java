@@ -51,4 +51,6 @@ public interface LocalizacaoRepository extends JpaRepository <Localizacao, Long>
     List<Localizacao> buscarUltimaDeCadaVeiculo();
 
     List<Localizacao> findByDataHoraBetweenOrderByDataHoraAsc(LocalDateTime inicio, LocalDateTime fim);
+
+    List<Localizacao> findByVeiculoIdAndDataHoraBetweenOrderByDataHoraAsc(Long idVeiculo, LocalDateTime inicio, LocalDateTime fim);
 }

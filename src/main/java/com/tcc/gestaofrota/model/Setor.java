@@ -1,8 +1,11 @@
 package com.tcc.gestaofrota.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 
 @Entity
@@ -77,5 +80,22 @@ public class Setor {
    @Column(name = "ativo")
    private boolean ativo;
 
+   // Permissões padrão do setor: aplicadas aos usuários dos funcionários deste setor.
+   // @JsonIgnore: o setor aparece dentro do funcionário e não precisa levar a lista junto.
+   @JsonIgnore
+   @ManyToMany(fetch = FetchType.LAZY)
+   @JoinTable(
+           name = "setor_permissao",
+           joinColumns = @JoinColumn(name = "id_setor"),
+           inverseJoinColumns = @JoinColumn(name = "id_permissao")
+   )
+   private Set<Permissao> permissoes = new HashSet<>();
 
+   public Set<Permissao> getPermissoes() {
+      return permissoes;
+   }
+
+   public void setPermissoes(Set<Permissao> permissoes) {
+      this.permissoes = permissoes;
+   }
 }

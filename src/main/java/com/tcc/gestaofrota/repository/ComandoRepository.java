@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,4 +23,7 @@ public interface ComandoRepository extends JpaRepository<Comando, Long> {
 
     // Último comando de um dos tipos (ex.: o último BLOQUEAR/DESBLOQUEAR = estado atual desejado).
     Optional<Comando> findFirstByControladora_IdControladoraAndTipoInOrderByCriadoEmDesc(Long idControladora, List<String> tipos);
+
+    // Comandos confirmados pela controladora depois de uma data (notificações).
+    List<Comando> findTop30ByStatusAndExecutadoEmAfterOrderByExecutadoEmDesc(String status, LocalDateTime depois);
 }

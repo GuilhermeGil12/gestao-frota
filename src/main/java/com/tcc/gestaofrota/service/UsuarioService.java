@@ -26,16 +26,19 @@ public class UsuarioService {
     private final FuncionarioRepository funcionarioRepository;
     private final PermissaoRepository permissaoRepository;
     private final RefreshTokenService refreshTokenService;
+    private final SetorService setorService;
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     public UsuarioService(UsuarioRepository usuarioRepository,
                           FuncionarioRepository funcionarioRepository,
                           PermissaoRepository permissaoRepository,
-                          RefreshTokenService refreshTokenService) {
+                          RefreshTokenService refreshTokenService,
+                          SetorService setorService) {
         this.usuarioRepository = usuarioRepository;
         this.funcionarioRepository = funcionarioRepository;
         this.permissaoRepository = permissaoRepository;
         this.refreshTokenService = refreshTokenService;
+        this.setorService = setorService;
     }
 
     /** Converte a lista de chaves vinda do frontend nas entidades correspondentes. */
@@ -83,7 +86,12 @@ public class UsuarioService {
         u.setEmail(dados.get("email").toString().trim().toLowerCase());
         u.setSenha(encoder.encode(dados.get("senha").toString()));
         u.setAtivo(true);
-        u.setPermissoes(resolverPermissoes(dados.get("permissoes")));
+        Set<Permissao> permissoes = resolverPermissoes(dados.get("permissoes"));
+        // Nenhuma permissão marcada: o usuário começa com as permissões padrão do setor do funcionário.
+        if (permissoes.isEmpty() && funcionario != null && funcionario.getSetor() != null) {
+            permissoes = setorService.permissoesDoSetor(funcionario.getSetor().getId());
+        }
+        u.setPermissoes(permissoes);
         return usuarioRepository.save(u);
     }
 

@@ -1,192 +1,204 @@
-import api from "@/services/api";
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion"
-
-import { Button } from "@/components/ui/button";
-
-import {
-    Field,
-    FieldContent,
-    FieldDescription,
-    FieldGroup,
-    FieldLabel,
-    FieldTitle,
-} from "@/components/ui/field"
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label"
-import menuItems from "@/utils/menuConfig";
-
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input";
-import { useEffect, useState } from "react";
-
-
-import { MoreHorizontalIcon } from "lucide-react"
-
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import Funcionarios from "../Funcionarios";
+import Swal from "sweetalert2";
+import { Search, ShieldCheck, Users, Loader2 } from "lucide-react";
+import api from "@/services/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import PainelPermissoes from "@/components/PainelPermissoes";
+import Paginacao from "../../components/Paginacao";
+import { usePaginacao } from "../../utils/usePaginacao";
 
+function erroMsg(e, padrao) {
+    return e?.response?.data?.message || padrao;
+}
+
+// Cores do tema atual (claro/escuro) para o sweetalert2, que não enxerga o Tailwind.
+function corDoTema(variavel) {
+    return getComputedStyle(document.documentElement).getPropertyValue(variavel).trim();
+}
 
 function Permissoes() {
+    const [setores, setSetores] = useState([]);
+    const [catalogo, setCatalogo] = useState([]);
+    const [busca, setBusca] = useState("");
+    const [setorEditando, setSetorEditando] = useState(null);
+    const [selecionadas, setSelecionadas] = useState([]);
+    const [salvando, setSalvando] = useState(false);
 
-    const [tipoPermissao, setTipoPermissao] = useState("setor");
-    const [funcionarios, setFuncionarios] = useState([]);
-    const [setor, setSetor] = useState([]);
+    const totalPermissoes = useMemo(
+        () => catalogo.reduce((s, grupo) => s + grupo.acoes.length, 0),
+        [catalogo]
+    );
 
-    const carregarFuncionarios = async () => {
+    const carregarSetores = async () => {
         try {
-            const res = await api.get('/funcionarios');
-            setFuncionarios(res.data);
+            const res = await api.get("/setores");
+            setSetores(Array.isArray(res.data) ? res.data : []);
+        } catch {
+            toast.error("Erro ao carregar setores.");
         }
-        catch (e) {
-            toast.error("Erro ao carregar!")
-            console.log(e);
-        }
-    }
+    };
 
-    const carregarSetor = async () => {
+    useEffect(() => {
+        carregarSetores();
+        api.get("/permissoes/catalogo")
+            .then((res) => setCatalogo(Array.isArray(res.data) ? res.data : []))
+            .catch(() => toast.error("Erro ao carregar a lista de permissões."));
+    }, []);
+
+    const abrirEdicao = (setor) => {
+        setSetorEditando(setor);
+        setSelecionadas(setor.permissoes ?? []);
+    };
+
+    // Pergunta se aplica agora aos usuários do setor (troca as permissões deles e pede novo login).
+    const perguntarAplicar = async (setor) => {
+        if (setor.quantidadeUsuarios === 0) return;
+        const resposta = await Swal.fire({
+            title: "Aplicar aos usuários?",
+            text: `Os ${setor.quantidadeUsuarios} usuário(s) do setor ${setor.nome} vão receber exatamente estas permissões. `
+                + "Quem tiver permissões diferentes precisará entrar no sistema de novo.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Aplicar",
+            cancelButtonText: "Agora não",
+            background: corDoTema("--card"),
+            color: corDoTema("--foreground"),
+            confirmButtonColor: corDoTema("--destructive"),
+            cancelButtonColor: corDoTema("--muted-foreground"),
+        });
+        if (!resposta.isConfirmed) return;
         try {
-            const res = await api.get('/setores');
-            setSetor(res.data);
+            const res = await api.post(`/setores/${setor.id}/permissoes/aplicar`);
+            const alterados = res.data?.usuariosAlterados ?? 0;
+            toast.success(alterados === 0
+                ? "Os usuários já tinham essas permissões."
+                : `Permissões aplicadas a ${alterados} usuário(s).`);
+        } catch (e) {
+            toast.error(erroMsg(e, "Erro ao aplicar as permissões."));
         }
-        catch (e) {
-            toast.error("Erro ao carregar setor!")
-            console.log(e);
-        }
-    }
+    };
 
-    useEffect(() => { carregarSetor(); }, []);
+    const handleSalvar = async () => {
+        setSalvando(true);
+        try {
+            const res = await api.put(`/setores/${setorEditando.id}/permissoes`, selecionadas);
+            toast.success(`Permissões do setor ${setorEditando.nome} salvas!`);
+            setSetorEditando(null);
+            await carregarSetores();
+            await perguntarAplicar(res.data);
+        } catch (e) {
+            toast.error(erroMsg(e, "Erro ao salvar as permissões."));
+        } finally {
+            setSalvando(false);
+        }
+    };
+
+    const filtrados = useMemo(() => {
+        const termo = busca.trim().toLowerCase();
+        return termo ? setores.filter((s) => s.nome.toLowerCase().includes(termo)) : setores;
+    }, [setores, busca]);
+
+    const paginacao = usePaginacao(filtrados, 20);
 
     return (
-        <div className="w-full ">
-            <div className="flex items-center justify-between mb-6 border-b border-border pb-4">
-                <h1 className="text-xl font-semibold text-foreground">Permissões</h1>
+        <div className="w-full space-y-6">
+            <div className="flex items-center justify-between border-b border-border pb-4 gap-4">
+                <h1 className="text-xl font-semibold text-foreground">Permissões por setor</h1>
+                <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input className="w-64 pl-8" placeholder="Buscar setor..." value={busca} onChange={(e) => setBusca(e.target.value)} />
+                </div>
             </div>
 
-            <section className="flex flex-col gap-4">
-                <div className="flex mb-8 justify-between">
-                    <Tabs defaultValue="setor" className="" onValueChange={(value) => {
-                        setTipoPermissao(value);
-                        if (value === "colaborador") {
-                            carregarFuncionarios();
-                        }
-                        else {
-                            carregarSetor();
-                        }
-                    }}>
-                        <TabsList>
-                            <TabsTrigger value="setor">
-                                Setor
-                            </TabsTrigger>
-                            <TabsTrigger value="colaborador">
-                                Colaborador
-                            </TabsTrigger>
-                        </TabsList>
-                    </Tabs>
+            <Card>
+                <CardContent className="pt-6 text-sm text-muted-foreground space-y-1">
+                    <p>
+                        Cada setor tem um conjunto de permissões padrão. Um usuário novo, de funcionário desse setor,
+                        já começa com elas, e você pode aplicá-las de uma vez a todos os usuários do setor.
+                    </p>
+                    <p>
+                        Para ajustar um usuário específico, use <Link to="/configuracoes/usuario" className="text-foreground underline underline-offset-4">Configurações → Usuários</Link>.
+                    </p>
+                </CardContent>
+            </Card>
 
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Setor</TableHead>
+                        <TableHead>Usuários</TableHead>
+                        <TableHead>Permissões</TableHead>
+                        <TableHead className="w-[1%] text-right">Ações</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {filtrados.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                                {busca ? "Nenhum setor encontrado para a busca." : "Nenhum setor cadastrado."}
+                            </TableCell>
+                        </TableRow>
+                    ) : paginacao.visiveis.map((s) => (
+                        <TableRow key={s.id}>
+                            <TableCell>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-medium">{s.nome}</span>
+                                    {!s.ativo && <Badge variant="outline">Inativo</Badge>}
+                                </div>
+                            </TableCell>
+                            <TableCell className="tabular-nums">{s.quantidadeUsuarios}</TableCell>
+                            <TableCell>
+                                <Badge variant={s.permissoes?.length ? "secondary" : "outline"}>
+                                    {s.permissoes?.length ?? 0} de {totalPermissoes}
+                                </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => abrirEdicao(s)}>
+                                        <ShieldCheck className="h-3.5 w-3.5 mr-1" />Editar
+                                    </Button>
+                                    <Button variant="outline" size="sm" disabled={s.quantidadeUsuarios === 0} onClick={() => perguntarAplicar(s)}>
+                                        <Users className="h-3.5 w-3.5 mr-1" />Aplicar aos usuários
+                                    </Button>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+            <Paginacao
+                pagina={paginacao.pagina}
+                totalPaginas={paginacao.totalPaginas}
+                totalItens={paginacao.totalItens}
+                inicio={paginacao.inicio}
+                fim={paginacao.fim}
+                onChange={paginacao.setPagina}
+            />
 
-                    <Input className="max-w-xs mx-auto justify-between" placeholder={tipoPermissao == "setor" ? "Digite o setor" : "Digite o nome do colaborador"} />
-                </div>
-                <Table>
-                    <TableHeader>
-                        {(tipoPermissao === "setor") ? (
-                            <TableRow>
-                                <TableHead className="w-[20%]">ID</TableHead>
-                                <TableHead className="w-[30%]">Setor</TableHead>
-                                <TableHead className="w-[30%]">Qtd. Colaboradores</TableHead>
-                                <TableHead className="w-[20%]">Permissões</TableHead>
-                            </TableRow>
-                        ) : (
-                            <TableRow>
-                                <TableHead className="w-[40%]">Nome</TableHead>
-                                <TableHead className="w-[40%]">Setor</TableHead>
-                                <TableHead className="w-[20%]">Permissões</TableHead>
-                            </TableRow>
-                        )}
-                    </TableHeader>
-                    <TableBody>
-
-
-                        {(tipoPermissao === "colaborador") ? (
-                            (funcionarios.length === 0) ? (
-                                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum funcionário encontrado.</TableCell></TableRow>
-                            ) : (
-                                funcionarios.map(f => (
-                                    <TableRow>
-
-                                        <TableCell>{f.nome}</TableCell>
-                                        <TableCell>{f.setor?.nome}</TableCell>
-                                        <TableCell>
-                                            <Button variant="outline">Editar</Button>
-                                        </TableCell>
-                                    </TableRow>
-
-                                ))
-                            )
-                        ) : (
-                            (setor.length === 0) ? (
-                                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum setor encontrado.</TableCell></TableRow>
-                            ) : (
-                                setor.map(s => (
-                                    <TableRow>
-                                        <TableCell>#{s.id}</TableCell>
-                                        <TableCell>{s.nome}</TableCell>
-                                        <TableCell>{s.id}</TableCell>
-                                        <TableCell>
-                                            <Button variant="outline">Editar</Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )
-                        )}
-
-
-                    </TableBody>
-                </Table>
-
-
-
-
-
-
-
-                {/* {menuItems.map(item => (
-                <Accordion defaultValue={["item-1"]}>
-                    <AccordionItem value={item.to}>
-                        <AccordionTrigger>{item.label}</AccordionTrigger>
-                        <AccordionContent>
-                            <FieldGroup>
-                                <Field orientation="horizontal">
-                                    <Checkbox id="terms-checkbox" name="terms-checkbox" />
-                                    <Label htmlFor="terms-checkbox">{item.label}</Label>
-                                </Field>
-                            </FieldGroup>
-
-                        </AccordionContent>
-
-                    </AccordionItem>
-                </Accordion>
-            ))} */}
-            </section>
+            <Dialog open={!!setorEditando} onOpenChange={(aberto) => !aberto && setSetorEditando(null)}>
+                <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Permissões do setor {setorEditando?.nome}</DialogTitle>
+                        <DialogDescription>
+                            {selecionadas.length} de {totalPermissoes} permissões marcadas.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <PainelPermissoes catalogo={catalogo} selecionadas={selecionadas} onChange={setSelecionadas} />
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setSetorEditando(null)}>Cancelar</Button>
+                        <Button onClick={handleSalvar} disabled={salvando}>
+                            {salvando && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Salvar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

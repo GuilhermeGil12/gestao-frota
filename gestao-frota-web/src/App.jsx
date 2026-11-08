@@ -1,18 +1,9 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { Bell } from 'lucide-react';
-import { Button } from './components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuTrigger,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-} from './components/ui/dropdown-menu';
-import { Badge } from './components/ui/badge';
 
 import Menu from './components/Menu';
+import Notificacoes from './components/Notificacoes';
 
 import Dashboard          from './pages/Dashboard';
 import MonitoramentoTempoReal from './pages/MonitoramentoTempoReal';
@@ -62,12 +53,6 @@ function LayoutPrincipal() {
 
     if (!autenticado) return <Navigate to="/login" replace />;
 
-    const notificacoes = [
-        { id: 1, texto: "A CNH do motorista Guilherme Gil vence em 5 dias.",       tempo: "Há 2 horas" },
-        { id: 2, texto: "Veículo ABC-1234 atingiu a quilometragem para revisão.", tempo: "Há 4 horas" },
-        { id: 3, texto: "Tentativa de acesso negada fora do horário.",             tempo: "Ontem"      },
-    ];
-
     return (
         <div className="flex h-screen bg-background overflow-hidden">
             <Menu isOpen={isMenuOpen} toggleMenu={toggleMenu} />
@@ -77,30 +62,7 @@ function LayoutPrincipal() {
                 style={{ marginLeft: isMenuOpen ? W_OPEN : W_CLOSED }}
             >
                 <header className="h-[60px] bg-card flex items-center justify-end px-5 border-b border-border z-40">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="relative">
-                                <Bell className="h-5 w-5" />
-                                {notificacoes.length > 0 && (
-                                    <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] bg-red-600 text-white border-0">
-                                        {notificacoes.length}
-                                    </Badge>
-                                )}
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-80">
-                            <DropdownMenuLabel>Notificações Recentes</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <div className="max-h-80 overflow-y-auto">
-                                {notificacoes.map(notif => (
-                                    <div key={notif.id} className="px-4 py-3 border-b border-border last:border-0 hover:bg-accent cursor-pointer transition-colors">
-                                        <p className="text-sm text-foreground leading-relaxed">{notif.texto}</p>
-                                        <span className="text-xs text-muted-foreground mt-1 block">{notif.tempo}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Notificacoes />
                 </header>
 
                 <main className="flex-1 overflow-y-auto p-6">
