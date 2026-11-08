@@ -11,18 +11,26 @@ import com.tcc.gestaofrota.repository.FuncionarioRepository;
 import com.tcc.gestaofrota.repository.LocalizacaoRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class LocalizacaoService {
+
+    // Mesmos valores da controladora e da tela de Rotas.
+    private static final double LIMITE_VELOCIDADE = 110;  // padrão, quando o veículo não tem limite cadastrado
+    private static final double VELOCIDADE_PARADO = 3;    // abaixo disso o GPS oscila mesmo parado
+    private static final long INTERVALO_MAXIMO_SEGUNDOS = 300; // mais que isso entre pontos = sem sinal
 
     private final FuncionarioRepository funcionarioRepository;
     private final LocalizacaoRepository localizacaoRepository;
@@ -195,19 +203,41 @@ public class LocalizacaoService {
 
         List<Map<String, Object>> relatorioFinal = new ArrayList<>();
 
-        // 3. Varre os pontos de cada veículo calculando a distância sequencial
+        // 3. Varre os pontos de cada veículo calculando distância, tempo em movimento e eventos
         locaisPorVeiculo.forEach((veicId, listaPontos) -> {
             double kmTotal = 0.0;
             double velMaxima = 0.0;
-            String placa = listaPontos.get(0).getVeiculo().getPlaca();
+            long segundosEmMovimento = 0;
+            int excessos = 0, freadas = 0, aceleracoes = 0, viradasBruscas = 0;
+            boolean emExcesso = false;
+            Set<String> motoristas = new LinkedHashSet<>();
+            Veiculo veiculo = listaPontos.get(0).getVeiculo();
+            String placa = veiculo.getPlaca();
+            // Cada veículo pode ter o próprio limite; sem cadastro, vale o padrão.
+            double limite = veiculo.getVelocidadeMaxima() != null && veiculo.getVelocidadeMaxima() > 0
+                    ? veiculo.getVelocidadeMaxima() : LIMITE_VELOCIDADE;
 
-            for (int i = 0; i < listaPontos.size() - 1; i++) {
+            for (int i = 0; i < listaPontos.size(); i++) {
                 Localizacao atual = listaPontos.get(i);
-                Localizacao proximo = listaPontos.get(i + 1);
+                double velocidade = atual.getVelocidade() != null ? atual.getVelocidade() : 0.0;
 
-                if (atual.getVelocidade() != null && atual.getVelocidade() > velMaxima) {
-                    velMaxima = atual.getVelocidade();
-                }
+                velMaxima = Math.max(velMaxima, velocidade);
+
+                // Cada vez que passa do limite conta um excesso (e não cada ponto acima dele).
+                boolean acimaDoLimite = velocidade > limite;
+                if (acimaDoLimite && !emExcesso) excessos++;
+                emExcesso = acimaDoLimite;
+
+                // Eventos de condução marcados pela controladora (pontos antigos não têm evento).
+                if ("FREADA".equals(atual.getEvento())) freadas++;
+                else if ("ACELERACAO".equals(atual.getEvento())) aceleracoes++;
+                else if ("VIRADA_BRUSCA".equals(atual.getEvento())) viradasBruscas++;
+
+                String nome = nomeDoMotorista(atual.getMotorista());
+                if (nome != null) motoristas.add(nome);
+
+                if (i == listaPontos.size() - 1) break;
+                Localizacao proximo = listaPontos.get(i + 1);
 
                 if (atual.getLatitude() != null && atual.getLongitude() != null &&
                         proximo.getLatitude() != null && proximo.getLongitude() != null) {
@@ -217,22 +247,53 @@ public class LocalizacaoService {
                             proximo.getLatitude(), proximo.getLongitude()
                     );
                 }
+
+                // Tempo em movimento: intervalo até o próximo ponto, se o carro estava andando.
+                // Intervalos muito longos são falta de sinal, não viagem: ficam de fora.
+                if (velocidade >= VELOCIDADE_PARADO && atual.getDataHora() != null && proximo.getDataHora() != null) {
+                    long segundos = Duration.between(atual.getDataHora(), proximo.getDataHora()).getSeconds();
+                    if (segundos > 0 && segundos <= INTERVALO_MAXIMO_SEGUNDOS) segundosEmMovimento += segundos;
+                }
             }
+
+            double horasEmMovimento = segundosEmMovimento / 3600.0;
+            double velMedia = horasEmMovimento > 0 ? kmTotal / horasEmMovimento : 0.0;
 
             // Formata a resposta em um Map estruturado para o JSON
             Map<String, Object> dadosVeiculo = new HashMap<>();
             dadosVeiculo.put("idVeiculo", veicId);
             dadosVeiculo.put("placa", placa);
+            dadosVeiculo.put("nome", veiculo.getNome());
+            dadosVeiculo.put("limiteVelocidade", limite);
             dadosVeiculo.put("kmRodados", Math.round(kmTotal * 100.0) / 100.0); // Arredonda 2 casas
             dadosVeiculo.put("totalRegistros", listaPontos.size());
             dadosVeiculo.put("velocidadeMaxima", Math.round(velMaxima * 100.0) / 100.0);
+            dadosVeiculo.put("velocidadeMedia", Math.round(velMedia * 10.0) / 10.0);
+            dadosVeiculo.put("minutosEmMovimento", Math.round(segundosEmMovimento / 60.0));
+            dadosVeiculo.put("excessos", excessos);
+            dadosVeiculo.put("freadas", freadas);
+            dadosVeiculo.put("aceleracoes", aceleracoes);
+            dadosVeiculo.put("viradasBruscas", viradasBruscas);
+            dadosVeiculo.put("motoristas", new ArrayList<>(motoristas));
+            dadosVeiculo.put("primeiroRegistro", listaPontos.get(0).getDataHora());
+            dadosVeiculo.put("ultimoRegistro", listaPontos.get(listaPontos.size() - 1).getDataHora());
             // Pega o nome do último condutor registrado no período
             dadosVeiculo.put("motorista", listaPontos.get(listaPontos.size() - 1).getMotorista());
 
             relatorioFinal.add(dadosVeiculo);
         });
 
+        // Quem rodou mais aparece primeiro.
+        relatorioFinal.sort((a, b) -> Double.compare((double) b.get("kmRodados"), (double) a.get("kmRodados")));
         return relatorioFinal;
+    }
+
+    // O motorista é gravado como "Nome | Cartão: UID". Sem cartão identificado, não entra na lista.
+    private String nomeDoMotorista(String texto) {
+        if (texto == null || texto.isBlank()) return null;
+        String nome = texto.split(" \\| Cartão: ")[0].trim();
+        if (nome.isEmpty() || nome.equalsIgnoreCase("Não Identificado")) return null;
+        return nome;
     }
 
     public List<Map<String, Object>> buscarUltimasLocalizacoes() {
