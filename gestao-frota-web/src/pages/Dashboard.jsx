@@ -76,7 +76,7 @@ function Dashboard() {
 
     try {
       const resp = await api.post(`/comandos/${idControladora}`, { tipo: "BLOQUEAR" });
-      toast.success(`Comando enviado! O veículo ${veiculoBloquear.placa} será bloqueado em até 10 segundos.`);
+      toast.success(`Comando enviado! O veículo ${veiculoBloquear.placa} será bloqueado quando estiver parado ou com a chave desligada.`);
     } catch (e) {
       toast.error("Não foi possível bloquear o veículo.");
     } finally {
@@ -93,7 +93,7 @@ function Dashboard() {
     }
     try {
       await api.post(`/comandos/${idControladora}`, { tipo: "APITAR" });
-      toast.success(`Comando enviado! ${veiculo.placa} vai apitar em até ~10s.`);
+      toast.success(`Comando enviado! ${veiculo.placa} vai apitar assim que receber.`);
     } catch (e) {
       toast.error("Não foi possível enviar o comando de apito.");
     }

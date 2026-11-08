@@ -3,9 +3,12 @@ package com.tcc.gestaofrota.service;
 
 import com.tcc.gestaofrota.dto.CartaoEsp32DTO;
 import com.tcc.gestaofrota.model.CartaoRfid;
+import com.tcc.gestaofrota.model.Controladora;
 import com.tcc.gestaofrota.repository.CartaoRfidRepository;
+import com.tcc.gestaofrota.repository.ControladoraRepository;
 import com.tcc.gestaofrota.repository.FuncionarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,11 +22,35 @@ public class CartaoRfidService {
 
     private final CartaoRfidRepository cartaoRfidRepository;
     private final FuncionarioService funcionarioService;
+    private final ControladoraRepository controladoraRepository;
+    private final MqttService mqttService;
 
 
-    public CartaoRfidService(CartaoRfidRepository cartaoRfidRepository, FuncionarioService funcionarioService) {
+    public CartaoRfidService(CartaoRfidRepository cartaoRfidRepository, FuncionarioService funcionarioService,
+                             ControladoraRepository controladoraRepository, MqttService mqttService) {
         this.cartaoRfidRepository = cartaoRfidRepository;
         this.funcionarioService = funcionarioService;
+        this.controladoraRepository = controladoraRepository;
+        this.mqttService = mqttService;
+    }
+
+    // Manda a lista de cartões liberados (retida) pra uma controladora.
+    public void publicarCartoes(Long idControladora) {
+        mqttService.publicarCartoes(idControladora, listarUidsAtivos());
+    }
+
+    // Toda mudança em cartão vale pra frota inteira: publica pra todas as controladoras.
+    public void publicarCartoesParaTodas() {
+        List<String> uids = listarUidsAtivos();
+        for (Controladora controladora : controladoraRepository.findAll()) {
+            mqttService.publicarCartoes(controladora.getIdControladora(), uids);
+        }
+    }
+
+    // O broker pode ter reiniciado e perdido as mensagens retidas: publica de novo.
+    @EventListener
+    public void aoConectarMqtt(MqttService.Conectado evento) {
+        publicarCartoesParaTodas();
     }
 
     public Optional<CartaoRfid> buscarPorUid(String uid){
@@ -43,7 +70,9 @@ public class CartaoRfidService {
             }
         }
 
-        return cartaoRfidRepository.save(cartaoRfid);
+        CartaoRfid salvo = cartaoRfidRepository.save(cartaoRfid);
+        publicarCartoesParaTodas();
+        return salvo;
     }
     // metodo listar cartão por funcionário
     public List<CartaoRfid> listarPorFuncionario(Long funcionarioId) {
@@ -69,6 +98,7 @@ public class CartaoRfidService {
         buscarPorId(id);
 
         cartaoRfidRepository.deleteById(id);
+        publicarCartoesParaTodas();
     }
 
     //inativar cartao
@@ -78,6 +108,7 @@ public class CartaoRfidService {
         cartao.setAtivo(false);
 
         cartaoRfidRepository.save(cartao);
+        publicarCartoesParaTodas();
     }
 
     public void ativar(Long id) {
@@ -86,6 +117,7 @@ public class CartaoRfidService {
 
         cartao.setAtivo(true);
         cartaoRfidRepository.save(cartao);
+        publicarCartoesParaTodas();
     }
 
     public String listarParaEsp32() {

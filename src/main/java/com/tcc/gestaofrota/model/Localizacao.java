@@ -50,6 +50,30 @@ public class Localizacao {
     @Column(name = "tensao_sistema")
     private Double tensaoSistema;
 
+    // Motivo do ponto (CURVA, FREADA, IGNICAO_ON...). Nulo nos pontos de firmwares antigos.
+    @Column(name = "evento", length = 20)
+    private String evento;
+
+    // 0 = ponto gerado sem GPS válido (a posição é a última conhecida).
+    @Column(name = "qtd_satelite")
+    private Integer qtdSatelite;
+
+    public String getEvento() {
+        return evento;
+    }
+
+    public void setEvento(String evento) {
+        this.evento = evento;
+    }
+
+    public Integer getQtdSatelite() {
+        return qtdSatelite;
+    }
+
+    public void setQtdSatelite(Integer qtdSatelite) {
+        this.qtdSatelite = qtdSatelite;
+    }
+
     public Long getId() {
         return id;
     }

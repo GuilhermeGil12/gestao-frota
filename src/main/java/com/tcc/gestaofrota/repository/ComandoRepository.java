@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ComandoRepository extends JpaRepository<Comando, Long> {
 
@@ -18,4 +19,7 @@ public interface ComandoRepository extends JpaRepository<Comando, Long> {
     // Lista todos os comandos de uma controladora, do mais novo para o mais antigo.
     // Usado pelo frontend para mostrar o histórico.
     List<Comando> findByControladora_IdControladoraOrderByCriadoEmDesc(Long idControladora);
+
+    // Último comando de um dos tipos (ex.: o último BLOQUEAR/DESBLOQUEAR = estado atual desejado).
+    Optional<Comando> findFirstByControladora_IdControladoraAndTipoInOrderByCriadoEmDesc(Long idControladora, List<String> tipos);
 }

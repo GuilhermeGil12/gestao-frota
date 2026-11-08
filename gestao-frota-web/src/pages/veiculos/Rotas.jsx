@@ -43,6 +43,29 @@ const CORES_MAPA = {
     trajeto: '#ef4444',
 };
 
+// Por que a controladora gerou o ponto (campo "evento" do firmware).
+const ROTULOS_EVENTO = {
+    IGNICAO_ON: 'Ignição ligada',
+    IGNICAO_OFF: 'Ignição desligada',
+    ACELERACAO: 'Aceleração brusca',
+    FREADA: 'Freada brusca',
+    VIRADA_BRUSCA: 'Virada brusca',
+    EXCESSO_INICIO: 'Início de excesso',
+    EXCESSO_FIM: 'Fim de excesso',
+    PARADA: 'Parada',
+    PARTIDA: 'Partida',
+    CURVA: 'Curva',
+    TEMPO: 'Periódico',
+};
+
+// Pontos de firmwares antigos não têm evento.
+function rotuloEvento(ponto) {
+    if (!ponto.evento) return '—';
+    const rotulo = ROTULOS_EVENTO[ponto.evento] || ponto.evento;
+    // qtdSatelite 0 = sem GPS válido: a posição é a última conhecida.
+    return ponto.qtdSatelite === 0 ? `${rotulo} (sem GPS)` : rotulo;
+}
+
 const LIMITE_PADRAO = 110;
 const VELOCIDADE_PARADO = 3; // abaixo disso o GPS oscila mesmo com o carro parado
 
@@ -266,6 +289,7 @@ function Rotas() {
                                                 <p>Motorista: <b>{motorista.nome}</b></p>
                                                 <p>Velocidade: <b>{ponto.velocidade} km/h</b></p>
                                                 <p>Situação: <b>{situacao.rotulo}</b></p>
+                                                <p>Evento: <b>{rotuloEvento(ponto)}</b></p>
                                                 <p>Pós-chave: <b>{formatarTensao(ponto.tensaoPosChave)}</b> · Bateria: <b>{formatarTensao(ponto.tensaoSistema)}</b></p>
                                             </div>
                                         </Popup>
@@ -299,6 +323,7 @@ function Rotas() {
                                 <TableHead>Motorista</TableHead>
                                 <TableHead>Velocidade</TableHead>
                                 <TableHead>Situação</TableHead>
+                                <TableHead>Evento</TableHead>
                                 <TableHead>Pós-chave</TableHead>
                                 <TableHead>Bateria</TableHead>
                                 <TableHead>Coordenadas</TableHead>
@@ -307,7 +332,7 @@ function Rotas() {
                         <TableBody>
                             {paginacao.totalItens === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum ponto de rota carregado.</TableCell>
+                                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Nenhum ponto de rota carregado.</TableCell>
                                 </TableRow>
                             ) : (paginacao.visiveis.map((h, i) => {
                                 const indiceGlobal = paginacao.inicio - 1 + i;
@@ -332,6 +357,7 @@ function Rotas() {
                                             {velocidade.toFixed(0)} km/h
                                         </TableCell>
                                         <TableCell><Badge variant={situacao.variante}>{situacao.rotulo}</Badge></TableCell>
+                                        <TableCell className="text-muted-foreground">{rotuloEvento(h)}</TableCell>
                                         <TableCell className="tabular-nums">{formatarTensao(h.tensaoPosChave)}</TableCell>
                                         <TableCell className="tabular-nums">{formatarTensao(h.tensaoSistema)}</TableCell>
                                         <TableCell className="text-xs text-muted-foreground tabular-nums">

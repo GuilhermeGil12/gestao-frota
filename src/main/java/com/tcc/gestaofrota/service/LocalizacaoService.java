@@ -71,6 +71,15 @@ public class LocalizacaoService {
         }
     }
 
+    // A chave chega como 1/0; aceita também true/false pra um ponto mal formatado não derrubar o lote.
+    private Integer paraStatus(String ign) {
+        if (ign == null) return 0;
+        if (ign.equalsIgnoreCase("true")) return 1;
+        if (ign.equalsIgnoreCase("false")) return 0;
+        Double valor = paraDouble(ign);
+        return valor != null ? valor.intValue() : 0;
+    }
+
     // Lógica de salvar os pontos — compartilhada entre HTTP e MQTT
     private void salvarPontos(Veiculo carroDoEsp32, List<CoordenadaEsp32DTO> loteDoEsp32) {
 
@@ -91,10 +100,13 @@ public class LocalizacaoService {
                 novaLoc.setLongitude(lng);
                 novaLoc.setAltitude(Double.parseDouble(dto.getAltitude()));
                 novaLoc.setVelocidade(Double.parseDouble(dto.getVelocidade()));
-                novaLoc.setStatus(Integer.parseInt(dto.getIgn()));
+                novaLoc.setStatus(paraStatus(dto.getIgn()));
                 novaLoc.setRecebidoEM(LocalDateTime.now());
                 novaLoc.setTensaoPosChave(paraDouble(dto.getTensao_pos_chave()));
                 novaLoc.setTensaoSistema(paraDouble(dto.getTensao_sistema()));
+                novaLoc.setEvento(dto.getEvento());
+                Double satelites = paraDouble(dto.getQtd_satelite());
+                novaLoc.setQtdSatelite(satelites != null ? satelites.intValue() : null);
 
                 // --- LÓGICA DE IDENTIFICAÇÃO DO MOTORISTA ---
                 String uidCartao = dto.getCrachastr(); // Código enviado pelo ESP32
@@ -120,6 +132,8 @@ public class LocalizacaoService {
                     if (dataHoraString != null && dataHoraString.contains(".")) {
                         dataHoraString = dataHoraString.substring(0, dataHoraString.indexOf("."));
                     }
+                    // Aceita também o formato ISO ("2026-11-08T15:30:12").
+                    if (dataHoraString != null) dataHoraString = dataHoraString.replace('T', ' ');
                     DateTimeFormatter formatador = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                     LocalDateTime dataHoraGps = LocalDateTime.parse(dataHoraString.trim(), formatador);
                     novaLoc.setDataHora(dataHoraGps);

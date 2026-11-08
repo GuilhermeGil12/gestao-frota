@@ -16,6 +16,7 @@ public class ControladoraService {
 
 
     private final ControladoraRepository controladoraRepository;
+    private final CartaoRfidService cartaoRfidService;
 
     /**
      * Construtor utilizado para a Injeção de Dependências (Padrão Ouro do Spring Boot).
@@ -28,8 +29,9 @@ public class ControladoraService {
      * deste repositório para ser instanciado e funcionar.
      */
 
-    public ControladoraService(ControladoraRepository controladoraRepository) {
+    public ControladoraService(ControladoraRepository controladoraRepository, CartaoRfidService cartaoRfidService) {
         this.controladoraRepository = controladoraRepository;
+        this.cartaoRfidService = cartaoRfidService;
     }
 
     public Controladora salvar(Controladora controladora){
@@ -50,7 +52,10 @@ public class ControladoraService {
                 throw new RuntimeException("Este veículo já possui uma controladora vinculada!");
             }
         }
-        return controladoraRepository.save(controladora);
+        Controladora salva = controladoraRepository.save(controladora);
+        // A controladora nova já recebe a lista de cartões quando conectar no broker.
+        cartaoRfidService.publicarCartoes(salva.getIdControladora());
+        return salva;
     }
 
     public List<Controladora> listarTodas(){

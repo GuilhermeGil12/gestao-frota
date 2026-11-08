@@ -14,6 +14,15 @@ public class CoordenadaEsp32DTO {
     private String tensao;
     private String tensao_pos_chave;
     private String tensao_sistema;
+    private String evento; // por que o ESP gerou o ponto: CURVA, FREADA, TEMPO...
+
+    public String getEvento() {
+        return evento;
+    }
+
+    public void setEvento(String evento) {
+        this.evento = evento;
+    }
 
     public String getTensao() {
         return tensao;

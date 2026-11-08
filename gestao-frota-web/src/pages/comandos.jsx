@@ -22,10 +22,13 @@ function Comandos() {
     const [tipoSelecionado, setTipoSelecionado] = useState("");
     const [carregando, setCarregando] = useState(false);
 
-    // Busca a lista de comandos ao abrir a página
+    // Busca a lista ao abrir a página e de novo a cada 10 s:
+    // o status muda sozinho quando o veículo confirma pelo MQTT.
     useEffect(() => {
         buscarComandos();
         buscarControladoras();
+        const intervalo = setInterval(buscarComandos, 10000);
+        return () => clearInterval(intervalo);
     }, []);
 
     async function buscarComandos() {
@@ -56,7 +59,9 @@ function Comandos() {
         try {
             await api.post(`/comandos/${idControladoraSelecionada}`, { tipo: tipoSelecionado });
 
-            toast.success("Comando enviado! O veículo receberá em até 10 segundos.");
+            toast.success(tipoSelecionado === "BLOQUEAR"
+                ? "Comando enviado! O bloqueio é aplicado quando o veículo estiver parado ou com a chave desligada."
+                : "Comando enviado! O status muda para Executado quando o veículo confirmar.");
             setDialogAberto(false);
             setIdControladoraSelecionada("");
             setTipoSelecionado("");
@@ -122,7 +127,7 @@ function Comandos() {
                                 </TableCell>
                                 <TableCell>
                                     <Badge variant={cmd.status === "EXECUTADO" ? "default" : "secondary"}>
-                                        {cmd.status}
+                                        {cmd.status === "EXECUTADO" ? "Executado" : "Aguardando veículo"}
                                     </Badge>
                                 </TableCell>
                                 <TableCell>{formatarData(cmd.executadoEm)}</TableCell>

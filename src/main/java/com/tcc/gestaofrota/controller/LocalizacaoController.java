@@ -75,6 +75,8 @@ public class LocalizacaoController {
             pontoMap.put("status", p.getStatus());
             pontoMap.put("tensaoPosChave", p.getTensaoPosChave());
             pontoMap.put("tensaoSistema", p.getTensaoSistema());
+            pontoMap.put("evento", p.getEvento());
+            pontoMap.put("qtdSatelite", p.getQtdSatelite());
             return pontoMap;
         }).collect(Collectors.toList());
 
