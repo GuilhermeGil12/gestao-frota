@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import Swal from "sweetalert2";
-import { Search, ShieldCheck, Users, Loader2 } from "lucide-react";
+import { Search, ShieldCheck, Loader2 } from "lucide-react";
 import api from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,11 +17,8 @@ function erroMsg(e, padrao) {
     return e?.response?.data?.message || padrao;
 }
 
-// Cores do tema atual (claro/escuro) para o sweetalert2, que não enxerga o Tailwind.
-function corDoTema(variavel) {
-    return getComputedStyle(document.documentElement).getPropertyValue(variavel).trim();
-}
-
+// Papel inicial de cada setor: as permissões com que um usuário NOVO começa.
+// Depois de criado, o usuário é ajustado individualmente em Configurações → Usuários.
 function Permissoes() {
     const [setores, setSetores] = useState([]);
     const [catalogo, setCatalogo] = useState([]);
@@ -57,44 +53,15 @@ function Permissoes() {
         setSelecionadas(setor.permissoes ?? []);
     };
 
-    // Pergunta se aplica agora aos usuários do setor (troca as permissões deles e pede novo login).
-    const perguntarAplicar = async (setor) => {
-        if (setor.quantidadeUsuarios === 0) return;
-        const resposta = await Swal.fire({
-            title: "Aplicar aos usuários?",
-            text: `Os ${setor.quantidadeUsuarios} usuário(s) do setor ${setor.nome} vão receber exatamente estas permissões. `
-                + "Quem tiver permissões diferentes precisará entrar no sistema de novo.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Aplicar",
-            cancelButtonText: "Agora não",
-            background: corDoTema("--card"),
-            color: corDoTema("--foreground"),
-            confirmButtonColor: corDoTema("--destructive"),
-            cancelButtonColor: corDoTema("--muted-foreground"),
-        });
-        if (!resposta.isConfirmed) return;
-        try {
-            const res = await api.post(`/setores/${setor.id}/permissoes/aplicar`);
-            const alterados = res.data?.usuariosAlterados ?? 0;
-            toast.success(alterados === 0
-                ? "Os usuários já tinham essas permissões."
-                : `Permissões aplicadas a ${alterados} usuário(s).`);
-        } catch (e) {
-            toast.error(erroMsg(e, "Erro ao aplicar as permissões."));
-        }
-    };
-
     const handleSalvar = async () => {
         setSalvando(true);
         try {
-            const res = await api.put(`/setores/${setorEditando.id}/permissoes`, selecionadas);
-            toast.success(`Permissões do setor ${setorEditando.nome} salvas!`);
+            await api.put(`/setores/${setorEditando.id}/permissoes`, selecionadas);
+            toast.success(`Papel inicial do setor ${setorEditando.nome} salvo!`);
             setSetorEditando(null);
-            await carregarSetores();
-            await perguntarAplicar(res.data);
+            carregarSetores();
         } catch (e) {
-            toast.error(erroMsg(e, "Erro ao salvar as permissões."));
+            toast.error(erroMsg(e, "Erro ao salvar o papel inicial."));
         } finally {
             setSalvando(false);
         }
@@ -110,7 +77,7 @@ function Permissoes() {
     return (
         <div className="w-full space-y-6">
             <div className="flex items-center justify-between border-b border-border pb-4 gap-4">
-                <h1 className="text-xl font-semibold text-foreground">Permissões por setor</h1>
+                <h1 className="text-xl font-semibold text-foreground">Papel inicial por setor</h1>
                 <div className="relative">
                     <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input className="w-64 pl-8" placeholder="Buscar setor..." value={busca} onChange={(e) => setBusca(e.target.value)} />
@@ -120,11 +87,12 @@ function Permissoes() {
             <Card>
                 <CardContent className="pt-6 text-sm text-muted-foreground space-y-1">
                     <p>
-                        Cada setor tem um conjunto de permissões padrão. Um usuário novo, de funcionário desse setor,
-                        já começa com elas, e você pode aplicá-las de uma vez a todos os usuários do setor.
+                        O papel inicial é o conjunto de permissões com que um <strong className="text-foreground">usuário novo</strong> começa.
+                        Ao cadastrar um usuário para um funcionário deste setor, essas permissões já vêm marcadas.
                     </p>
                     <p>
-                        Para ajustar um usuário específico, use <Link to="/configuracoes/usuario" className="text-foreground underline underline-offset-4">Configurações → Usuários</Link>.
+                        Mudar o papel inicial não altera os usuários que já existem. Para ajustar um usuário,
+                        use <Link to="/configuracoes/usuario" className="text-foreground underline underline-offset-4">Configurações → Usuários</Link>.
                     </p>
                 </CardContent>
             </Card>
@@ -133,8 +101,8 @@ function Permissoes() {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Setor</TableHead>
-                        <TableHead>Usuários</TableHead>
-                        <TableHead>Permissões</TableHead>
+                        <TableHead>Funcionários</TableHead>
+                        <TableHead>Papel inicial</TableHead>
                         <TableHead className="w-[1%] text-right">Ações</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -153,21 +121,18 @@ function Permissoes() {
                                     {!s.ativo && <Badge variant="outline">Inativo</Badge>}
                                 </div>
                             </TableCell>
-                            <TableCell className="tabular-nums">{s.quantidadeUsuarios}</TableCell>
+                            <TableCell className="tabular-nums">{s.quantidadeFuncionarios}</TableCell>
                             <TableCell>
-                                <Badge variant={s.permissoes?.length ? "secondary" : "outline"}>
-                                    {s.permissoes?.length ?? 0} de {totalPermissoes}
-                                </Badge>
+                                {s.permissoes?.length ? (
+                                    <Badge variant="secondary">{s.permissoes.length} de {totalPermissoes} permissões</Badge>
+                                ) : (
+                                    <Badge variant="outline">Não definido</Badge>
+                                )}
                             </TableCell>
                             <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => abrirEdicao(s)}>
-                                        <ShieldCheck className="h-3.5 w-3.5 mr-1" />Editar
-                                    </Button>
-                                    <Button variant="outline" size="sm" disabled={s.quantidadeUsuarios === 0} onClick={() => perguntarAplicar(s)}>
-                                        <Users className="h-3.5 w-3.5 mr-1" />Aplicar aos usuários
-                                    </Button>
-                                </div>
+                                <Button variant="outline" size="sm" onClick={() => abrirEdicao(s)}>
+                                    <ShieldCheck className="h-3.5 w-3.5 mr-1" />Definir papel
+                                </Button>
                             </TableCell>
                         </TableRow>
                     ))}
@@ -185,9 +150,9 @@ function Permissoes() {
             <Dialog open={!!setorEditando} onOpenChange={(aberto) => !aberto && setSetorEditando(null)}>
                 <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Permissões do setor {setorEditando?.nome}</DialogTitle>
+                        <DialogTitle>Papel inicial do setor {setorEditando?.nome}</DialogTitle>
                         <DialogDescription>
-                            {selecionadas.length} de {totalPermissoes} permissões marcadas.
+                            {selecionadas.length} de {totalPermissoes} permissões marcadas. Vale para os próximos usuários criados.
                         </DialogDescription>
                     </DialogHeader>
                     <PainelPermissoes catalogo={catalogo} selecionadas={selecionadas} onChange={setSelecionadas} />

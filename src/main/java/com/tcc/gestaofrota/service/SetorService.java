@@ -4,12 +4,10 @@ package com.tcc.gestaofrota.service;
 import com.tcc.gestaofrota.dto.SetorDTO;
 import com.tcc.gestaofrota.model.Permissao;
 import com.tcc.gestaofrota.model.Setor;
-import com.tcc.gestaofrota.model.Usuario;
 import com.tcc.gestaofrota.repository.FuncionarioRepository;
 import com.tcc.gestaofrota.repository.PermissaoRepository;
 import com.tcc.gestaofrota.repository.SetorRepository;
 import com.tcc.gestaofrota.repository.UsuarioRepository;
-import com.tcc.gestaofrota.security.RefreshTokenService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,18 +27,15 @@ public class SetorService {
     private final FuncionarioRepository funcionarioRepository;
     private final UsuarioRepository usuarioRepository;
     private final PermissaoRepository permissaoRepository;
-    private final RefreshTokenService refreshTokenService;
 
     public SetorService(SetorRepository setorRepository,
                         FuncionarioRepository funcionarioRepository,
                         UsuarioRepository usuarioRepository,
-                        PermissaoRepository permissaoRepository,
-                        RefreshTokenService refreshTokenService) {
+                        PermissaoRepository permissaoRepository) {
         this.setorRepository = setorRepository;
         this.funcionarioRepository = funcionarioRepository;
         this.usuarioRepository = usuarioRepository;
         this.permissaoRepository = permissaoRepository;
-        this.refreshTokenService = refreshTokenService;
     }
 
     public List<Setor> listarSetores(){
@@ -116,7 +111,8 @@ public class SetorService {
         return setorRepository.save(setor);
     }
 
-    // Guarda as permissões padrão do setor (ainda não mexe nos usuários).
+    // Papel inicial do setor: as permissões com que um usuário NOVO desse setor começa.
+    // Não mexe nos usuários que já existem (esses são ajustados um a um na tela de Usuários).
     @Transactional
     public SetorDTO salvarPermissoes(Long id, Collection<String> chaves) {
         Setor setor = buscarPorId(id);
@@ -126,35 +122,12 @@ public class SetorService {
         return paraDTO(setorRepository.save(setor));
     }
 
-    // Copia as permissões do setor para todos os usuários dele. Devolve quantos usuários mudaram.
-    @Transactional
-    public int aplicarPermissoesAosUsuarios(Long id) {
-        Setor setor = buscarPorId(id);
-        Set<String> chavesDoSetor = chaves(setor.getPermissoes());
-        int alterados = 0;
-
-        for (Usuario usuario : usuarioRepository.findByFuncionario_Setor_Id(id)) {
-            if (chaves(usuario.getPermissoes()).equals(chavesDoSetor)) continue;
-            usuario.setPermissoes(new HashSet<>(setor.getPermissoes()));
-            usuarioRepository.save(usuario);
-            // O token antigo ainda carregaria as permissões antigas: obriga a entrar de novo.
-            refreshTokenService.revogarTodosDoUsuario(usuario.getId());
-            alterados++;
-        }
-        return alterados;
-    }
-
-    // Permissões do setor de um funcionário (vazio se não tiver setor). Usado ao criar usuário.
+    // Papel inicial do setor de um funcionário (vazio se não tiver setor). Usado ao criar usuário.
     @Transactional(readOnly = true)
     public Set<Permissao> permissoesDoSetor(Long idSetor) {
         if (idSetor == null) return new HashSet<>();
         return setorRepository.findById(idSetor)
                 .map(s -> new HashSet<>(s.getPermissoes()))
                 .orElseGet(HashSet::new);
-    }
-
-    private Set<String> chaves(Set<Permissao> permissoes) {
-        if (permissoes == null) return Set.of();
-        return permissoes.stream().map(Permissao::getNomePermissao).collect(Collectors.toSet());
     }
 }

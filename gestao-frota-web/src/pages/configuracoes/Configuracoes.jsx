@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../..
 import { Switch } from "../../components/ui/switch";
 import { Save, Download, Loader2 } from "lucide-react";
 import api from "../../services/api";
-import { useTheme } from "../../context/ThemeContext";
+import PreferenciasNotificacao from "../../components/PreferenciasNotificacao";
 
 const BOM = String.fromCharCode(0xfeff);
 
@@ -17,7 +17,7 @@ const PADRAO = {
     nomeEmpresa: "",
     diasAvisoCnh: 30,
     kmRevisao: 10000,
-    bloquearCnhVencida: false,
+    bloquearCnhVencida: true,
     bloquearMadrugada: false,
 };
 
@@ -45,7 +45,6 @@ function Configuracoes() {
     const [carregando, setCarregando] = useState(true);
     const [salvando, setSalvando] = useState(false);
     const [exportando, setExportando] = useState(false);
-    const { tema, toggleTema } = useTheme();
 
     useEffect(() => {
         api.get("/configuracoes")
@@ -183,20 +182,20 @@ function Configuracoes() {
                     </CardContent>
                 </Card>
 
-                {/* Regras da controladora */}
+                {/* Regras de acesso */}
                 <Card>
                     <CardHeader>
                         <CardTitle>Regras de acesso ao veículo</CardTitle>
-                        <CardDescription>Ficam salvas, mas a controladora ainda não aplica.</CardDescription>
+                        <CardDescription>O que impede um motorista de liberar o veículo com o cartão.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="flex items-center justify-between gap-4">
                             <div className="space-y-0.5">
-                                <div className="flex items-center gap-2">
-                                    <Label htmlFor="cnh-vencida">Bloquear CNH vencida</Label>
-                                    <Badge variant="outline">Em breve</Badge>
-                                </div>
-                                <p className="text-xs text-muted-foreground">Não liberar o veículo para motorista com CNH vencida.</p>
+                                <Label htmlFor="cnh-vencida">Bloquear CNH vencida</Label>
+                                <p className="text-xs text-muted-foreground">
+                                    Quando a CNH vence, os cartões do motorista são bloqueados e a CNH fica pendente
+                                    até ser validada em Funcionários. Verificado todo dia e ao salvar o funcionário.
+                                </p>
                             </div>
                             <Switch id="cnh-vencida" checked={!!config.bloquearCnhVencida}
                                     onCheckedChange={(v) => alterar("bloquearCnhVencida", v)} disabled={carregando} />
@@ -215,17 +214,14 @@ function Configuracoes() {
                     </CardContent>
                 </Card>
 
-                {/* Aparência */}
+                {/* Notificações do usuário logado */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Aparência</CardTitle>
-                        <CardDescription>Vale só para este navegador.</CardDescription>
+                        <CardTitle>Minhas notificações</CardTitle>
+                        <CardDescription>O que aparece no seu sino. Salva na hora e vale só para você.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-center justify-between gap-4">
-                            <Label htmlFor="tema-escuro">Tema escuro</Label>
-                            <Switch id="tema-escuro" checked={tema === "dark"} onCheckedChange={toggleTema} />
-                        </div>
+                        <PreferenciasNotificacao />
                     </CardContent>
                 </Card>
 

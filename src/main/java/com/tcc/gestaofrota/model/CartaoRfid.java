@@ -22,6 +22,10 @@ public class CartaoRfid {
     @Column(name = "ativo")
     private Boolean ativo;
 
+    // Bloqueado automaticamente porque a CNH do dono venceu (volta ao validar a CNH).
+    @Column(name = "bloqueado_por_cnh")
+    private Boolean bloqueadoPorCnh = false;
+
     @Column(name = "criado_em")
     private LocalDateTime criadoEm;
 
@@ -83,6 +87,15 @@ public class CartaoRfid {
 
     public void setFuncionario(Funcionario funcionario) {
         this.funcionario = funcionario;
+    }
+
+
+    public Boolean getBloqueadoPorCnh() {
+        return bloqueadoPorCnh;
+    }
+
+    public void setBloqueadoPorCnh(Boolean bloqueadoPorCnh) {
+        this.bloqueadoPorCnh = bloqueadoPorCnh;
     }
 
 }

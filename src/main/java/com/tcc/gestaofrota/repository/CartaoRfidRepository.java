@@ -23,6 +23,8 @@ public interface CartaoRfidRepository extends JpaRepository<CartaoRfid, Long> {
 
     List<CartaoRfid> findByFuncionarioIdAndAtivoTrue(Long funcionarioId);
 
+    List<CartaoRfid> findByFuncionarioIdAndBloqueadoPorCnhTrue(Long funcionarioId);
+
 
 
 

@@ -2,6 +2,7 @@ package com.tcc.gestaofrota.controller;
 
 import com.tcc.gestaofrota.dto.NotificacaoDTO;
 import com.tcc.gestaofrota.service.NotificacaoService;
+import com.tcc.gestaofrota.service.PerfilService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,17 +19,21 @@ import java.util.stream.Collectors;
 public class NotificacaoController {
 
     private final NotificacaoService notificacaoService;
+    private final PerfilService perfilService;
 
-    public NotificacaoController(NotificacaoService notificacaoService) {
+    public NotificacaoController(NotificacaoService notificacaoService, PerfilService perfilService) {
         this.notificacaoService = notificacaoService;
+        this.perfilService = perfilService;
     }
 
     @GetMapping
     public ResponseEntity<List<NotificacaoDTO>> listar() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
-        Set<String> permissoes = auth == null ? Set.of() : auth.getAuthorities().stream()
+        if (auth == null) return ResponseEntity.ok(List.of());
+        Set<String> permissoes = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toSet());
-        return ResponseEntity.ok(notificacaoService.listar(permissoes));
+        Set<String> desativadas = perfilService.notificacoesDesativadas(auth.getName());
+        return ResponseEntity.ok(notificacaoService.listar(permissoes, desativadas));
     }
 }

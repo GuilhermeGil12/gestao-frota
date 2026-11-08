@@ -46,6 +46,17 @@ public class Usuario {
     @Column(name = "ativo")
     private Boolean ativo;
 
+    // Foto do perfil como data URL ("data:image/jpeg;base64,...").
+    // Fica fora do JSON comum (listas de usuários); sai só em /api/perfil.
+    @JsonIgnore
+    @Column(name = "foto", columnDefinition = "TEXT")
+    private String foto;
+
+    // Tipos de notificação que o usuário desligou, separados por vírgula. Vazio = recebe todas.
+    @JsonIgnore
+    @Column(name = "notificacoes_desativadas", length = 300)
+    private String notificacoesDesativadas;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "usuario_permissao",
@@ -74,4 +85,10 @@ public class Usuario {
 
     public Set<Permissao> getPermissoes() { return permissoes; }
     public void setPermissoes(Set<Permissao> permissoes) { this.permissoes = permissoes; }
+
+    public String getFoto() { return foto; }
+    public void setFoto(String foto) { this.foto = foto; }
+
+    public String getNotificacoesDesativadas() { return notificacoesDesativadas; }
+    public void setNotificacoesDesativadas(String notificacoesDesativadas) { this.notificacoesDesativadas = notificacoesDesativadas; }
 }

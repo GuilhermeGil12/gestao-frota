@@ -136,6 +136,30 @@ function Usuario() {
     useEffect(() => {
         carregarFuncionarios();
     }, []);
+
+    // Setores com o papel inicial de cada um.
+    const [setores, setSetores] = useState([]);
+    useEffect(() => {
+        api.get("/setores")
+            .then((res) => setSetores(Array.isArray(res.data) ? res.data : []))
+            .catch(() => {});
+    }, []);
+
+    // Usuário novo: ao escolher o funcionário, já marca o papel inicial do setor dele.
+    // Editando um usuário existente, só troca o funcionário (as permissões dele não mudam).
+    const escolherFuncionario = (valor) => {
+        if (formData.id) {
+            setFormData({ ...formData, idFuncionario: valor });
+            return;
+        }
+        const funcionario = funcionarios.find((f) => String(f.id) === valor);
+        const setor = setores.find((s) => s.id === funcionario?.setor?.id);
+        const papel = setor?.permissoes ?? [];
+        setFormData({ ...formData, idFuncionario: valor, permissoes: papel.length ? papel : formData.permissoes });
+        if (papel.length) {
+            toast.info(`Papel inicial do setor ${setor.nome} aplicado (${papel.length} permissões). Ajuste na aba Permissões se precisar.`);
+        }
+    };
     const carregarCatalogoPermissoes = async () => {
         try {
             const res = await api.get("/permissoes/catalogo");
@@ -419,9 +443,7 @@ function Usuario() {
                                         />
                                         <Select
                                             value={formData.idFuncionario}
-                                            onValueChange={(valor) =>
-                                                setFormData({ ...formData, idFuncionario: valor })
-                                            }
+                                            onValueChange={escolherFuncionario}
                                             required
                                         >
                                             <SelectTrigger>

@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 
 import Menu from './components/Menu';
 import Notificacoes from './components/Notificacoes';
+import BotaoTema from './components/BotaoTema';
 
 import Dashboard          from './pages/Dashboard';
 import MonitoramentoTempoReal from './pages/MonitoramentoTempoReal';
@@ -21,6 +22,7 @@ import Comandos           from './pages/comandos';
 import Login              from './pages/login';
 import Setores            from './pages/configuracoes/Setores';
 import Usuario from './pages/configuracoes/Usuario';
+import Perfil from './pages/Perfil';
 import { useAuth } from './context/AuthContext';
 
 const W_OPEN   = 240;
@@ -62,7 +64,10 @@ function LayoutPrincipal() {
                 style={{ marginLeft: isMenuOpen ? W_OPEN : W_CLOSED }}
             >
                 <header className="h-[60px] bg-card flex items-center justify-end px-5 border-b border-border z-40">
-                    <Notificacoes />
+                    <div className="flex items-center gap-1">
+                        <BotaoTema />
+                        <Notificacoes />
+                    </div>
                 </header>
 
                 <main className="flex-1 overflow-y-auto p-6">
@@ -82,6 +87,7 @@ function LayoutPrincipal() {
                         <Route path="/configuracoes/setores"    element={<RotaProtegida permissao="configuracoes.setores"><Setores /></RotaProtegida>} />
                         <Route path="/configuracoes/usuario"    element={<RotaProtegida permissao="configuracoes.usuarios"><Usuario /></RotaProtegida>} />
                         <Route path="/relatorios"               element={<RotaProtegida permissao="relatorios.visualizar"><Relatorios /></RotaProtegida>} />
+                        <Route path="/perfil"                   element={<RotaProtegida><Perfil /></RotaProtegida>} />
                         <Route path="/"                         element={<Navigate to="/dashboard" />} />
                     </Routes>
                 </main>

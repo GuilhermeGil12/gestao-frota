@@ -26,9 +26,11 @@ public class Configuracao {
     @Column(name = "km_revisao")
     private Integer kmRevisao = 10000;
 
-    // Regras que dependem da controladora (ainda não aplicadas pelo firmware).
+    // CNH vencida: bloqueia os cartões do motorista e deixa a CNH pendente até validar.
     @Column(name = "bloquear_cnh_vencida")
-    private Boolean bloquearCnhVencida = false;
+    private Boolean bloquearCnhVencida = true;
+
+    // Depende da controladora (ainda não aplicado pelo firmware).
 
     @Column(name = "bloquear_madrugada")
     private Boolean bloquearMadrugada = false;

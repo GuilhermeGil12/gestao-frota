@@ -18,6 +18,7 @@ import {
 
 import { maskCPF, maskRG } from '../utils/mascaras';
 import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
@@ -78,6 +79,29 @@ function Funcionarios() {
     useEffect(() => { carregarSetores(); }, []);
 
     const erroMsg = (e, fallback) => e?.response?.data?.message || fallback;
+
+    // "2026-11-08" < hoje? (compara só a data, sem fuso)
+    const cnhVencida = (f) => {
+        if (!f.validadeCNH) return false;
+        const hoje = new Date();
+        const hojeIso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
+        return f.validadeCNH < hojeIso;
+    };
+
+    // A nova CNH foi conferida: tira a pendência e libera os cartões que tinham sido bloqueados.
+    const validarCnh = async (f) => {
+        if (cnhVencida(f)) {
+            toast.error("Atualize a validade da CNH (botão Editar) antes de validar.");
+            return;
+        }
+        try {
+            await api.post(`/funcionarios/${f.id}/validar-cnh`);
+            toast.success(`CNH de ${f.nome} validada. Cartões liberados.`);
+            carregar();
+        } catch (e) {
+            toast.error(erroMsg(e, "Erro ao validar a CNH."));
+        }
+    };
 
     const maskCEP = (v) => v.replace(/\D/g, "").replace(/^(\d{5})(\d)/, "$1-$2").slice(0, 9);
 
@@ -393,13 +417,25 @@ function Funcionarios() {
                                 <TableCell>{f.rg}</TableCell>
                                 <TableCell className="">{f.setor?.nome}</TableCell>
                                 <TableCell>Nível {f.nivelMotorista}</TableCell>
-                                <TableCell>{f.ativo ? "Ativo" : "Desativado"}</TableCell>
+                                <TableCell>
+                                    <div className="flex flex-col items-start gap-1">
+                                        <span>{f.ativo ? "Ativo" : "Desativado"}</span>
+                                        {f.cnhPendente ? (
+                                            <Badge variant="destructive" title="Cartões bloqueados até validar a nova CNH">CNH pendente</Badge>
+                                        ) : cnhVencida(f) && (
+                                            <Badge variant="outline" className="text-destructive">CNH vencida</Badge>
+                                        )}
+                                    </div>
+                                </TableCell>
                                 <TableCell>
                                     <div className="flex gap-2 justify-center">
                                         {f.ativo ? (
                                             <>
                                                 {temPermissao("funcionarios.editar") && (
                                                     <Button size="sm" variant="outline" onClick={() => abrirModal(f)}>Editar</Button>
+                                                )}
+                                                {temPermissao("funcionarios.editar") && f.cnhPendente && (
+                                                    <Button size="sm" onClick={() => validarCnh(f)}>Validar CNH</Button>
                                                 )}
                                                 {temPermissao("funcionarios.inativar") && (
                                                     <Button size="sm" variant="destructive" onClick={() => setFuncionarioParaExcluir(f)}>Inativar</Button>

@@ -68,6 +68,11 @@ public class CartaoRfidService {
             if (Boolean.FALSE.equals(funcionario.getAtivo())) {
                 throw new RuntimeException("Não é possível vincular um cartão ao funcionário '" + funcionario.getNome() + "' pois ele está inativo.");
             }
+            // CNH pendente: o cartão é cadastrado, mas já nasce bloqueado (libera ao validar a CNH).
+            if (Boolean.TRUE.equals(funcionario.getCnhPendente())) {
+                cartaoRfid.setAtivo(false);
+                cartaoRfid.setBloqueadoPorCnh(true);
+            }
         }
 
         CartaoRfid salvo = cartaoRfidRepository.save(cartaoRfid);
@@ -115,7 +120,13 @@ public class CartaoRfidService {
         CartaoRfid cartao = cartaoRfidRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cartão não encontrado"));
 
+        if (cartao.getFuncionario() != null && Boolean.TRUE.equals(cartao.getFuncionario().getCnhPendente())) {
+            throw new RuntimeException("A CNH de " + cartao.getFuncionario().getNome()
+                    + " está pendente. Valide a CNH em Funcionários para liberar o cartão.");
+        }
+
         cartao.setAtivo(true);
+        cartao.setBloqueadoPorCnh(false);
         cartaoRfidRepository.save(cartao);
         publicarCartoesParaTodas();
     }

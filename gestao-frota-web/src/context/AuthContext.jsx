@@ -26,6 +26,19 @@ function AuthProvider({ children }) {
         setSessao(null);
     };
 
+    // Atualiza dados do usuário na sessão (ex.: nome e foto trocados no Perfil) sem novo login.
+    const atualizarUsuario = (campos) => {
+        const atual = lerSessao();
+        if (!atual?.usuario) return;
+        const nova = { ...atual, usuario: { ...atual.usuario, ...campos } };
+        try {
+            salvarSessao(nova);
+        } catch {
+            // localStorage cheio: a tela atualiza mesmo assim, só não lembra depois de recarregar
+        }
+        setSessao(nova);
+    };
+
     const usuario = sessao?.usuario ?? null;
     const permissoes = usuario?.permissoes ?? [];
 
@@ -47,6 +60,7 @@ function AuthProvider({ children }) {
                 autenticado: Boolean(usuario),
                 login,
                 logout,
+                atualizarUsuario,
                 temPermissao,
                 temAlgumaPermissao,
             }}

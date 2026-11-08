@@ -113,6 +113,10 @@ public class Funcionario {
     @Column(name = "ativo")
     private Boolean ativo;
 
+    // CNH venceu: os cartões ficam bloqueados até alguém validar a nova validade.
+    @Column(name = "cnh_pendente")
+    private Boolean cnhPendente = false;
+
     @CreatedDate //pega a data que aquele registro foi criado
     @Column(name = "criado_em")
     private LocalDateTime criadoEm;
@@ -308,5 +312,13 @@ public class Funcionario {
 
     public void setCep(String cep) {
         this.cep = cep;
+    }
+
+    public Boolean getCnhPendente() {
+        return cnhPendente;
+    }
+
+    public void setCnhPendente(Boolean cnhPendente) {
+        this.cnhPendente = cnhPendente;
     }
 }

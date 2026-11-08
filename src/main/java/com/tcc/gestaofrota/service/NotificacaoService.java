@@ -35,12 +35,13 @@ public class NotificacaoService {
         this.configuracaoService = configuracaoService;
     }
 
-    // Cada usuário só vê as notificações das telas que ele pode acessar.
-    public List<NotificacaoDTO> listar(Set<String> permissoes) {
+    // Cada usuário só vê as notificações das telas que ele pode acessar,
+    // e só dos tipos que ele não desligou (Configurações > Geral ou Perfil).
+    public List<NotificacaoDTO> listar(Set<String> permissoes, Set<String> tiposDesativados) {
         List<NotificacaoDTO> lista = new ArrayList<>();
         if (permissoes.contains("funcionarios.visualizar")) lista.addAll(cnhVencendo());
         if (permissoes.contains("comandos.visualizar")) lista.addAll(comandosExecutados());
-        return lista;
+        return lista.stream().filter(n -> !tiposDesativados.contains(n.tipo())).toList();
     }
 
     // CNH vencida ou vencendo dentro do aviso configurado em Configurações > Geral.
@@ -51,21 +52,28 @@ public class NotificacaoService {
         LocalDate limite = hoje.plusDays(diasAviso);
 
         return funcionarioRepository.findByAtivoTrue().stream()
-                .filter(f -> f.getValidadeCNH() != null && !f.getValidadeCNH().isAfter(limite))
+                // Pendente aparece mesmo se a validade nova já foi digitada: ainda falta validar.
+                .filter(f -> f.getValidadeCNH() != null
+                        && (!f.getValidadeCNH().isAfter(limite) || Boolean.TRUE.equals(f.getCnhPendente())))
                 .sorted(Comparator.comparing(Funcionario::getValidadeCNH))
                 .map(f -> {
                     long dias = ChronoUnit.DAYS.between(hoje, f.getValidadeCNH());
                     boolean vencida = dias < 0;
+                    boolean pendente = Boolean.TRUE.equals(f.getCnhPendente());
                     String quando;
                     if (vencida) quando = "venceu em " + f.getValidadeCNH().format(DATA_BR);
                     else if (dias == 0) quando = "vence hoje";
                     else if (dias == 1) quando = "vence amanhã";
                     else quando = "vence em " + dias + " dias (" + f.getValidadeCNH().format(DATA_BR) + ")";
+
+                    String titulo = pendente ? "CNH pendente — cartão bloqueado" : vencida ? "CNH vencida" : "CNH vencendo";
+                    String mensagem = "A CNH de " + f.getNome() + " " + quando + "."
+                            + (pendente ? " O cartão fica bloqueado até a nova CNH ser validada em Funcionários." : "");
                     return new NotificacaoDTO(
-                            "cnh-" + f.getId() + "-" + f.getValidadeCNH(),
-                            vencida ? "CNH_VENCIDA" : "CNH_VENCENDO",
-                            vencida ? "CNH vencida" : "CNH vencendo",
-                            "A CNH de " + f.getNome() + " " + quando + ".",
+                            "cnh-" + f.getId() + "-" + f.getValidadeCNH() + (pendente ? "-pendente" : ""),
+                            vencida || pendente ? "CNH_VENCIDA" : "CNH_VENCENDO",
+                            titulo,
+                            mensagem,
                             f.getValidadeCNH().atStartOfDay(),
                             "/funcionarios"
                     );

@@ -8,7 +8,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/setores")
@@ -20,8 +19,9 @@ public class SetorController {
         this.setorService = setorService;
     }
 
-    // Também usado pelo cadastro de funcionários (escolher o setor) e pela tela de Permissões.
-    @PreAuthorize("hasAnyAuthority('configuracoes.setores', 'configuracoes.permissoes', 'funcionarios.visualizar')")
+    // Também usado pelo cadastro de funcionários (escolher o setor), pela tela de Permissões
+    // e pelo cadastro de usuários (papel inicial do setor).
+    @PreAuthorize("hasAnyAuthority('configuracoes.setores', 'configuracoes.permissoes', 'configuracoes.usuarios', 'funcionarios.visualizar')")
     @GetMapping
     public ResponseEntity<List<SetorDTO>> listarSetores(){
         return ResponseEntity.ok(setorService.listarResumo());
@@ -46,18 +46,10 @@ public class SetorController {
         return ResponseEntity.ok(setorService.alternarAtivo(id));
     }
 
-    // Body: ["veiculos.visualizar", "comandos.bloquear", ...]
+    // Papel inicial do setor. Body: ["veiculos.visualizar", "comandos.bloquear", ...]
     @PreAuthorize("hasAuthority('configuracoes.permissoes')")
     @PutMapping("/{id}/permissoes")
     public ResponseEntity<SetorDTO> salvarPermissoes(@PathVariable Long id, @RequestBody List<String> permissoes) {
         return ResponseEntity.ok(setorService.salvarPermissoes(id, permissoes));
-    }
-
-    // Copia as permissões do setor para os usuários dele.
-    @PreAuthorize("hasAuthority('configuracoes.permissoes')")
-    @PostMapping("/{id}/permissoes/aplicar")
-    public ResponseEntity<Map<String, Integer>> aplicarPermissoes(@PathVariable Long id) {
-        int alterados = setorService.aplicarPermissoesAosUsuarios(id);
-        return ResponseEntity.ok(Map.of("usuariosAlterados", alterados));
     }
 }

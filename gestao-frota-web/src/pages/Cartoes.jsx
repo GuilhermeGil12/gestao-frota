@@ -126,6 +126,9 @@ function Cartoes() {
                                                 <div>
                                                     <strong className="block text-foreground text-base tracking-wider">{cartao.uid}</strong>
                                                     <Badge variant={cartao.ativo ? "default" : "destructive"} className={`text-xs mt-1 ${cartao.ativo ? 'bg-green-600' : ''}`}>{cartao.ativo ? "ATIVO" : "INATIVO"}</Badge>
+                                                    {cartao.bloqueadoPorCnh && (
+                                                        <span className="block text-xs text-destructive mt-1">Bloqueado: CNH pendente (valide em Funcionários)</span>
+                                                    )}
                                                 </div>
                                                 <div className="flex gap-2">
                                                     {/* CORREÇÃO DO EVENTO AQUI (Passando o 'e' corretamente) */}

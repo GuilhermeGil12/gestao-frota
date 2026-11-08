@@ -2,6 +2,7 @@ package com.tcc.gestaofrota.controller;
 
 
 import com.tcc.gestaofrota.model.Funcionario;
+import com.tcc.gestaofrota.service.CnhService;
 import com.tcc.gestaofrota.service.FuncionarioService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,9 +16,18 @@ import java.util.List;
 public class FuncionarioController {
 
     private final FuncionarioService funcionarioService;
+    private final CnhService cnhService;
 
-    public FuncionarioController(FuncionarioService funcionarioService) {
+    public FuncionarioController(FuncionarioService funcionarioService, CnhService cnhService) {
         this.funcionarioService = funcionarioService;
+        this.cnhService = cnhService;
+    }
+
+    // A CNH nova foi conferida: tira a pendência e libera os cartões bloqueados pela CNH vencida.
+    @PreAuthorize("hasAuthority('funcionarios.editar')")
+    @PostMapping("/{id}/validar-cnh")
+    public ResponseEntity<Funcionario> validarCnh(@PathVariable Long id) {
+        return ResponseEntity.ok(cnhService.validar(id));
     }
 
     // Metodo para salvar via POST
@@ -29,6 +39,7 @@ public class FuncionarioController {
         System.out.println("Recebendo: " + funcionario.getNome());
 
         Funcionario novoFuncionario = funcionarioService.salvar(funcionario);
+        cnhService.verificar(novoFuncionario);  // já cadastrado com CNH vencida → pendente
         return ResponseEntity.status(201).body(novoFuncionario);
     }
 
@@ -53,6 +64,7 @@ public class FuncionarioController {
     public ResponseEntity<Funcionario> atualizar(@PathVariable Long id, @RequestBody Funcionario funcionarioNovo) {
 
         Funcionario funcionarioAtualizado = funcionarioService.atualizar(id, funcionarioNovo);
+        cnhService.verificar(funcionarioAtualizado);  // validade editada pra uma data passada → pendente
 
         return ResponseEntity.ok(funcionarioAtualizado);
     }

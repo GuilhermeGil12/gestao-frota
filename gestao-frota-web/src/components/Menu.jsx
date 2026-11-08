@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import api from '../services/api';
 import logoLight from '../assets/logocompleta-light.svg';
 import logoDark from '../assets/logocompleta-dark.svg';
 import {
@@ -27,8 +28,16 @@ function Menu({ isOpen, toggleMenu }) {
     const [configOpen, setConfigOpen] = useState(false);
     const [confirmarSaida, setConfirmarSaida] = useState(false);
     const { tema } = useTheme();
-    const { usuario, logout, temPermissao } = useAuth();
+    const { usuario, logout, temPermissao, atualizarUsuario } = useAuth();
     const navigate = useNavigate();
+
+    // Traz a foto e o nome atuais (podem ter mudado em outro navegador).
+    useEffect(() => {
+        api.get("/perfil")
+            .then((res) => atualizarUsuario({ nomeUsuario: res.data.nomeUsuario, foto: res.data.foto ?? null }))
+            .catch(() => {});
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const sair = async () => {
         setConfirmarSaida(false);
@@ -221,7 +230,11 @@ function Menu({ isOpen, toggleMenu }) {
                         !isOpen && "justify-center px-0"
                     )}
                 >
-                    <User className="h-5 w-5 shrink-0" />
+                    {usuario?.foto ? (
+                        <img src={usuario.foto} alt="" className="size-6 shrink-0 rounded-full object-cover" />
+                    ) : (
+                        <User className="h-5 w-5 shrink-0" />
+                    )}
                     {isOpen && (
                         <span className="truncate">{usuario?.nomeUsuario ?? "Perfil"}</span>
                     )}
