@@ -152,7 +152,7 @@ function Cercas() {
             </div>
 
             {/* MAPA PRINCIPAL */}
-            <MapContainer center={centro} zoom={13} style={{ height: "600px", width: "100%", borderRadius: "8px" }}>
+            <MapContainer center={centro} zoom={13} className="isolate h-[55vh] min-h-80 w-full rounded-lg md:h-[600px]">
                 <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 <VoarPara posicao={voarPara} />
                 {cercas.map(c => c.latitude && c.longitude && (

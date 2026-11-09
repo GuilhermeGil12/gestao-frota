@@ -82,7 +82,7 @@ function Menu({ isOpen: abertoNoDesktop, toggleMenu, mobile = false, aberto = fa
         <nav
             className={cn(
                 // overflow-hidden aqui e overflow-y-auto só na lista: a logo fica parada no topo ao rolar.
-                "fixed top-0 left-0 h-dvh flex flex-col z-50 bg-sidebar border-r border-sidebar-border shadow-xl transition-all duration-300 overflow-hidden",
+                "fixed top-0 left-0 h-dvh flex flex-col z-[1100] bg-sidebar border-r border-sidebar-border shadow-xl transition-all duration-300 overflow-hidden",
                 isOpen ? "w-60 min-w-60" : "w-14 min-w-14",
                 mobile && !aberto && "-translate-x-full"
             )}

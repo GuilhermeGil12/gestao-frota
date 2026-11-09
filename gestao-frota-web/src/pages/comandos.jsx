@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import BotaoFlutuante from "../components/BotaoFlutuante";
 import api from '../services/api';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Button } from "../components/ui/button";
@@ -92,7 +93,7 @@ function Comandos() {
             <div className="flex flex-wrap items-center justify-between border-b border-border pb-4 gap-3">
                 <h1 className="text-xl font-semibold text-foreground">Comandos Remotos</h1>
                 {podeEnviarComando && (
-                    <Button onClick={() => setDialogAberto(true)}>Novo Comando</Button>
+                    <BotaoFlutuante rotulo="Novo comando" onClick={() => setDialogAberto(true)} />
                 )}
             </div>
 

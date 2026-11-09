@@ -88,7 +88,7 @@ function LayoutPrincipal() {
 
             {/* Fundo escuro atrás da gaveta: tocar fora fecha o menu. */}
             {ehMobile && menuMobileAberto && (
-                <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setMenuMobileAberto(false)} aria-hidden="true" />
+                <div className="fixed inset-0 z-[1090] bg-black/50" onClick={() => setMenuMobileAberto(false)} aria-hidden="true" />
             )}
 
             <div
@@ -107,7 +107,7 @@ function LayoutPrincipal() {
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">
+                <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 pb-24 md:p-6 md:pb-24">
                     <Routes>
                         <Route path="/dashboard"                element={<RotaProtegida permissao="dashboard.visualizar"><Dashboard /></RotaProtegida>} />
                         <Route path="/Monitoramento"            element={<RotaProtegida permissao="monitoramento.visualizar"><MonitoramentoTempoReal /></RotaProtegida>} />

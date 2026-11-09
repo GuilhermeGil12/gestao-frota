@@ -23,6 +23,7 @@ function CliqueMapa({ onMover }) {
 function MapaPicker({ posicao, onMover }) {
     return (
         <MapContainer
+            className="isolate"
             center={[posicao.lat, posicao.lng]}
             zoom={16}
             style={{ height: "300px", width: "100%", borderRadius: "8px" }}

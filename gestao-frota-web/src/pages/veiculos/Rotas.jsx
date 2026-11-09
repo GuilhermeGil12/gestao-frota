@@ -238,7 +238,7 @@ function Rotas() {
             )}
 
             {/* Mapa */}
-            <div className="w-full h-[55vh] min-h-80 md:h-[600px] rounded-xl overflow-hidden border border-border relative">
+            <div className="isolate w-full h-[55vh] min-h-80 md:h-[600px] rounded-xl overflow-hidden border border-border relative">
                 <div className="absolute top-3 right-3 z-[1000] space-y-1 rounded-lg border border-border bg-card/95 p-3 text-xs text-card-foreground shadow-md">
                     <p className="mb-1 font-semibold">Legenda</p>
                     {[

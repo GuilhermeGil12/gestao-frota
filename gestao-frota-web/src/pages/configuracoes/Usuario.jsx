@@ -1,4 +1,5 @@
 import api from "@/services/api";
+import BotaoFlutuante from "@/components/BotaoFlutuante";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -352,7 +353,7 @@ function Usuario() {
                     onChange={(e) => setTermoBusca(e.target.value)}
                 />
                 {temPermissao("configuracoes.usuarios") && (
-                    <Button onClick={() => abrirModal()}>+ Novo Usuário</Button>
+                    <BotaoFlutuante rotulo="Novo usuário" onClick={() => abrirModal()} />
                 )}
             </div>
 

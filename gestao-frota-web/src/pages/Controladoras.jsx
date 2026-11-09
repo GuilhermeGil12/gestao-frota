@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import BotaoFlutuante from "../components/BotaoFlutuante";
 import api from "../services/api";
 //import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
@@ -92,7 +93,7 @@ function Controladoras() {
             <div className="flex flex-wrap items-center justify-between mb-6 border-b border-border pb-4 gap-3">
                 <h1 className="text-xl font-semibold text-foreground">Gestão de Controladoras</h1>
                 {temPermissao("controladoras.cadastrar") && (
-                    <Button onClick={() => abrirModal()}>+ Nova Controladora</Button>
+                    <BotaoFlutuante rotulo="Nova controladora" onClick={() => abrirModal()} />
                 )}
             </div>
 

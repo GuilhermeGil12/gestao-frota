@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import BotaoFlutuante from "../../components/BotaoFlutuante";
 import api from "../../services/api";
 //import { toast } from "react-toastify";
 import Swal from "sweetalert2";
@@ -111,7 +112,7 @@ function Veiculos() {
                 <h1 className="text-xl font-semibold text-foreground">Gestão de Veículos</h1>
                 <Input type="text" placeholder="Pesquisar por Nome ou Placa..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} className="max-w-xs" />
                 {temPermissao("veiculos.cadastrar") && (
-                    <Button onClick={() => abrirModal()}>+ Novo Veículo</Button>
+                    <BotaoFlutuante rotulo="Novo veículo" onClick={() => abrirModal()} />
                 )}
             </div>
 

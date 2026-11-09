@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import BotaoFlutuante from "../components/BotaoFlutuante";
 import api from "../services/api";
 import { toast } from 'sonner';
-import { MapPin } from "lucide-react";
+import { MapPin, Search } from "lucide-react";
+import { combinaBusca } from "../utils/busca";
 import MapaPicker from "../components/MapaPicker";
 
 
@@ -175,12 +177,10 @@ function Funcionarios() {
 
     // 2. FILTRAGEM DUPLA: Filtra por texto E por status de ativação
     const funcionariosFiltrados = funcionarios.filter((f) => {
-        const buscaMinuscula = termoBusca.toLocaleLowerCase();
-        const nome = f.nome ? f.nome.toLocaleLowerCase() : "";
-        const cpf = f.cpf ? f.cpf.toLocaleLowerCase() : "";
-
-        // Regra do filtro de texto
-        const bateTexto = nome.includes(buscaMinuscula) || cpf.includes(buscaMinuscula);
+        // Regra do filtro de texto: sem acento e sem máscara (CPF, RG e telefone com ou sem pontos)
+        const bateTexto = combinaBusca(termoBusca, [
+            f.nome, f.cpf, f.rg, f.matricula, f.email, f.cargo, f.setor?.nome, f.numCNH, f.numeroTelefone,
+        ]);
 
         // Regra do filtro de status (Combobox)
         if (filtroStatus === "ativos") return bateTexto && f.ativo === true;
@@ -229,9 +229,19 @@ function Funcionarios() {
             <div className="flex flex-wrap items-center justify-between mb-6 border-b border-border pb-4 gap-4">
                 <h1 className="text-xl font-semibold text-foreground">Gestão de Funcionários</h1>
 
-                <div className="flex items-center gap-3 flex-1 max-w-xl">
+                <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-1 sm:flex-row sm:items-center sm:max-w-xl">
                     {/* Barra de Pesquisa */}
-                    <Input type="text" placeholder="Pesquisar por Nome ou CPF..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} className="w-full" />
+                    <div className="relative w-full">
+                        <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Nome, CPF, matrícula, setor..."
+                            value={termoBusca}
+                            onChange={(e) => setTermoBusca(e.target.value)}
+                            className="w-full pl-8"
+                            aria-label="Pesquisar funcionários"
+                        />
+                    </div>
 
                     {/* 3. NOVO COMPONENTE: Filtro de exibição por status */}
                     <select
@@ -246,7 +256,7 @@ function Funcionarios() {
                 </div>
 
                 {temPermissao("funcionarios.cadastrar") && (
-                    <Button onClick={() => abrirModal()}>+ Novo Funcionário</Button>
+                    <BotaoFlutuante rotulo="Novo funcionário" onClick={() => abrirModal()} />
                 )}
             </div>
 
@@ -404,7 +414,7 @@ function Funcionarios() {
                 </TableHeader>
                 <TableBody>
                     {(!Array.isArray(funcionariosFiltrados) || funcionariosFiltrados.length === 0) ? (
-                        <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum funcionário encontrado.</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{termoBusca ? `Nenhum funcionário encontrado para "${termoBusca}".` : "Nenhum funcionário encontrado."}</TableCell></TableRow>
                     ) : (
                         paginacao.visiveis.map(f => (
                             // 4. MUDANÇA VISUAL: Se f.ativo for falso, a linha ganha opacidade de 45% e um tom acinzentado

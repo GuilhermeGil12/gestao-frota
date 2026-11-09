@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import BotaoFlutuante from "@/components/BotaoFlutuante";
 import { toast } from 'sonner';
-import { Plus, Pencil, Search } from "lucide-react";
+import { Pencil, Search } from "lucide-react";
 import api from "@/services/api";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
@@ -101,7 +102,7 @@ function Setores() {
                             onChange={(e) => setBusca(e.target.value)}
                         />
                     </div>
-                    <Button onClick={() => abrirModal()}><Plus className="h-4 w-4 mr-2" />Novo setor</Button>
+                    <BotaoFlutuante rotulo="Novo setor" onClick={() => abrirModal()} />
                 </div>
             </div>
 
