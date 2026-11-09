@@ -17,6 +17,7 @@ O projeto é dividido em dois módulos independentes:
 - **ORM:** Spring Data JPA + Hibernate — queries via repository interfaces; evitar `@Query` nativo salvo quando necessário
 - **Banco:** PostgreSQL na porta **5433** (não 5432)
 - **Perfis locais:** `application-casa.properties` e `application-flash.properties` ficam fora do git (têm a senha do banco local) — cada máquina mantém o seu; `application-prod.properties` lê tudo de variáveis de ambiente
+- **Telegram:** `application.properties` ganhou `app.telegram.token=${TELEGRAM_TOKEN:}` — token do bot (avisos no Telegram). Vazio = integração desligada. Nunca commitar o token: em dev, pôr no perfil local fora do git; na VM, variável de ambiente `TELEGRAM_TOKEN`
 - **REST:** Controllers com `@CrossOrigin`; respostas em JSON; sem autenticação implementada ainda
 - **Nomenclatura:** entidades e campos em português (ex: `Veiculo`, `placa`, `funcionario`)
 

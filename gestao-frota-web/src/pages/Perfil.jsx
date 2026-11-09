@@ -9,6 +9,7 @@ import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import PreferenciasNotificacao from "../components/PreferenciasNotificacao";
+import ConexaoTelegram from "../components/ConexaoTelegram";
 import { useAuth } from "../context/AuthContext";
 
 const LADO_FOTO = 256;  // a foto é reduzida no navegador pra no máximo 256x256 antes de enviar
@@ -281,8 +282,19 @@ function Perfil() {
                     </CardContent>
                 </Card>
 
-                {/* Notificações */}
+                {/* Telegram */}
                 <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle>Telegram</CardTitle>
+                        <CardDescription>Avisos no celular, mesmo com o site fechado.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ConexaoTelegram />
+                    </CardContent>
+                </Card>
+
+                {/* Notificações */}
+                <Card className="lg:col-span-3">
                     <CardHeader>
                         <CardTitle>Minhas notificações</CardTitle>
                         <CardDescription>Escolha o que aparece no sino. Vale só para você.</CardDescription>

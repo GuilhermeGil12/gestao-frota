@@ -1,6 +1,7 @@
 package com.tcc.gestaofrota.controller;
 
 import com.tcc.gestaofrota.service.PerfilService;
+import com.tcc.gestaofrota.service.TelegramService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +15,37 @@ import java.util.Map;
 public class PerfilController {
 
     private final PerfilService perfilService;
+    private final TelegramService telegramService;
 
-    public PerfilController(PerfilService perfilService) {
+    public PerfilController(PerfilService perfilService, TelegramService telegramService) {
         this.perfilService = perfilService;
+        this.telegramService = telegramService;
+    }
+
+    // ===== Telegram =====
+
+    // { disponivel, conectado, bot }
+    @GetMapping("/telegram")
+    public ResponseEntity<Map<String, Object>> statusTelegram() {
+        return ResponseEntity.ok(telegramService.status(emailLogado()));
+    }
+
+    // Gera o link t.me/<bot>?start=<código> que conecta o Telegram a este usuário.
+    @PostMapping("/telegram")
+    public ResponseEntity<Map<String, Object>> conectarTelegram() {
+        return ResponseEntity.ok(telegramService.gerarLinkDeConexao(emailLogado()));
+    }
+
+    @DeleteMapping("/telegram")
+    public ResponseEntity<Void> desconectarTelegram() {
+        telegramService.desconectar(emailLogado());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/telegram/teste")
+    public ResponseEntity<Void> testarTelegram() {
+        telegramService.enviarTeste(emailLogado());
+        return ResponseEntity.noContent().build();
     }
 
     // O "nome" da autenticação é o e-mail (subject do token).

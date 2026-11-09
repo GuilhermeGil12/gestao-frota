@@ -15,6 +15,8 @@ import java.util.Optional;
 @Service
 public class ComandoService {
 
+    private final TelegramService telegramService;
+
     private final AtividadeService atividadeService;
 
     // Os comandos que mudam o estado do veículo (vão pro tópico "estado", retido).
@@ -27,11 +29,13 @@ public class ComandoService {
     public ComandoService(ComandoRepository comandoRepository,
                           ControladoraRepository controladoraRepository,
                           MqttService mqttService,
-            AtividadeService atividadeService) {
+            AtividadeService atividadeService,
+            TelegramService telegramService) {
         this.comandoRepository = comandoRepository;
         this.controladoraRepository = controladoraRepository;
         this.mqttService = mqttService;
         this.atividadeService = atividadeService;
+        this.telegramService = telegramService;
     }
 
     // Frontend chama isso para enviar um comando a um veículo.
@@ -88,8 +92,27 @@ public class ComandoService {
                     + " não pertence à controladora " + resposta.codigoControladora());
             return;
         }
-        confirmarExecucao(resposta.idComando());
+        boolean jaEstavaExecutado = "EXECUTADO".equals(busca.get().getStatus());
+        Comando comando = confirmarExecucao(resposta.idComando());
         System.out.println("[MQTT] comando " + resposta.idComando() + " EXECUTADO");
+        // A mensagem retida faz o ESP confirmar de novo a cada reconexão: avisa só da primeira vez.
+        if (!jaEstavaExecutado) avisarTelegram(comando);
+    }
+
+    private void avisarTelegram(Comando c) {
+        String veiculo = c.getControladora().getVeiculo() != null
+                ? c.getControladora().getVeiculo().getPlaca()
+                : "Controladora " + c.getControladora().getIdControladora();
+        String acao = switch (c.getTipo()) {
+            case "BLOQUEAR" -> "🔒 <b>" + TelegramService.esc(veiculo) + "</b> foi bloqueado.";
+            case "DESBLOQUEAR" -> "🔓 <b>" + TelegramService.esc(veiculo) + "</b> foi desbloqueado.";
+            case "APITAR" -> "📢 <b>" + TelegramService.esc(veiculo) + "</b> apitou.";
+            default -> "✅ <b>" + TelegramService.esc(veiculo) + "</b> executou " + TelegramService.esc(c.getTipo()) + ".";
+        };
+        String quem = c.getEnviadoPorNome() != null ? "\nPedido por " + TelegramService.esc(c.getEnviadoPorNome()) : "";
+        String hora = c.getExecutadoEm() != null
+                ? " às " + c.getExecutadoEm().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) : "";
+        telegramService.avisar("COMANDO_EXECUTADO", "comandos.visualizar", acao + quem + hora + ".");
     }
 
     // O broker pode ter reiniciado e perdido as mensagens retidas: publica de novo o

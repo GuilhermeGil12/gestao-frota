@@ -9,6 +9,7 @@ const TIPOS = [
     { tipo: "CNH_VENCENDO", rotulo: "CNH vencendo", descricao: "Motoristas com a CNH perto de vencer." },
     { tipo: "CNH_VENCIDA", rotulo: "CNH vencida / pendente", descricao: "CNH vencida e cartão bloqueado até validar." },
     { tipo: "COMANDO_EXECUTADO", rotulo: "Comandos executados", descricao: "Bloqueio, desbloqueio ou apito confirmado pelo veículo." },
+    { tipo: "EXCESSO_VELOCIDADE", rotulo: "Excesso de velocidade", descricao: "Veículo passou do limite. Só no Telegram." },
 ];
 
 // Preferências do usuário logado: cada um escolhe o que aparece no próprio sino.

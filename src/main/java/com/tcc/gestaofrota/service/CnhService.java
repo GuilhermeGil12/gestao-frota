@@ -22,6 +22,8 @@ import java.util.List;
 @Service
 public class CnhService {
 
+    private final TelegramService telegramService;
+
     private final AtividadeService atividadeService;
 
     private final FuncionarioRepository funcionarioRepository;
@@ -33,12 +35,14 @@ public class CnhService {
                       CartaoRfidRepository cartaoRfidRepository,
                       CartaoRfidService cartaoRfidService,
                       ConfiguracaoService configuracaoService,
-            AtividadeService atividadeService) {
+            AtividadeService atividadeService,
+            TelegramService telegramService) {
         this.funcionarioRepository = funcionarioRepository;
         this.cartaoRfidRepository = cartaoRfidRepository;
         this.cartaoRfidService = cartaoRfidService;
         this.configuracaoService = configuracaoService;
         this.atividadeService = atividadeService;
+        this.telegramService = telegramService;
     }
 
     private boolean regraLigada() {
@@ -82,6 +86,10 @@ public class CnhService {
         f.setCnhPendente(true);
         funcionarioRepository.save(f);
         atividadeService.registrar("CNH", "CNH de " + f.getNome() + " vencida: CNH pendente e cartões bloqueados");
+        telegramService.avisar("CNH_VENCIDA", "funcionarios.visualizar",
+                "⚠️ <b>CNH vencida</b>\nA CNH de <b>" + TelegramService.esc(f.getNome()) + "</b> venceu em "
+                + f.getValidadeCNH().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                + ".\nOs cartões foram bloqueados até a nova CNH ser validada no sistema.");
         for (CartaoRfid cartao : cartaoRfidRepository.findByFuncionarioIdAndAtivoTrue(f.getId())) {
             cartao.setAtivo(false);
             cartao.setBloqueadoPorCnh(true);

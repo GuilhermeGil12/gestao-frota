@@ -15,4 +15,9 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     // Usuários cujo funcionário pertence ao setor.
     List<Usuario> findByFuncionario_Setor_Id(Long idSetor);
+
+    // Usuários ativos com o Telegram conectado (destinatários dos avisos).
+    List<Usuario> findByAtivoTrueAndTelegramChatIdIsNotNull();
+
+    Optional<Usuario> findByTelegramChatId(String telegramChatId);
 }

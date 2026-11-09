@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 public class PerfilService {
 
     // Tipos de notificação que o usuário pode ligar/desligar.
-    public static final List<String> TIPOS_NOTIFICACAO = List.of("CNH_VENCENDO", "CNH_VENCIDA", "COMANDO_EXECUTADO");
+    public static final List<String> TIPOS_NOTIFICACAO = List.of("CNH_VENCENDO", "CNH_VENCIDA", "COMANDO_EXECUTADO", "EXCESSO_VELOCIDADE");
 
     // A foto chega já reduzida pelo navegador; o limite só impede abuso.
     private static final int TAMANHO_MAXIMO_FOTO = 400_000;
@@ -122,7 +122,7 @@ public class PerfilService {
         return usuarioRepository.findByEmail(email).map(this::notificacoesDesativadas).orElse(Set.of());
     }
 
-    private Set<String> notificacoesDesativadas(Usuario u) {
+    public Set<String> notificacoesDesativadas(Usuario u) {
         String valor = u.getNotificacoesDesativadas();
         if (valor == null || valor.isBlank()) return Set.of();
         return Arrays.stream(valor.split(",")).map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toSet());

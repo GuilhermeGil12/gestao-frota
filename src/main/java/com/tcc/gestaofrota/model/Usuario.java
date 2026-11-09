@@ -57,6 +57,11 @@ public class Usuario {
     @Column(name = "notificacoes_desativadas", length = 300)
     private String notificacoesDesativadas;
 
+    // Conversa do usuário com o bot do Telegram (preenchido ao conectar pelo Perfil). null = não conectado.
+    @JsonIgnore
+    @Column(name = "telegram_chat_id", length = 40)
+    private String telegramChatId;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "usuario_permissao",
@@ -91,4 +96,7 @@ public class Usuario {
 
     public String getNotificacoesDesativadas() { return notificacoesDesativadas; }
     public void setNotificacoesDesativadas(String notificacoesDesativadas) { this.notificacoesDesativadas = notificacoesDesativadas; }
+
+    public String getTelegramChatId() { return telegramChatId; }
+    public void setTelegramChatId(String telegramChatId) { this.telegramChatId = telegramChatId; }
 }

@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
 @Service
 public class LocalizacaoService {
 
+    private final TelegramService telegramService;
+
     // Mesmos valores da controladora e da tela de Rotas.
     private static final double LIMITE_VELOCIDADE = 110;  // padrão, quando o veículo não tem limite cadastrado
     private static final double VELOCIDADE_PARADO = 3;    // abaixo disso o GPS oscila mesmo parado
@@ -41,11 +43,13 @@ public class LocalizacaoService {
     public LocalizacaoService(LocalizacaoRepository localizacaoRepository,
                               ControladoraRepository controladoraRepository,
                               FuncionarioRepository funcionarioRepository,
-                              CartaoRfidRepository cartaoRfidRepository) {
+                              CartaoRfidRepository cartaoRfidRepository,
+            TelegramService telegramService) {
         this.localizacaoRepository = localizacaoRepository;
         this.controladoraRepository = controladoraRepository;
         this.funcionarioRepository = funcionarioRepository;
         this.cartaoRfidRepository = cartaoRfidRepository;
+        this.telegramService = telegramService;
     }
 
     // === Via HTTP (com senha) ===
@@ -154,8 +158,36 @@ public class LocalizacaoService {
             }
         }
 
+        // Antes de salvar: compara com o último ponto gravado pra saber se o excesso COMEÇOU agora.
+        avisarExcessos(carroDoEsp32, localizacoesParaSalvar);
+
         // Salva todos os pontos do lote de uma vez (mais performático)
         localizacaoRepository.saveAll(localizacoesParaSalvar);
+    }
+
+    // Um aviso por excesso (quando passa do limite), não um por ponto. Pontos antigos
+    // (reenviados do SD depois de horas sem sinal) não avisam: já não dá pra fazer nada.
+    private void avisarExcessos(Veiculo veiculo, List<Localizacao> pontos) {
+        if (veiculo == null || pontos.isEmpty()) return;
+        double limite = veiculo.getVelocidadeMaxima() != null && veiculo.getVelocidadeMaxima() > 0
+                ? veiculo.getVelocidadeMaxima() : LIMITE_VELOCIDADE;
+        boolean estavaAcima = buscarUltimaLocalizacao(veiculo.getId())
+                .map(l -> l.getVelocidade() != null && l.getVelocidade() > limite)
+                .orElse(false);
+        LocalDateTime recente = LocalDateTime.now().minusMinutes(10);
+
+        for (Localizacao p : pontos) {
+            boolean acima = p.getVelocidade() != null && p.getVelocidade() > limite;
+            if (acima && !estavaAcima && p.getDataHora() != null && p.getDataHora().isAfter(recente)) {
+                String motorista = p.getMotorista() != null ? p.getMotorista().split(" \\| Cartão: ")[0] : "Não identificado";
+                telegramService.avisar("EXCESSO_VELOCIDADE", "monitoramento.visualizar",
+                        "🚨 <b>Excesso de velocidade</b>\n<b>" + TelegramService.esc(veiculo.getPlaca()) + "</b> a <b>"
+                        + Math.round(p.getVelocidade()) + " km/h</b> (limite " + Math.round(limite) + " km/h)\n"
+                        + "Motorista: " + TelegramService.esc(motorista) + "\n"
+                        + "<a href=\"https://www.google.com/maps?q=" + p.getLatitude() + "," + p.getLongitude() + "\">📍 Ver no mapa</a>");
+            }
+            estavaAcima = acima;
+        }
     }
 
     public Optional<Localizacao> buscarUltimaLocalizacao(Long veiculoId) {
