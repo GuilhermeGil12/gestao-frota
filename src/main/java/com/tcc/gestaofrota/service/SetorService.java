@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 @Service
 public class SetorService {
 
+    private final AtividadeService atividadeService;
+
     private final SetorRepository setorRepository;
     private final FuncionarioRepository funcionarioRepository;
     private final UsuarioRepository usuarioRepository;
@@ -31,11 +33,13 @@ public class SetorService {
     public SetorService(SetorRepository setorRepository,
                         FuncionarioRepository funcionarioRepository,
                         UsuarioRepository usuarioRepository,
-                        PermissaoRepository permissaoRepository) {
+                        PermissaoRepository permissaoRepository,
+            AtividadeService atividadeService) {
         this.setorRepository = setorRepository;
         this.funcionarioRepository = funcionarioRepository;
         this.usuarioRepository = usuarioRepository;
         this.permissaoRepository = permissaoRepository;
+        this.atividadeService = atividadeService;
     }
 
     public List<Setor> listarSetores(){
@@ -83,6 +87,7 @@ public class SetorService {
         setor.setAtivo(true);
         setor.setCriadoEm(LocalDateTime.now());
         Setor salvo = setorRepository.save(setor);
+        atividadeService.registrar("SETOR", "Cadastrou o setor " + salvo.getNome());
         System.out.println("Setor " + setor.getNome() +  " salvo com sucesso!");
         return salvo;
     }
@@ -101,14 +106,18 @@ public class SetorService {
         setor.setNome(nome);
         setor.setDescricao(dados.getDescricao());
         setor.setAtualizadoEm(LocalDateTime.now());
-        return setorRepository.save(setor);
+        Setor atualizado = setorRepository.save(setor);
+        atividadeService.registrar("SETOR", "Editou o setor " + atualizado.getNome());
+        return atualizado;
     }
 
     public Setor alternarAtivo(Long id) {
         Setor setor = buscarPorId(id);
         setor.setAtivo(!setor.isAtivo());
         setor.setAtualizadoEm(LocalDateTime.now());
-        return setorRepository.save(setor);
+        Setor atualizado = setorRepository.save(setor);
+        atividadeService.registrar("SETOR", (atualizado.isAtivo() ? "Ativou" : "Inativou") + " o setor " + atualizado.getNome());
+        return atualizado;
     }
 
     // Papel inicial do setor: as permissões com que um usuário NOVO desse setor começa.
@@ -119,7 +128,10 @@ public class SetorService {
         Set<String> nomes = chaves == null ? Set.of() : new HashSet<>(chaves);
         setor.setPermissoes(nomes.isEmpty() ? new HashSet<>() : new HashSet<>(permissaoRepository.findByNomePermissaoIn(nomes)));
         setor.setAtualizadoEm(LocalDateTime.now());
-        return paraDTO(setorRepository.save(setor));
+        Setor salvo = setorRepository.save(setor);
+        atividadeService.registrar("SETOR", "Alterou o papel inicial do setor " + salvo.getNome()
+                + " (" + salvo.getPermissoes().size() + " permissões)");
+        return paraDTO(salvo);
     }
 
     // Papel inicial do setor de um funcionário (vazio se não tiver setor). Usado ao criar usuário.

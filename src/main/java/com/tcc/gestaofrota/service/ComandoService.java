@@ -15,6 +15,8 @@ import java.util.Optional;
 @Service
 public class ComandoService {
 
+    private final AtividadeService atividadeService;
+
     // Os comandos que mudam o estado do veículo (vão pro tópico "estado", retido).
     private static final List<String> TIPOS_DE_ESTADO = List.of("BLOQUEAR", "DESBLOQUEAR");
 
@@ -24,10 +26,12 @@ public class ComandoService {
 
     public ComandoService(ComandoRepository comandoRepository,
                           ControladoraRepository controladoraRepository,
-                          MqttService mqttService) {
+                          MqttService mqttService,
+            AtividadeService atividadeService) {
         this.comandoRepository = comandoRepository;
         this.controladoraRepository = controladoraRepository;
         this.mqttService = mqttService;
+        this.atividadeService = atividadeService;
     }
 
     // Frontend chama isso para enviar um comando a um veículo.
@@ -46,7 +50,18 @@ public class ComandoService {
         comando.setTipo(tipo);
         comando.setStatus("PENDENTE");
         comando.setCriadoEm(LocalDateTime.now());
+        AtividadeService.Autor autor = atividadeService.autorAtual();
+        comando.setEnviadoPorId(autor.id());
+        comando.setEnviadoPorNome(autor.nome());
         Comando salvo = comandoRepository.save(comando);
+
+        String veiculo = controladora.getVeiculo() != null ? controladora.getVeiculo().getPlaca() : "da controladora " + idControladora;
+        String acao = switch (tipo) {
+            case "BLOQUEAR" -> "Mandou bloquear o veículo ";
+            case "DESBLOQUEAR" -> "Mandou desbloquear o veículo ";
+            default -> "Mandou apitar o veículo ";
+        };
+        atividadeService.registrar("COMANDO", acao + veiculo);
 
         // O id vai junto pro ESP devolver na resposta.
         publicarNoMqtt(salvo);

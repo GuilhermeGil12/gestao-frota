@@ -14,6 +14,8 @@ import java.util.Optional;
 @Service
 public class ControladoraService {
 
+    private final AtividadeService atividadeService;
+
 
     private final ControladoraRepository controladoraRepository;
     private final CartaoRfidService cartaoRfidService;
@@ -29,9 +31,11 @@ public class ControladoraService {
      * deste repositório para ser instanciado e funcionar.
      */
 
-    public ControladoraService(ControladoraRepository controladoraRepository, CartaoRfidService cartaoRfidService) {
+    public ControladoraService(ControladoraRepository controladoraRepository, CartaoRfidService cartaoRfidService,
+            AtividadeService atividadeService) {
         this.controladoraRepository = controladoraRepository;
         this.cartaoRfidService = cartaoRfidService;
+        this.atividadeService = atividadeService;
     }
 
     public Controladora salvar(Controladora controladora){
@@ -53,6 +57,7 @@ public class ControladoraService {
             }
         }
         Controladora salva = controladoraRepository.save(controladora);
+        atividadeService.registrar("CONTROLADORA", "Cadastrou a controladora " + salva.getIdControladora());
         // A controladora nova já recebe a lista de cartões quando conectar no broker.
         cartaoRfidService.publicarCartoes(salva.getIdControladora());
         return salva;
@@ -84,7 +89,9 @@ public class ControladoraService {
 
         controladoraAntiga.setVeiculo(controladoraNova.getVeiculo());
 
-        return controladoraRepository.save(controladoraAntiga);
+        Controladora atualizada = controladoraRepository.save(controladoraAntiga);
+        atividadeService.registrar("CONTROLADORA", "Editou a controladora " + id);
+        return atualizada;
 
     }
 
@@ -92,6 +99,7 @@ public class ControladoraService {
         buscarPorId(id);
 
         controladoraRepository.deleteById(id);
+        atividadeService.registrar("CONTROLADORA", "Excluiu a controladora " + id);
     }
 
     public void inativar(Long id){
@@ -104,6 +112,8 @@ public class ControladoraService {
         controladora.setAtivo(!controladora.getAtivo());
 
         controladoraRepository.save(controladora);
+        atividadeService.registrar("CONTROLADORA",
+                (controladora.getAtivo() ? "Ativou" : "Inativou") + " a controladora " + id);
     }
 
 

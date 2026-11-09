@@ -101,7 +101,7 @@ function Cartoes() {
 
     return (
         <div className="w-full">
-            <div className="flex items-center justify-between mb-6 border-b border-border pb-4 gap-4">
+            <div className="flex flex-wrap items-center justify-between mb-6 border-b border-border pb-4 gap-4">
                 <h1 className="text-xl font-semibold text-foreground">Vínculo de Cartões RFID</h1>
                 <Input type="text" placeholder="Buscar por Nome, CPF ou Código do Crachá..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} className="max-w-sm" />
             </div>

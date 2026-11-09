@@ -60,7 +60,8 @@ public final class CatalogoPermissoes {
                     new Acao("configuracoes.geral", "Configurações gerais"),
                     new Acao("configuracoes.setores", "Gerenciar setores"),
                     new Acao("configuracoes.usuarios", "Gerenciar usuários"),
-                    new Acao("configuracoes.permissoes", "Gerenciar permissões")
+                    new Acao("configuracoes.permissoes", "Gerenciar permissões"),
+                    new Acao("configuracoes.atividades", "Ver registro de atividades")
             ))
     );
 

@@ -226,7 +226,7 @@ function Funcionarios() {
 
     return (
         <div className="w-full">
-            <div className="flex items-center justify-between mb-6 border-b border-border pb-4 gap-4">
+            <div className="flex flex-wrap items-center justify-between mb-6 border-b border-border pb-4 gap-4">
                 <h1 className="text-xl font-semibold text-foreground">Gestão de Funcionários</h1>
 
                 <div className="flex items-center gap-3 flex-1 max-w-xl">
@@ -260,11 +260,11 @@ function Funcionarios() {
 
                     <form onSubmit={handleSalvar} className="space-y-6" noValidate>
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados Pessoais</h3>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="col-span-2 space-y-2"><Label>Nome Completo</Label><Input value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} required /></div>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                            <div className="sm:col-span-2 space-y-2"><Label>Nome Completo</Label><Input value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} required /></div>
                             <div className="space-y-2"><Label>CPF</Label><Input value={formData.cpf} onChange={e => setFormData({ ...formData, cpf: maskCPF(e.target.value) })} placeholder="000.000.000-00" required /></div>
                         </div>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div className="space-y-2"><Label>RG</Label><Input value={formData.rg} onChange={e => setFormData({ ...formData, rg: maskRG(e.target.value) })} required /></div>
                             <div className="space-y-2"><Label>Telefone</Label><Input value={formData.numeroTelefone} onChange={e => setFormData({ ...formData, numeroTelefone: e.target.value })} placeholder="(17) 99999-9999" /></div>
                             <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="funcionario@empresa.com" /></div>
@@ -273,7 +273,7 @@ function Funcionarios() {
                             <div className="space-y-2"><Label>Bairro</Label><Input type="text" value={formData.bairro} onChange={e => setFormData({ ...formData, bairro: e.target.value })} placeholder="Centro" /></div>
                             <div className="space-y-2"><Label>Cidade</Label><Input type="text" value={formData.cidade} onChange={e => setFormData({ ...formData, cidade: e.target.value })} placeholder="São Paulo" /></div>
                             <div className="space-y-2"><Label>CEP</Label><Input type="text" value={formData.cep} onChange={e => handleCepChange(e.target.value)} placeholder="00000-000" maxLength={9} /></div>
-                            <div className="col-span-3 flex justify-end">
+                            <div className="sm:col-span-3 flex justify-end">
                                 <Button type="button" variant="outline" onClick={buscarCoordenadas} disabled={buscandoLocal}>
                                     {buscandoLocal ? (
                                         <>
@@ -290,7 +290,7 @@ function Funcionarios() {
                             </div>
 
                             {mapaAberto && pinPos && (
-                                <div className="col-span-3 space-y-3">
+                                <div className="sm:col-span-3 space-y-3">
                                     <p className="text-sm text-muted-foreground">
                                         Clique no mapa ou arraste o pin para ajustar a localização.
                                     </p>
@@ -314,7 +314,7 @@ function Funcionarios() {
                         </div>
 
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados Corporativos</h3>
-                        <div className="grid grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                             <div className="space-y-2"><Label>Matrícula</Label><Input value={formData.matricula} onChange={e => setFormData({ ...formData, matricula: e.target.value })} placeholder="Ex: 107858" required /></div>
                             <div className="space-y-2"><Label>Cargo</Label><Input value={formData.cargo} onChange={e => setFormData({ ...formData, cargo: e.target.value })} required /></div>
                             <div className="space-y-2">
@@ -342,7 +342,7 @@ function Funcionarios() {
                         </div>
 
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados de Direção</h3>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div className="space-y-2"><Label>Número CNH</Label><Input value={formData.numCNH} onChange={e => setFormData({ ...formData, numCNH: e.target.value })} disabled={formData.nivelMotorista === "0"} required /></div>
                             <div className="space-y-2">
                                 <Label>Categoria CNH</Label>
@@ -373,12 +373,12 @@ function Funcionarios() {
                     {funcionarioSelecionado && (
                         <div className="space-y-6">
                             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados Pessoais</h3>
-                            <div className="grid grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                                 <div className="col-span-2"><span className="block text-xs text-muted-foreground">Nome Completo</span><span>{funcionarioSelecionado.nome}</span></div>
                                 <div><span className="block text-xs text-muted-foreground">CPF</span><span>{funcionarioSelecionado.cpf}</span></div>
                                 <div><span className="block text-xs text-muted-foreground">RG</span><span>{funcionarioSelecionado.rg}</span></div>
                                 <div><span className="block text-xs text-muted-foreground">Telefone</span><span>{funcionarioSelecionado.numeroTelefone || "Não informado"}</span></div>
-                                <div className="col-span-3"><span className="block text-xs text-muted-foreground">E-mail</span><span>{funcionarioSelecionado.email || "Não informado"}</span></div>
+                                <div className="col-span-2 md:col-span-3"><span className="block text-xs text-muted-foreground">E-mail</span><span>{funcionarioSelecionado.email || "Não informado"}</span></div>
                             </div>
                         </div>
                     )}

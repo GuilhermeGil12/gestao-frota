@@ -28,6 +28,13 @@ public class Comando {
     @Column(name = "executado_em")
     private LocalDateTime executadoEm;
 
+    // Quem enviou o comando pelo site (nome guardado na hora, pro histórico não mudar).
+    @Column(name = "id_usuario")
+    private Long enviadoPorId;
+
+    @Column(name = "nome_usuario", length = 120)
+    private String enviadoPorNome;
+
     // ==========================================
     // GETTERS E SETTERS
     // ==========================================
@@ -78,5 +85,21 @@ public class Comando {
 
     public void setExecutadoEm(LocalDateTime executadoEm) {
         this.executadoEm = executadoEm;
+    }
+
+    public Long getEnviadoPorId() {
+        return enviadoPorId;
+    }
+
+    public void setEnviadoPorId(Long enviadoPorId) {
+        this.enviadoPorId = enviadoPorId;
+    }
+
+    public String getEnviadoPorNome() {
+        return enviadoPorNome;
+    }
+
+    public void setEnviadoPorNome(String enviadoPorNome) {
+        this.enviadoPorNome = enviadoPorNome;
     }
 }

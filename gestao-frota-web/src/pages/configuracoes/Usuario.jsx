@@ -342,7 +342,7 @@ function Usuario() {
 
     return (
         <div className="w-full">
-            <div className="flex items-center justify-between mb-6 border-b border-border pb-4 gap-4">
+            <div className="flex flex-wrap items-center justify-between mb-6 border-b border-border pb-4 gap-4">
                 <h1 className="text-xl font-semibold text-foreground">Usuários</h1>
                 <Input
                     type="text"
@@ -429,7 +429,7 @@ function Usuario() {
                             <FieldGroup className="grid grid-col-2">
                                 <Field>
                                     <Label>Nome</Label>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                         <Input
                                             placeholder="Nome"
                                             value={formData.nomeUsuario}

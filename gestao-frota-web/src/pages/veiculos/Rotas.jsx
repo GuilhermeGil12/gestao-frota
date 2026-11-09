@@ -187,7 +187,7 @@ function Rotas() {
 
     return (
         <div className="w-full space-y-6">
-            <div className="flex items-center justify-between border-b border-border pb-4">
+            <div className="flex flex-wrap items-center justify-between border-b border-border pb-4 gap-3">
                 <h1 className="text-xl font-semibold text-foreground">Rastreamento de Percurso Diário</h1>
             </div>
 
@@ -238,7 +238,7 @@ function Rotas() {
             )}
 
             {/* Mapa */}
-            <div className="w-full h-[600px] rounded-xl overflow-hidden border border-border relative">
+            <div className="w-full h-[55vh] min-h-80 md:h-[600px] rounded-xl overflow-hidden border border-border relative">
                 <div className="absolute top-3 right-3 z-[1000] space-y-1 rounded-lg border border-border bg-card/95 p-3 text-xs text-card-foreground shadow-md">
                     <p className="mb-1 font-semibold">Legenda</p>
                     {[

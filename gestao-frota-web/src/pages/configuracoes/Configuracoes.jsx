@@ -126,7 +126,7 @@ function Configuracoes() {
 
     return (
         <div className="w-full space-y-6">
-            <div className="flex items-center justify-between border-b border-border pb-4">
+            <div className="flex flex-wrap items-center justify-between border-b border-border pb-4 gap-3">
                 <h1 className="text-xl font-semibold text-foreground">Configurações do Sistema</h1>
                 <Button onClick={handleSalvar} disabled={carregando || salvando}>
                     {salvando ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}

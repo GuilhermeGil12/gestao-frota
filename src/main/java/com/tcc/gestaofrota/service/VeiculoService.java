@@ -14,6 +14,8 @@ import java.util.Optional;
 @Service
 public class VeiculoService {
 
+    private final AtividadeService atividadeService;
+
     private final VeiculoRepository veiculoRepository;
     private final ControladoraRepository controladoraRepository;
 
@@ -28,9 +30,11 @@ public class VeiculoService {
      * deste repositório para ser instanciado e funcionar.
      */
 
-    public VeiculoService(VeiculoRepository veiculoRepository, ControladoraRepository controladoraRepository) {
+    public VeiculoService(VeiculoRepository veiculoRepository, ControladoraRepository controladoraRepository,
+            AtividadeService atividadeService) {
         this.veiculoRepository = veiculoRepository;
         this.controladoraRepository = controladoraRepository;
+        this.atividadeService = atividadeService;
     }
 
     public Optional<Veiculo> buscarPorPlaca(String placa){
@@ -55,6 +59,7 @@ public class VeiculoService {
         // Remove a referência detached antes de salvar para evitar cascade em entidade detached
         veiculo.setControladora(null);
         Veiculo veiculoSalvo = veiculoRepository.save(veiculo);
+        atividadeService.registrar("VEICULO", "Cadastrou o veículo " + veiculoSalvo.getPlaca());
 
         if (controladoraId != null) {
             Controladora controladora = controladoraRepository.findById(controladoraId)
@@ -122,7 +127,9 @@ public class VeiculoService {
             }
         }
 
-        return veiculoRepository.save(veiculoAntigo);
+        Veiculo atualizado = veiculoRepository.save(veiculoAntigo);
+        atividadeService.registrar("VEICULO", "Editou o veículo " + atualizado.getPlaca());
+        return atualizado;
     }
 
     @Transactional
@@ -137,5 +144,6 @@ public class VeiculoService {
         }
 
         veiculoRepository.deleteById(id);
+        atividadeService.registrar("VEICULO", "Excluiu o veículo " + veiculo.getPlaca());
     }
 }

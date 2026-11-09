@@ -9,10 +9,14 @@ import java.time.LocalDateTime;
 @Service
 public class ConfiguracaoService {
 
+    private final AtividadeService atividadeService;
+
     private final ConfiguracaoRepository configuracaoRepository;
 
-    public ConfiguracaoService(ConfiguracaoRepository configuracaoRepository) {
+    public ConfiguracaoService(ConfiguracaoRepository configuracaoRepository,
+            AtividadeService atividadeService) {
         this.configuracaoRepository = configuracaoRepository;
+        this.atividadeService = atividadeService;
     }
 
     // Na primeira vez a linha ainda não existe: devolve os valores padrão (sem gravar).
@@ -38,6 +42,8 @@ public class ConfiguracaoService {
         config.setBloquearCnhVencida(Boolean.TRUE.equals(nova.getBloquearCnhVencida()));
         config.setBloquearMadrugada(Boolean.TRUE.equals(nova.getBloquearMadrugada()));
         config.setAtualizadoEm(LocalDateTime.now());
-        return configuracaoRepository.save(config);
+        Configuracao salva = configuracaoRepository.save(config);
+        atividadeService.registrar("CONFIGURACAO", "Alterou as configurações gerais");
+        return salva;
     }
 }

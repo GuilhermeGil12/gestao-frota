@@ -31,6 +31,13 @@ public class PerfilController {
         return ResponseEntity.ok(perfilService.buscar(emailLogado()));
     }
 
+    // Fotos de outros usuários para os logs. Ex.: GET /api/perfil/fotos?ids=1,3,7
+    @GetMapping("/fotos")
+    public ResponseEntity<Map<String, String>> fotos(@RequestParam List<Long> ids) {
+        if (ids.size() > 200) ids = ids.subList(0, 200);
+        return ResponseEntity.ok(perfilService.fotos(ids));
+    }
+
     // Body: { "nomeUsuario": "..." }
     @PutMapping
     public ResponseEntity<Map<String, Object>> atualizarNome(@RequestBody Map<String, String> dados) {

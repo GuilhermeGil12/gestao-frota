@@ -16,13 +16,17 @@ import javax.management.RuntimeErrorException;
 @Service
 public class FuncionarioService {
 
+    private final AtividadeService atividadeService;
+
     private final FuncionarioRepository funcionarioRepository;
     private final CercaRepository cercaRepository;
     
 
-    public FuncionarioService(FuncionarioRepository funcionarioRepository, CercaRepository cercaRepository) {
+    public FuncionarioService(FuncionarioRepository funcionarioRepository, CercaRepository cercaRepository,
+            AtividadeService atividadeService) {
         this.funcionarioRepository = funcionarioRepository;
         this.cercaRepository = cercaRepository;
+        this.atividadeService = atividadeService;
     }
 
     private void criarOuAtualizarCercaCasa(Funcionario funcionario) {
@@ -83,6 +87,7 @@ public class FuncionarioService {
 
         //caso não existir, ele retorna o valor e salva
         Funcionario salvo = funcionarioRepository.save(funcionario);
+        atividadeService.registrar("FUNCIONARIO", "Cadastrou o funcionário " + salvo.getNome());
         criarOuAtualizarCercaCasa(salvo);
         return salvo;
     }
@@ -139,6 +144,7 @@ public class FuncionarioService {
         funcionarioAntigo.setCep(funcionarioNovo.getCep());
 
         Funcionario atualizado = funcionarioRepository.save(funcionarioAntigo);
+        atividadeService.registrar("FUNCIONARIO", "Editou o funcionário " + atualizado.getNome());
         criarOuAtualizarCercaCasa(atualizado);
         return atualizado;
     }
@@ -149,12 +155,14 @@ public class FuncionarioService {
         funcionarioInativo.setAtivo(false);
 
         funcionarioRepository.save(funcionarioInativo);
+        atividadeService.registrar("FUNCIONARIO", "Inativou o funcionário " + funcionarioInativo.getNome());
     }
 
     public void deletar(Long id){
-        buscarPorId(id);
+        Funcionario excluido = buscarPorId(id);
 
         funcionarioRepository.deleteById(id);
+        atividadeService.registrar("FUNCIONARIO", "Excluiu o funcionário " + excluido.getNome());
     }
 
 

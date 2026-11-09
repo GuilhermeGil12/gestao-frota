@@ -10,10 +10,14 @@ import java.util.Optional;
 @Service
 public class CercaService {
 
+    private final AtividadeService atividadeService;
+
     private final CercaRepository cercaRepository;
 
-    public CercaService(CercaRepository cercaRepository) {
+    public CercaService(CercaRepository cercaRepository,
+            AtividadeService atividadeService) {
         this.cercaRepository = cercaRepository;
+        this.atividadeService = atividadeService;
     }
 
     public List<Cerca> listarAtivas() {
@@ -30,7 +34,9 @@ public class CercaService {
     }
 
     public Cerca salvar(Cerca cerca) {
-        return cercaRepository.save(cerca);
+        Cerca salva = cercaRepository.save(cerca);
+        atividadeService.registrar("CERCA", "Cadastrou a cerca " + salva.getNome());
+        return salva;
     }
 
     public Cerca atualizar(Long id, Cerca cercaNova) {
@@ -41,11 +47,14 @@ public class CercaService {
         cercaAntiga.setRaio(cercaNova.getRaio());
         cercaAntiga.setAtivo(cercaNova.getAtivo());
         cercaAntiga.setFuncionario(cercaNova.getFuncionario());
-        return cercaRepository.save(cercaAntiga);
+        Cerca atualizada = cercaRepository.save(cercaAntiga);
+        atividadeService.registrar("CERCA", "Editou a cerca " + atualizada.getNome());
+        return atualizada;
     }
 
     public void deletar(Long id) {
-        buscarPorId(id);
+        Cerca cerca = buscarPorId(id);
         cercaRepository.deleteById(id);
+        atividadeService.registrar("CERCA", "Excluiu a cerca " + cerca.getNome());
     }
 }

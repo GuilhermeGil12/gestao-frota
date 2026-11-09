@@ -97,7 +97,7 @@ function Notificacoes() {
                     )}
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-96">
+            <DropdownMenuContent align="end" className="w-[calc(100vw-1.5rem)] sm:w-96">
                 <div className="flex items-center justify-between pr-2">
                     <DropdownMenuLabel>Notificações</DropdownMenuLabel>
                     {naoLidas.length > 0 && (

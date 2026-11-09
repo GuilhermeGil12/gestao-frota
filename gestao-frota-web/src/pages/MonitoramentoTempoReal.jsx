@@ -224,7 +224,7 @@ function MonitoramentoTempoReal() {
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
                 {/* Mapa — "isolate" fecha os z-index do Leaflet aqui dentro, pra ele não cobrir o Select */}
-                <div className="isolate h-[640px] overflow-hidden rounded-xl border border-border">
+                <div className="isolate h-[60vh] min-h-80 overflow-hidden rounded-xl border border-border lg:h-[640px]">
                     <MapContainer center={[-15.78, -47.93]} zoom={4} style={{ height: "100%", width: "100%" }}>
                         <TileLayer
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -262,7 +262,7 @@ function MonitoramentoTempoReal() {
                 </div>
 
                 {/* Lista lateral */}
-                <Card className="flex h-[640px] flex-col gap-0 py-0">
+                <Card className="flex h-[60vh] min-h-80 flex-col gap-0 py-0 lg:h-[640px]">
                     <CardHeader className="border-b border-border py-4">
                         <CardTitle className="text-base">Veículos</CardTitle>
                         <CardDescription>Clique para acompanhar um veículo.</CardDescription>

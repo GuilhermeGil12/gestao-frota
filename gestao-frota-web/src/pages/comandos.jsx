@@ -9,6 +9,7 @@ import { Label } from "../components/ui/label";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import Paginacao from "../components/Paginacao";
+import AvatarUsuario from "../components/AvatarUsuario";
 import { usePaginacao } from "../utils/usePaginacao";
 
 function Comandos() {
@@ -88,7 +89,7 @@ function Comandos() {
     return (
         <div className="w-full space-y-6">
             {/* Cabeçalho */}
-            <div className="flex items-center justify-between border-b border-border pb-4">
+            <div className="flex flex-wrap items-center justify-between border-b border-border pb-4 gap-3">
                 <h1 className="text-xl font-semibold text-foreground">Comandos Remotos</h1>
                 {podeEnviarComando && (
                     <Button onClick={() => setDialogAberto(true)}>Novo Comando</Button>
@@ -99,6 +100,7 @@ function Comandos() {
             <Table>
                 <TableHeader>
                     <TableRow>
+                        <TableHead className="w-12">Por</TableHead>
                         <TableHead className="w-[20%]">Data/Hora</TableHead>
                         <TableHead className="w-[20%]">Veículo</TableHead>
                         <TableHead className="w-[15%]">Comando</TableHead>
@@ -109,13 +111,19 @@ function Comandos() {
                 <TableBody>
                     {comandos.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                            <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                                 Nenhum comando enviado ainda.
                             </TableCell>
                         </TableRow>
                     ) : (
                         paginacao.visiveis.map((cmd) => (
                             <TableRow key={cmd.idComando}>
+                                <TableCell>
+                                    {/* Comandos antigos não guardavam quem enviou. */}
+                                    {cmd.enviadoPorNome
+                                        ? <AvatarUsuario id={cmd.enviadoPorId} nome={cmd.enviadoPorNome} />
+                                        : <span className="text-muted-foreground">—</span>}
+                                </TableCell>
                                 <TableCell>{formatarData(cmd.criadoEm)}</TableCell>
                                 <TableCell>
                                     {cmd.controladora?.veiculo?.placa || `Controladora ${cmd.controladora?.idControladora}`}

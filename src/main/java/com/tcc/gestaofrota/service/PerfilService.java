@@ -107,6 +107,17 @@ public class PerfilService {
         return buscar(email);
     }
 
+    // Fotos de vários usuários de uma vez (listas de log): { "3": "data:image/jpeg;base64,..." }.
+    // Quem não tem foto não aparece no mapa (o site mostra as iniciais).
+    public Map<String, String> fotos(Collection<Long> ids) {
+        Map<String, String> fotos = new HashMap<>();
+        if (ids == null || ids.isEmpty()) return fotos;
+        for (Usuario u : usuarioRepository.findAllById(ids)) {
+            if (u.getFoto() != null) fotos.put(String.valueOf(u.getId()), u.getFoto());
+        }
+        return fotos;
+    }
+
     public Set<String> notificacoesDesativadas(String email) {
         return usuarioRepository.findByEmail(email).map(this::notificacoesDesativadas).orElse(Set.of());
     }

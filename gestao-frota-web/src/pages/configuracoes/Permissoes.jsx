@@ -76,11 +76,11 @@ function Permissoes() {
 
     return (
         <div className="w-full space-y-6">
-            <div className="flex items-center justify-between border-b border-border pb-4 gap-4">
+            <div className="flex flex-wrap items-center justify-between border-b border-border pb-4 gap-4">
                 <h1 className="text-xl font-semibold text-foreground">Papel inicial por setor</h1>
-                <div className="relative">
+                <div className="relative w-full sm:w-auto">
                     <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input className="w-64 pl-8" placeholder="Buscar setor..." value={busca} onChange={(e) => setBusca(e.target.value)} />
+                    <Input className="w-full sm:w-64 pl-8" placeholder="Buscar setor..." value={busca} onChange={(e) => setBusca(e.target.value)} />
                 </div>
             </div>
 

@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 @Service
 public class CartaoRfidService {
 
+    private final AtividadeService atividadeService;
+
 
 
     private final CartaoRfidRepository cartaoRfidRepository;
@@ -27,11 +29,13 @@ public class CartaoRfidService {
 
 
     public CartaoRfidService(CartaoRfidRepository cartaoRfidRepository, FuncionarioService funcionarioService,
-                             ControladoraRepository controladoraRepository, MqttService mqttService) {
+                             ControladoraRepository controladoraRepository, MqttService mqttService,
+            AtividadeService atividadeService) {
         this.cartaoRfidRepository = cartaoRfidRepository;
         this.funcionarioService = funcionarioService;
         this.controladoraRepository = controladoraRepository;
         this.mqttService = mqttService;
+        this.atividadeService = atividadeService;
     }
 
     // Manda a lista de cartões liberados (retida) pra uma controladora.
@@ -76,6 +80,7 @@ public class CartaoRfidService {
         }
 
         CartaoRfid salvo = cartaoRfidRepository.save(cartaoRfid);
+        atividadeService.registrar("CARTAO", "Cadastrou o cartão " + salvo.getUid() + (salvo.getFuncionario() != null ? " de " + salvo.getFuncionario().getNome() : ""));
         publicarCartoesParaTodas();
         return salvo;
     }
@@ -100,9 +105,10 @@ public class CartaoRfidService {
     }
 
     public void deletar(Long id){
-        buscarPorId(id);
+        CartaoRfid excluido = buscarPorId(id);
 
         cartaoRfidRepository.deleteById(id);
+        atividadeService.registrar("CARTAO", "Excluiu o cartão " + excluido.getUid() + (excluido.getFuncionario() != null ? " de " + excluido.getFuncionario().getNome() : ""));
         publicarCartoesParaTodas();
     }
 
@@ -113,6 +119,7 @@ public class CartaoRfidService {
         cartao.setAtivo(false);
 
         cartaoRfidRepository.save(cartao);
+        atividadeService.registrar("CARTAO", "Inativou o cartão " + cartao.getUid() + (cartao.getFuncionario() != null ? " de " + cartao.getFuncionario().getNome() : ""));
         publicarCartoesParaTodas();
     }
 
@@ -128,6 +135,7 @@ public class CartaoRfidService {
         cartao.setAtivo(true);
         cartao.setBloqueadoPorCnh(false);
         cartaoRfidRepository.save(cartao);
+        atividadeService.registrar("CARTAO", "Ativou o cartão " + cartao.getUid() + (cartao.getFuncionario() != null ? " de " + cartao.getFuncionario().getNome() : ""));
         publicarCartoesParaTodas();
     }
 

@@ -146,7 +146,7 @@ function Cercas() {
 
     return (
         <div className="w-full space-y-6">
-            <div className="flex items-center justify-between border-b border-border pb-4">
+            <div className="flex flex-wrap items-center justify-between border-b border-border pb-4 gap-3">
                 <h1 className="text-xl font-semibold text-foreground">Cercas Geográficas</h1>
                 <Button onClick={abrirModalNova}>+ Nova Cerca</Button>
             </div>
@@ -233,7 +233,7 @@ function Cercas() {
                     </DialogHeader>
 
                     <div className="space-y-4">
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div className="space-y-2">
                                 <Label>Nome</Label>
                                 <Input value={novoNome} onChange={e => setNovoNome(e.target.value)} placeholder="Ex: Casa do João" />

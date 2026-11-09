@@ -22,6 +22,8 @@ import com.tcc.gestaofrota.security.RefreshTokenService;
 @Service
 public class UsuarioService {
 
+    private final AtividadeService atividadeService;
+
     private final UsuarioRepository usuarioRepository;
     private final FuncionarioRepository funcionarioRepository;
     private final PermissaoRepository permissaoRepository;
@@ -33,12 +35,14 @@ public class UsuarioService {
                           FuncionarioRepository funcionarioRepository,
                           PermissaoRepository permissaoRepository,
                           RefreshTokenService refreshTokenService,
-                          SetorService setorService) {
+                          SetorService setorService,
+            AtividadeService atividadeService) {
         this.usuarioRepository = usuarioRepository;
         this.funcionarioRepository = funcionarioRepository;
         this.permissaoRepository = permissaoRepository;
         this.refreshTokenService = refreshTokenService;
         this.setorService = setorService;
+        this.atividadeService = atividadeService;
     }
 
     /** Converte a lista de chaves vinda do frontend nas entidades correspondentes. */
@@ -92,7 +96,9 @@ public class UsuarioService {
             permissoes = setorService.permissoesDoSetor(funcionario.getSetor().getId());
         }
         u.setPermissoes(permissoes);
-        return usuarioRepository.save(u);
+        Usuario criado = usuarioRepository.save(u);
+        atividadeService.registrar("USUARIO", "Criou o usuário " + criado.getNomeUsuario() + " (" + criado.getEmail() + ")");
+        return criado;
     }
 
     public Usuario atualizar(Long id, Map<String, Object> dados) {
@@ -133,6 +139,8 @@ public class UsuarioService {
         }
 
         Usuario salvo = usuarioRepository.save(u);
+        atividadeService.registrar("USUARIO", "Editou o usuário " + salvo.getNomeUsuario()
+                + (permissoesMudaram ? " (permissões alteradas)" : ""));
 
         // Derruba as sessoes abertas: o token antigo ainda carregaria as permissoes antigas.
         if (permissoesMudaram) {
@@ -152,6 +160,8 @@ public class UsuarioService {
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
         u.setAtivo(!Boolean.TRUE.equals(u.getAtivo()));
         Usuario salvo = usuarioRepository.save(u);
+        atividadeService.registrar("USUARIO",
+                (Boolean.TRUE.equals(salvo.getAtivo()) ? "Ativou" : "Inativou") + " o usuário " + salvo.getNomeUsuario());
 
         // Inativar precisa ter efeito imediato, nao so no proximo login.
         if (!Boolean.TRUE.equals(salvo.getAtivo())) {

@@ -107,7 +107,7 @@ function Veiculos() {
 
     return (
         <div className="w-full">
-            <div className="flex items-center justify-between mb-6 border-b border-border pb-4 gap-4">
+            <div className="flex flex-wrap items-center justify-between mb-6 border-b border-border pb-4 gap-4">
                 <h1 className="text-xl font-semibold text-foreground">Gestão de Veículos</h1>
                 <Input type="text" placeholder="Pesquisar por Nome ou Placa..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} className="max-w-xs" />
                 {temPermissao("veiculos.cadastrar") && (
@@ -120,11 +120,11 @@ function Veiculos() {
                     <DialogHeader><DialogTitle>{formData.id ? "Editar Veículo" : "Cadastrar Veículo"}</DialogTitle><DialogDescription>Preencha os dados do veículo.</DialogDescription></DialogHeader>
                     <form onSubmit={handleSalvar} className="space-y-4">
                         <div className="space-y-2"><Label>Nome do Veículo</Label><Input value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} required /></div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div className="space-y-2"><Label>Placa</Label><Input value={formData.placa} onChange={e => setFormData({ ...formData, placa: maskPlaca(e.target.value) })} required /></div>
                             <div className="space-y-2"><Label>Renavam</Label><Input value={formData.renavam} onChange={e => setFormData({ ...formData, renavam: e.target.value })} required /></div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div className="space-y-2"><Label>Vel. Máxima (km/h)</Label><Input type="number" value={formData.velocidadeMaxima} onChange={e => setFormData({ ...formData, velocidadeMaxima: e.target.value })} /></div>
                             <div className="space-y-2">
                                 <Label>Vincular Controladora</Label>

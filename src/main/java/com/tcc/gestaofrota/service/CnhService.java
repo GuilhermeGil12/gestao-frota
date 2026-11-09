@@ -22,6 +22,8 @@ import java.util.List;
 @Service
 public class CnhService {
 
+    private final AtividadeService atividadeService;
+
     private final FuncionarioRepository funcionarioRepository;
     private final CartaoRfidRepository cartaoRfidRepository;
     private final CartaoRfidService cartaoRfidService;
@@ -30,11 +32,13 @@ public class CnhService {
     public CnhService(FuncionarioRepository funcionarioRepository,
                       CartaoRfidRepository cartaoRfidRepository,
                       CartaoRfidService cartaoRfidService,
-                      ConfiguracaoService configuracaoService) {
+                      ConfiguracaoService configuracaoService,
+            AtividadeService atividadeService) {
         this.funcionarioRepository = funcionarioRepository;
         this.cartaoRfidRepository = cartaoRfidRepository;
         this.cartaoRfidService = cartaoRfidService;
         this.configuracaoService = configuracaoService;
+        this.atividadeService = atividadeService;
     }
 
     private boolean regraLigada() {
@@ -77,6 +81,7 @@ public class CnhService {
     private void marcarPendenteSemPublicar(Funcionario f) {
         f.setCnhPendente(true);
         funcionarioRepository.save(f);
+        atividadeService.registrar("CNH", "CNH de " + f.getNome() + " vencida: CNH pendente e cartões bloqueados");
         for (CartaoRfid cartao : cartaoRfidRepository.findByFuncionarioIdAndAtivoTrue(f.getId())) {
             cartao.setAtivo(false);
             cartao.setBloqueadoPorCnh(true);
@@ -95,6 +100,7 @@ public class CnhService {
 
         f.setCnhPendente(false);
         funcionarioRepository.save(f);
+        atividadeService.registrar("CNH", "Validou a CNH de " + f.getNome() + " e liberou os cartões");
 
         List<CartaoRfid> bloqueados = cartaoRfidRepository.findByFuncionarioIdAndBloqueadoPorCnhTrue(f.getId());
         for (CartaoRfid cartao : bloqueados) {

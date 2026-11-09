@@ -6,7 +6,7 @@ import logoDark from '../assets/logocompleta-dark.svg';
 import {
     Users, Car, LayoutDashboard, CreditCard,
     FileText, Settings, Radio, LogOut, Cpu, Menu as MenuIcon, ChevronRight, User,
-    ShieldAlert
+    ShieldAlert, X
 } from "lucide-react";
 import { cn } from '../lib/utils';
 import { Button } from './ui/button';
@@ -23,7 +23,9 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 
-function Menu({ isOpen, toggleMenu }) {
+// No celular (mobile) o menu vira uma gaveta: fica escondido e abre por cima da tela.
+function Menu({ isOpen: abertoNoDesktop, toggleMenu, mobile = false, aberto = false, fechar }) {
+    const isOpen = mobile || abertoNoDesktop;
     const [veiculosOpen, setVeiculosOpen] = useState(false);
     const [configOpen, setConfigOpen] = useState(false);
     const [confirmarSaida, setConfirmarSaida] = useState(false);
@@ -70,6 +72,7 @@ function Menu({ isOpen, toggleMenu }) {
         { to: "/configuracoes/permissoes", label: "Permissões", permissao: "configuracoes.permissoes" },
         { to: "/configuracoes/setores", label: "Setores", permissao: "configuracoes.setores" },
         { to: "/configuracoes/usuario", label: "Usuários", permissao: "configuracoes.usuarios" },
+        { to: "/configuracoes/atividades", label: "Atividades", permissao: "configuracoes.atividades" },
     ].filter(item => temPermissao(item.permissao));
 
     const mostrarVeiculos = veiculosSubmenu.length > 0;
@@ -78,9 +81,13 @@ function Menu({ isOpen, toggleMenu }) {
     return (
         <nav
             className={cn(
-                "fixed top-0 left-0 h-screen flex flex-col z-50 bg-sidebar border-r border-sidebar-border shadow-xl transition-all duration-300 overflow-x-hidden overflow-y-auto",
-                isOpen ? "w-60 min-w-60" : "w-14 min-w-14"
+                // overflow-hidden aqui e overflow-y-auto só na lista: a logo fica parada no topo ao rolar.
+                "fixed top-0 left-0 h-dvh flex flex-col z-50 bg-sidebar border-r border-sidebar-border shadow-xl transition-all duration-300 overflow-hidden",
+                isOpen ? "w-60 min-w-60" : "w-14 min-w-14",
+                mobile && !aberto && "-translate-x-full"
             )}
+            // No celular, escolher uma tela fecha a gaveta.
+            onClick={(e) => { if (mobile && e.target.closest("a")) fechar?.(); }}
         >
             {/* Topo: logo + toggle */}
             <div className={cn(
@@ -93,13 +100,19 @@ function Menu({ isOpen, toggleMenu }) {
                     : <img src={logoLight} alt="Logo" className="w-[130px] shrink-0" />
 
                 )}
-                <Button variant="ghost" size="icon" onClick={toggleMenu} className="text-muted-foreground hover:text-foreground">
-                    <MenuIcon className="h-5 w-5" />
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={mobile ? fechar : toggleMenu}
+                    className="text-muted-foreground hover:text-foreground"
+                    aria-label={mobile ? "Fechar menu" : isOpen ? "Recolher menu" : "Expandir menu"}
+                >
+                    {mobile ? <X className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
                 </Button>
             </div>
 
             {/* Itens do menu */}
-            <ul className="flex-1 p-1.5 m-0 list-none space-y-0.5">
+            <ul className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-1.5 m-0 list-none space-y-0.5">
                 {menuItems.map(item => (
                     <li key={item.to}>
                         <Link

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useSyncExternalStore } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { Menu as MenuIcon } from 'lucide-react';
+import { Button } from './components/ui/button';
 
 import Menu from './components/Menu';
 import Notificacoes from './components/Notificacoes';
@@ -23,6 +25,7 @@ import Login              from './pages/login';
 import Setores            from './pages/configuracoes/Setores';
 import Usuario from './pages/configuracoes/Usuario';
 import Perfil from './pages/Perfil';
+import Atividades from './pages/configuracoes/Atividades';
 import { useAuth } from './context/AuthContext';
 
 const W_OPEN   = 240;
@@ -48,29 +51,63 @@ function RotaProtegida({ permissao, children }) {
     return children;
 }
 
+// Celular/tablet em pé: abaixo de 768px o menu vira gaveta.
+const CONSULTA_MOBILE = "(max-width: 767px)";
+
+function useEhMobile() {
+    return useSyncExternalStore(
+        (avisar) => {
+            const mq = window.matchMedia(CONSULTA_MOBILE);
+            mq.addEventListener("change", avisar);
+            return () => mq.removeEventListener("change", avisar);
+        },
+        () => window.matchMedia(CONSULTA_MOBILE).matches
+    );
+}
+
 function LayoutPrincipal() {
     const [isMenuOpen, setIsMenuOpen] = useState(true);
+    const [menuMobileAberto, setMenuMobileAberto] = useState(false);
     const toggleMenu = () => setIsMenuOpen(prev => !prev);
+    const ehMobile = useEhMobile();
     const { autenticado } = useAuth();
 
     if (!autenticado) return <Navigate to="/login" replace />;
 
+    const margemEsquerda = ehMobile ? 0 : (isMenuOpen ? W_OPEN : W_CLOSED);
+
     return (
-        <div className="flex h-screen bg-background overflow-hidden">
-            <Menu isOpen={isMenuOpen} toggleMenu={toggleMenu} />
+        <div className="flex h-dvh bg-background overflow-hidden">
+            <Menu
+                isOpen={isMenuOpen}
+                toggleMenu={toggleMenu}
+                mobile={ehMobile}
+                aberto={menuMobileAberto}
+                fechar={() => setMenuMobileAberto(false)}
+            />
+
+            {/* Fundo escuro atrás da gaveta: tocar fora fecha o menu. */}
+            {ehMobile && menuMobileAberto && (
+                <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setMenuMobileAberto(false)} aria-hidden="true" />
+            )}
 
             <div
-                className="flex-1 flex flex-col overflow-hidden transition-[margin-left] duration-300"
-                style={{ marginLeft: isMenuOpen ? W_OPEN : W_CLOSED }}
+                className="flex-1 flex flex-col min-w-0 overflow-hidden transition-[margin-left] duration-300"
+                style={{ marginLeft: margemEsquerda }}
             >
-                <header className="h-[60px] bg-card flex items-center justify-end px-5 border-b border-border z-40">
+                <header className="h-[60px] shrink-0 bg-card flex items-center justify-between gap-2 px-3 sm:px-5 border-b border-border z-30">
+                    {ehMobile ? (
+                        <Button variant="ghost" size="icon" onClick={() => setMenuMobileAberto(true)} aria-label="Abrir menu">
+                            <MenuIcon className="h-5 w-5" />
+                        </Button>
+                    ) : <span />}
                     <div className="flex items-center gap-1">
                         <BotaoTema />
                         <Notificacoes />
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">
                     <Routes>
                         <Route path="/dashboard"                element={<RotaProtegida permissao="dashboard.visualizar"><Dashboard /></RotaProtegida>} />
                         <Route path="/Monitoramento"            element={<RotaProtegida permissao="monitoramento.visualizar"><MonitoramentoTempoReal /></RotaProtegida>} />
@@ -86,6 +123,7 @@ function LayoutPrincipal() {
                         <Route path="/configuracoes/permissoes" element={<RotaProtegida permissao="configuracoes.permissoes"><Permissoes /></RotaProtegida>} />
                         <Route path="/configuracoes/setores"    element={<RotaProtegida permissao="configuracoes.setores"><Setores /></RotaProtegida>} />
                         <Route path="/configuracoes/usuario"    element={<RotaProtegida permissao="configuracoes.usuarios"><Usuario /></RotaProtegida>} />
+                        <Route path="/configuracoes/atividades" element={<RotaProtegida permissao="configuracoes.atividades"><Atividades /></RotaProtegida>} />
                         <Route path="/relatorios"               element={<RotaProtegida permissao="relatorios.visualizar"><Relatorios /></RotaProtegida>} />
                         <Route path="/perfil"                   element={<RotaProtegida><Perfil /></RotaProtegida>} />
                         <Route path="/"                         element={<Navigate to="/dashboard" />} />

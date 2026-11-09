@@ -334,7 +334,7 @@ function Relatorios() {
 
     return (
         <div className="w-full space-y-6">
-            <div className="flex items-center justify-between border-b border-border pb-4 gap-4">
+            <div className="flex flex-wrap items-center justify-between border-b border-border pb-4 gap-4">
                 <h1 className="text-xl font-semibold text-foreground">Relatórios</h1>
                 {podeExportar && (
                     <div className="flex gap-2">
@@ -459,7 +459,7 @@ function Relatorios() {
                 {/* ===================== DETALHADO ===================== */}
                 <TabsContent value="detalhado">
                     <Card>
-                        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+                        <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 space-y-0">
                             <div className="space-y-1.5">
                                 <CardTitle>Todos os pontos registrados</CardTitle>
                                 <CardDescription>
