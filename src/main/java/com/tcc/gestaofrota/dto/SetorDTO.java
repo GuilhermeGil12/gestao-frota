@@ -8,6 +8,8 @@ public record SetorDTO(
         String nome,
         String descricao,
         boolean ativo,
+        Long liderId,
+        String liderNome,
         long quantidadeFuncionarios,
         long quantidadeUsuarios,
         List<String> permissoes

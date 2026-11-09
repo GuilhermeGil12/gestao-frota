@@ -40,6 +40,21 @@ public class EmailService {
         }
     }
 
+    // E-mail genérico: versão texto (pra quem não abre HTML) + versão HTML.
+    public void enviarHtml(String destinatario, String assunto, String texto, String html) {
+        try {
+            MimeMessage mensagem = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mensagem, true, StandardCharsets.UTF_8.name());
+            helper.setFrom(remetente, "FrotaSystem");
+            helper.setTo(destinatario);
+            helper.setSubject(assunto);
+            helper.setText(texto, html);
+            mailSender.send(mensagem);
+        } catch (Exception e) {
+            throw new RuntimeException("Não foi possível enviar o e-mail para " + destinatario + ": " + e.getMessage(), e);
+        }
+    }
+
     private String montarTextoSimples(String nome, String codigo, int validadeMinutos) {
         return "Olá, " + nome + ".\n\n"
                 + "Seu código para redefinir a senha é: " + codigo + "\n\n"

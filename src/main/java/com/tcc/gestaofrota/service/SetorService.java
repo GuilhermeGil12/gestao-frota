@@ -2,6 +2,7 @@ package com.tcc.gestaofrota.service;
 
 
 import com.tcc.gestaofrota.dto.SetorDTO;
+import com.tcc.gestaofrota.model.Funcionario;
 import com.tcc.gestaofrota.model.Permissao;
 import com.tcc.gestaofrota.model.Setor;
 import com.tcc.gestaofrota.repository.FuncionarioRepository;
@@ -61,6 +62,8 @@ public class SetorService {
                 setor.getNome(),
                 setor.getDescricao(),
                 setor.isAtivo(),
+                setor.getLider() != null ? setor.getLider().getId() : null,
+                setor.getLider() != null ? setor.getLider().getNome() : null,
                 funcionarioRepository.countBySetorId(setor.getId()),
                 usuarioRepository.findByFuncionario_Setor_Id(setor.getId()).size(),
                 setor.getPermissoes().stream().map(Permissao::getNomePermissao).sorted().collect(Collectors.toList())
@@ -84,6 +87,7 @@ public class SetorService {
         }
 
         setor.setId(null);
+        setor.setLider(buscarLider(setor.getLiderIdInformado()));
         setor.setAtivo(true);
         setor.setCriadoEm(LocalDateTime.now());
         Setor salvo = setorRepository.save(setor);
@@ -105,10 +109,21 @@ public class SetorService {
 
         setor.setNome(nome);
         setor.setDescricao(dados.getDescricao());
+        setor.setLider(buscarLider(dados.getLiderIdInformado()));
         setor.setAtualizadoEm(LocalDateTime.now());
         Setor atualizado = setorRepository.save(setor);
         atividadeService.registrar("SETOR", "Editou o setor " + atualizado.getNome());
         return atualizado;
+    }
+
+    private Funcionario buscarLider(Long idLider) {
+        if (idLider == null) return null;
+        Funcionario lider = funcionarioRepository.findById(idLider)
+                .orElseThrow(() -> new RuntimeException("Líder não encontrado!"));
+        if (!Boolean.TRUE.equals(lider.getAtivo())) {
+            throw new RuntimeException("O líder escolhido (" + lider.getNome() + ") está inativo.");
+        }
+        return lider;
     }
 
     public Setor alternarAtivo(Long id) {

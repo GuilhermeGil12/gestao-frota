@@ -50,7 +50,7 @@ function Funcionarios() {
     const initialState = {
         id: null, nome: "", cpf: "", rg: "", numeroTelefone: "", email: "",
         matricula: "", cargo: "", setor: "", nivelMotorista: "",
-        numCNH: "", categoriaCNH: "", validadeCNH: "", ativo: true,
+        numCNH: "", categoriaCNH: "", validadeCNH: "", ativo: true, liderId: null,
         endereco: "", numero: "", bairro: "", cidade: "", cep: ""
     };
 
@@ -81,6 +81,14 @@ function Funcionarios() {
     useEffect(() => { carregarSetores(); }, []);
 
     const erroMsg = (e, fallback) => e?.response?.data?.message || fallback;
+
+    // Nome do líder do setor (quem lidera o funcionário que não tem líder próprio).
+    // idFuncionario: o líder do setor não é líder dele mesmo.
+    const liderDoSetor = (idSetor, idFuncionario) => {
+        const s = setor.find(x => x.id === idSetor);
+        if (!s?.liderNome || s.liderId === idFuncionario) return null;
+        return s.liderNome;
+    };
 
     // "2026-11-08" < hoje? (compara só a data, sem fuso)
     const cnhVencida = (f) => {
@@ -339,6 +347,26 @@ function Funcionarios() {
                                    
                                 </select>
                             </div>
+                            <div className="space-y-2 col-span-2 md:col-span-4">
+                                <Label htmlFor="func-lider">Líder</Label>
+                                <select
+                                    id="func-lider"
+                                    value={formData.liderId ?? ""}
+                                    onChange={e => setFormData({ ...formData, liderId: e.target.value ? Number(e.target.value) : null })}
+                                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                >
+                                    <option value="">
+                                        {liderDoSetor(formData.setor?.id) ? `Líder do setor (${liderDoSetor(formData.setor?.id)})` : "Sem líder"}
+                                    </option>
+                                    {funcionarios
+                                        .filter(f => f.ativo && f.id !== formData.id)
+                                        .map(f => <option key={f.id} value={f.id}>{f.nome}{f.cargo ? ` — ${f.cargo}` : ""}</option>)}
+                                </select>
+                                <p className="text-xs text-muted-foreground">
+                                    O líder recebe toda segunda, por e-mail, o relatório de condução dos seus liderados.
+                                    Sem líder próprio, vale o líder do setor.
+                                </p>
+                            </div>
                             <div className="space-y-2">
                                 <Label>Nível Motorista</Label>
                                 <select value={formData.nivelMotorista} onChange={e => setFormData({ ...formData, nivelMotorista: e.target.value })} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
@@ -425,7 +453,14 @@ function Funcionarios() {
                                 </TableCell>
                                 <TableCell>{f.cpf}</TableCell>
                                 <TableCell>{f.rg}</TableCell>
-                                <TableCell className="">{f.setor?.nome}</TableCell>
+                                <TableCell>
+                                    <div className="flex flex-col">
+                                        <span>{f.setor?.nome}</span>
+                                        {(f.liderNome || liderDoSetor(f.setor?.id, f.id)) && (
+                                            <span className="text-xs text-muted-foreground">Líder: {f.liderNome || liderDoSetor(f.setor?.id, f.id)}</span>
+                                        )}
+                                    </div>
+                                </TableCell>
                                 <TableCell>Nível {f.nivelMotorista}</TableCell>
                                 <TableCell>
                                     <div className="flex flex-col items-start gap-1">

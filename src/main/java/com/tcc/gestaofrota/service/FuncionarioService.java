@@ -86,6 +86,7 @@ public class FuncionarioService {
         }
 
         //caso não existir, ele retorna o valor e salva
+        aplicarLider(funcionario, funcionario);
         Funcionario salvo = funcionarioRepository.save(funcionario);
         atividadeService.registrar("FUNCIONARIO", "Cadastrou o funcionário " + salvo.getNome());
         criarOuAtualizarCercaCasa(salvo);
@@ -143,10 +144,39 @@ public class FuncionarioService {
         funcionarioAntigo.setCidade(funcionarioNovo.getCidade());
         funcionarioAntigo.setCep(funcionarioNovo.getCep());
 
+        aplicarLider(funcionarioAntigo, funcionarioNovo);
         Funcionario atualizado = funcionarioRepository.save(funcionarioAntigo);
         atividadeService.registrar("FUNCIONARIO", "Editou o funcionário " + atualizado.getNome());
         criarOuAtualizarCercaCasa(atualizado);
         return atualizado;
+    }
+
+    // Líder direto vindo do formulário (liderId). null = sem líder próprio (vale o do setor).
+    private void aplicarLider(Funcionario destino, Funcionario dados) {
+        if (!dados.isLiderInformado()) return;
+        Long liderId = dados.getLiderIdInformado();
+        if (liderId == null) {
+            destino.setLider(null);
+            return;
+        }
+        if (liderId.equals(destino.getId())) {
+            throw new RuntimeException("O funcionário não pode ser líder dele mesmo.");
+        }
+        Funcionario lider = buscarPorId(liderId);
+        if (!Boolean.TRUE.equals(lider.getAtivo())) {
+            throw new RuntimeException("O líder escolhido (" + lider.getNome() + ") está inativo.");
+        }
+        // Não deixa fechar um ciclo (A lidera B e B lidera A): subindo a partir do novo líder,
+        // não pode chegar no próprio funcionário.
+        Funcionario acima = lider;
+        for (int passos = 0; acima != null && passos < 100; passos++) {
+            if (destino.getId() != null && destino.getId().equals(acima.getId())) {
+                throw new RuntimeException(lider.getNome() + " já está abaixo de " + destino.getNome()
+                        + " na liderança. Escolha outro líder.");
+            }
+            acima = acima.getLider();
+        }
+        destino.setLider(lider);
     }
 
     public void inativar(Long id){

@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 public class PerfilService {
 
     // Tipos de notificação que o usuário pode ligar/desligar.
-    public static final List<String> TIPOS_NOTIFICACAO = List.of("CNH_VENCENDO", "CNH_VENCIDA", "COMANDO_EXECUTADO", "EXCESSO_VELOCIDADE");
+    public static final List<String> TIPOS_NOTIFICACAO = List.of("CNH_VENCENDO", "CNH_VENCIDA", "COMANDO_EXECUTADO", "EXCESSO_VELOCIDADE", "RELATORIO_SEMANAL");
 
     // A foto chega já reduzida pelo navegador; o limite só impede abuso.
     private static final int TAMANHO_MAXIMO_FOTO = 400_000;

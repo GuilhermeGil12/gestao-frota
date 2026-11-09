@@ -7,7 +7,7 @@ import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
 import { Switch } from "../../components/ui/switch";
-import { Save, Download, Loader2 } from "lucide-react";
+import { Save, Download, Loader2, Mail } from "lucide-react";
 import api from "../../services/api";
 import PreferenciasNotificacao from "../../components/PreferenciasNotificacao";
 
@@ -45,6 +45,26 @@ function Configuracoes() {
     const [carregando, setCarregando] = useState(true);
     const [salvando, setSalvando] = useState(false);
     const [exportando, setExportando] = useState(false);
+    const [enviandoRelatorio, setEnviandoRelatorio] = useState(false);
+    const [resultadoRelatorio, setResultadoRelatorio] = useState(null);
+
+    // Mesmo envio da segunda às 7h, feito agora (semana passada). Serve pra testar.
+    const enviarRelatorioAgora = async () => {
+        setEnviandoRelatorio(true);
+        try {
+            const res = await api.post("/relatorios-lideres/enviar");
+            setResultadoRelatorio(res.data);
+            const lista = res.data.resultados ?? [];
+            const enviados = lista.filter((r) => r.enviado).length;
+            if (lista.length === 0) toast.warning("Nenhum líder cadastrado. Defina líderes em Funcionários ou Setores.");
+            else if (enviados === lista.length) toast.success(`Relatório enviado para ${enviados} líder(es).`);
+            else toast.warning(`Enviado para ${enviados} de ${lista.length} líder(es). Veja os detalhes no card.`);
+        } catch (e) {
+            toast.error(erroMsg(e, "Erro ao enviar os relatórios."));
+        } finally {
+            setEnviandoRelatorio(false);
+        }
+    };
 
     useEffect(() => {
         api.get("/configuracoes")
@@ -222,6 +242,40 @@ function Configuracoes() {
                     </CardHeader>
                     <CardContent>
                         <PreferenciasNotificacao />
+                    </CardContent>
+                </Card>
+
+                {/* Relatório semanal dos líderes */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Relatório semanal dos líderes</CardTitle>
+                        <CardDescription>
+                            Toda segunda às 7h, cada líder recebe por e-mail a condução da semana anterior dos seus liderados,
+                            e um aviso no Telegram (se conectou).
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <Button variant="outline" className="w-full" onClick={enviarRelatorioAgora} disabled={enviandoRelatorio}>
+                            {enviandoRelatorio ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+                            Enviar agora (semana passada)
+                        </Button>
+                        {resultadoRelatorio && (
+                            <ul className="space-y-2 text-sm">
+                                {(resultadoRelatorio.resultados ?? []).map((r) => (
+                                    <li key={r.lider} className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2">
+                                        <span>
+                                            <span className="font-medium">{r.lider}</span>
+                                            <span className="text-muted-foreground"> · {r.liderados} liderado(s)</span>
+                                        </span>
+                                        {r.enviado ? (
+                                            <Badge variant="secondary">{r.telegram ? "E-mail + Telegram" : "E-mail"}</Badge>
+                                        ) : (
+                                            <span className="text-xs text-destructive">{r.erro || "Não enviado"}</span>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </CardContent>
                 </Card>
 

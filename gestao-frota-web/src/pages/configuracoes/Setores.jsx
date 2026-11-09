@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import Paginacao from "../../components/Paginacao";
 import { usePaginacao } from "../../utils/usePaginacao";
 
-const FORM_VAZIO = { id: null, nome: "", descricao: "" };
+const FORM_VAZIO = { id: null, nome: "", descricao: "", liderId: "" };
 
 function erroMsg(e, padrao) {
     return e?.response?.data?.message || padrao;
@@ -27,6 +27,7 @@ function Setores() {
     const [modalAberto, setModalAberto] = useState(false);
     const [formData, setFormData] = useState(FORM_VAZIO);
     const [salvando, setSalvando] = useState(false);
+    const [funcionarios, setFuncionarios] = useState([]);
 
     const carregarSetores = async () => {
         try {
@@ -37,10 +38,18 @@ function Setores() {
         }
     };
 
-    useEffect(() => { carregarSetores(); }, []);
+    useEffect(() => {
+        carregarSetores();
+        // Candidatos a líder do setor.
+        api.get('/funcionarios')
+            .then((res) => setFuncionarios(Array.isArray(res.data) ? res.data.filter((f) => f.ativo) : []))
+            .catch(() => {});
+    }, []);
 
     const abrirModal = (setor = null) => {
-        setFormData(setor ? { id: setor.id, nome: setor.nome, descricao: setor.descricao ?? "" } : FORM_VAZIO);
+        setFormData(setor
+            ? { id: setor.id, nome: setor.nome, descricao: setor.descricao ?? "", liderId: setor.liderId ? String(setor.liderId) : "" }
+            : FORM_VAZIO);
         setModalAberto(true);
     };
 
@@ -52,7 +61,11 @@ function Setores() {
         }
         setSalvando(true);
         try {
-            const dados = { nome: formData.nome.trim(), descricao: formData.descricao.trim() || null };
+            const dados = {
+                nome: formData.nome.trim(),
+                descricao: formData.descricao.trim() || null,
+                liderId: formData.liderId ? Number(formData.liderId) : null,
+            };
             if (formData.id) {
                 await api.put(`/setores/${formData.id}`, dados);
                 toast.success("Setor atualizado!");
@@ -123,6 +136,23 @@ function Setores() {
                             <Textarea id="setor-descricao" value={formData.descricao} rows={3} placeholder="Opcional"
                                       onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} />
                         </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="setor-lider">Líder do setor</Label>
+                            <select
+                                id="setor-lider"
+                                value={formData.liderId}
+                                onChange={(e) => setFormData({ ...formData, liderId: e.target.value })}
+                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            >
+                                <option value="">Sem líder</option>
+                                {funcionarios.map((f) => (
+                                    <option key={f.id} value={f.id}>{f.nome}{f.cargo ? ` — ${f.cargo}` : ""}</option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-muted-foreground">
+                                Recebe o relatório semanal de quem é do setor e não tem um líder próprio.
+                            </p>
+                        </div>
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setModalAberto(false)}>Cancelar</Button>
                             <Button type="submit" disabled={salvando}>{formData.id ? "Salvar" : "Cadastrar"}</Button>
@@ -136,6 +166,7 @@ function Setores() {
                     <TableRow>
                         <TableHead>Nome</TableHead>
                         <TableHead>Descrição</TableHead>
+                        <TableHead>Líder</TableHead>
                         <TableHead>Funcionários</TableHead>
                         <TableHead>Usuários</TableHead>
                         <TableHead>Status</TableHead>
@@ -145,7 +176,7 @@ function Setores() {
                 <TableBody>
                     {filtrados.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                                 {busca ? "Nenhum setor encontrado para a busca." : "Nenhum setor cadastrado."}
                             </TableCell>
                         </TableRow>
@@ -154,6 +185,7 @@ function Setores() {
                             <TableRow key={s.id}>
                                 <TableCell className="font-medium">{s.nome}</TableCell>
                                 <TableCell className="text-muted-foreground max-w-xs truncate">{s.descricao || "—"}</TableCell>
+                                <TableCell>{s.liderNome || <span className="text-muted-foreground">—</span>}</TableCell>
                                 <TableCell className="tabular-nums">{s.quantidadeFuncionarios}</TableCell>
                                 <TableCell className="tabular-nums">{s.quantidadeUsuarios}</TableCell>
                                 <TableCell>

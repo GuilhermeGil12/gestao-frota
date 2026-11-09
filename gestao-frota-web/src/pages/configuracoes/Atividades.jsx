@@ -28,6 +28,7 @@ const CATEGORIAS = {
     USUARIO: "Usuários",
     SETOR: "Setores",
     CONFIGURACAO: "Configurações",
+    RELATORIO: "Relatórios",
 };
 
 function hojeMenos(dias) {

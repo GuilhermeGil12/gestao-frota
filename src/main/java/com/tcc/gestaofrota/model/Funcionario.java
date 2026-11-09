@@ -1,6 +1,8 @@
 package com.tcc.gestaofrota.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -77,6 +79,19 @@ public class Funcionario {
     @ManyToOne
     @JoinColumn(name = "id_setor", referencedColumnName = "id_setor")
     private Setor setor; // Alterado de String para a Classe Permissao
+
+    // Líder direto. Sem líder próprio, vale o líder do setor (ver liderEfetivo()).
+    // No JSON vai só liderId/liderNome, pra não carregar a cadeia inteira de líderes.
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_lider", referencedColumnName = "id_funcionario")
+    private Funcionario lider;
+
+    // liderId que veio do formulário. "informado" diferencia "não mandou" de "tirou o líder".
+    @Transient
+    private Long liderIdInformado;
+    @Transient
+    private boolean liderInformado;
 
     @Column(name = "longitude")
     private Double longitude;
@@ -320,5 +335,48 @@ public class Funcionario {
 
     public void setCnhPendente(Boolean cnhPendente) {
         this.cnhPendente = cnhPendente;
+    }
+
+    @JsonIgnore
+    public Funcionario getLider() {
+        return lider;
+    }
+
+    public void setLider(Funcionario lider) {
+        this.lider = lider;
+    }
+
+    @JsonProperty("liderId")
+    public Long getLiderId() {
+        return lider != null ? lider.getId() : null;
+    }
+
+    @JsonProperty("liderId")
+    public void setLiderId(Long liderId) {
+        this.liderIdInformado = liderId;
+        this.liderInformado = true;
+    }
+
+    @JsonProperty("liderNome")
+    public String getLiderNome() {
+        return lider != null ? lider.getNome() : null;
+    }
+
+    @JsonIgnore
+    public Long getLiderIdInformado() {
+        return liderIdInformado;
+    }
+
+    @JsonIgnore
+    public boolean isLiderInformado() {
+        return liderInformado;
+    }
+
+    /** Quem recebe o relatório deste funcionário: o líder direto ou, sem ele, o líder do setor. */
+    @JsonIgnore
+    public Funcionario liderEfetivo() {
+        if (lider != null) return lider;
+        if (setor != null && setor.getLider() != null && !setor.getLider().getId().equals(id)) return setor.getLider();
+        return null;
     }
 }
