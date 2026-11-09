@@ -166,7 +166,7 @@ public class LocalizacaoService {
     }
 
     // Um aviso por excesso (quando passa do limite), não um por ponto. Pontos antigos
-    // (reenviados do SD depois de horas sem sinal) não avisam: já não dá pra fazer nada.
+    // (mais de 30 min, reenviados do SD depois de um tempo sem sinal) não avisam.
     private void avisarExcessos(Veiculo veiculo, List<Localizacao> pontos) {
         if (veiculo == null || pontos.isEmpty()) return;
         double limite = veiculo.getVelocidadeMaxima() != null && veiculo.getVelocidadeMaxima() > 0
@@ -174,7 +174,7 @@ public class LocalizacaoService {
         boolean estavaAcima = buscarUltimaLocalizacao(veiculo.getId())
                 .map(l -> l.getVelocidade() != null && l.getVelocidade() > limite)
                 .orElse(false);
-        LocalDateTime recente = LocalDateTime.now().minusMinutes(10);
+        LocalDateTime recente = LocalDateTime.now().minusMinutes(30);
 
         for (Localizacao p : pontos) {
             boolean acima = p.getVelocidade() != null && p.getVelocidade() > limite;
