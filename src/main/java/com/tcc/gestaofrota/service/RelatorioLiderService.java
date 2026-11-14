@@ -193,9 +193,13 @@ public class RelatorioLiderService {
                 c.veiculos.add(p.getVeiculo().getPlaca());
                 if (p.getDataHora() != null) c.dias.add(p.getDataHora().toLocalDate());
 
-                boolean acima = v > limite;
-                if (acima && !estavaAcima) c.excessos++;
-                estavaAcima = acima;
+                // Excesso começa acima do limite e só termina 5 km/h abaixo (oscilar não conta de novo).
+                if (!estavaAcima && v > limite) {
+                    c.excessos++;
+                    estavaAcima = true;
+                } else if (estavaAcima && v < limite - 5) {
+                    estavaAcima = false;
+                }
 
                 if ("FREADA".equals(p.getEvento())) c.freadas++;
                 else if ("ACELERACAO".equals(p.getEvento())) c.aceleracoes++;

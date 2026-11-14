@@ -31,6 +31,9 @@ public class LocalizacaoService {
 
     // Mesmos valores da controladora e da tela de Rotas.
     private static final double LIMITE_VELOCIDADE = 110;  // padrão, quando o veículo não tem limite cadastrado
+    // Histerese do excesso: entra acima do limite e só termina 5 km/h abaixo dele.
+    // Sem isso, andar a 109/111 km/h viraria vários excessos (e vários avisos).
+    private static final double MARGEM_FIM_EXCESSO = 5;
     private static final double VELOCIDADE_PARADO = 3;    // abaixo disso o GPS oscila mesmo parado
     private static final long INTERVALO_MAXIMO_SEGUNDOS = 300; // mais que isso entre pontos = sem sinal
 
@@ -165,29 +168,81 @@ public class LocalizacaoService {
         localizacaoRepository.saveAll(localizacoesParaSalvar);
     }
 
-    // Um aviso por excesso (quando passa do limite), não um por ponto. Pontos antigos
-    // (mais de 30 min, reenviados do SD depois de um tempo sem sinal) não avisam.
+    /** Excesso em andamento de um veículo (guardado em memória entre um lote e outro). */
+    private static class Episodio {
+        LocalDateTime inicio;
+        double maxima;
+        Double latMaxima, lngMaxima;
+        String motorista;
+    }
+
+    private final Map<Long, Episodio> excessosEmAndamento = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * Avisos de excesso no Telegram, um por episódio:
+     *  - quando passa do limite: "🚨 Excesso de velocidade" (uma vez);
+     *  - quando volta a ficar 5 km/h abaixo do limite: "✅ Fim do excesso" com a velocidade MÁXIMA
+     *    atingida, a duração e o lugar da máxima.
+     * Pontos com mais de 30 min (reenviados do SD depois de um tempo sem sinal) não avisam.
+     */
     private void avisarExcessos(Veiculo veiculo, List<Localizacao> pontos) {
         if (veiculo == null || pontos.isEmpty()) return;
         double limite = veiculo.getVelocidadeMaxima() != null && veiculo.getVelocidadeMaxima() > 0
                 ? veiculo.getVelocidadeMaxima() : LIMITE_VELOCIDADE;
-        boolean estavaAcima = buscarUltimaLocalizacao(veiculo.getId())
-                .map(l -> l.getVelocidade() != null && l.getVelocidade() > limite)
-                .orElse(false);
         LocalDateTime recente = LocalDateTime.now().minusMinutes(30);
+        String placa = TelegramService.esc(veiculo.getPlaca());
 
         for (Localizacao p : pontos) {
-            boolean acima = p.getVelocidade() != null && p.getVelocidade() > limite;
-            if (acima && !estavaAcima && p.getDataHora() != null && p.getDataHora().isAfter(recente)) {
-                String motorista = p.getMotorista() != null ? p.getMotorista().split(" \\| Cartão: ")[0] : "Não identificado";
+            if (p.getVelocidade() == null || p.getDataHora() == null || !p.getDataHora().isAfter(recente)) continue;
+            double v = p.getVelocidade();
+            Episodio ep = excessosEmAndamento.get(veiculo.getId());
+
+            if (ep == null && v > limite) {
+                ep = new Episodio();
+                ep.inicio = p.getDataHora();
+                ep.maxima = v;
+                ep.latMaxima = p.getLatitude();
+                ep.lngMaxima = p.getLongitude();
+                ep.motorista = nomeDoMotorista(p.getMotorista());
+                excessosEmAndamento.put(veiculo.getId(), ep);
                 telegramService.avisar("EXCESSO_VELOCIDADE", "monitoramento.visualizar",
-                        "🚨 <b>Excesso de velocidade</b>\n<b>" + TelegramService.esc(veiculo.getPlaca()) + "</b> a <b>"
-                        + Math.round(p.getVelocidade()) + " km/h</b> (limite " + Math.round(limite) + " km/h)\n"
-                        + "Motorista: " + TelegramService.esc(motorista) + "\n"
-                        + "<a href=\"https://www.google.com/maps?q=" + p.getLatitude() + "," + p.getLongitude() + "\">📍 Ver no mapa</a>");
+                        "🚨 <b>Excesso de velocidade</b>\n<b>" + placa + "</b> a <b>" + kmh(v) + "</b> (limite " + kmh(limite) + ")\n"
+                        + "Motorista: " + TelegramService.esc(motoristaOuPadrao(ep.motorista)) + "\n"
+                        + linkMapa(p.getLatitude(), p.getLongitude()));
+            } else if (ep != null) {
+                if (v > ep.maxima) {
+                    ep.maxima = v;
+                    ep.latMaxima = p.getLatitude();
+                    ep.lngMaxima = p.getLongitude();
+                }
+                if (v < limite - MARGEM_FIM_EXCESSO) {
+                    excessosEmAndamento.remove(veiculo.getId());
+                    long segundos = java.time.Duration.between(ep.inicio, p.getDataHora()).getSeconds();
+                    telegramService.avisar("EXCESSO_VELOCIDADE", "monitoramento.visualizar",
+                            "✅ <b>Fim do excesso</b>\n<b>" + placa + "</b> chegou a <b>" + kmh(ep.maxima) + "</b> (limite " + kmh(limite) + ")\n"
+                            + "Duração: " + duracao(segundos) + "\n"
+                            + "Motorista: " + TelegramService.esc(motoristaOuPadrao(ep.motorista)) + "\n"
+                            + linkMapa(ep.latMaxima, ep.lngMaxima).replace("Ver no mapa", "Onde atingiu a máxima"));
+                }
             }
-            estavaAcima = acima;
         }
+    }
+
+    private static String kmh(double v) {
+        return Math.round(v) + " km/h";
+    }
+
+    private static String duracao(long segundos) {
+        if (segundos < 60) return Math.max(segundos, 0) + " s";
+        return (segundos / 60) + " min " + (segundos % 60) + " s";
+    }
+
+    private static String motoristaOuPadrao(String nome) {
+        return nome != null ? nome : "Não identificado";
+    }
+
+    private static String linkMapa(Double lat, Double lng) {
+        return "<a href=\"https://www.google.com/maps?q=" + lat + "," + lng + "\">📍 Ver no mapa</a>";
     }
 
     public Optional<Localizacao> buscarUltimaLocalizacao(Long veiculoId) {
@@ -255,10 +310,13 @@ public class LocalizacaoService {
 
                 velMaxima = Math.max(velMaxima, velocidade);
 
-                // Cada vez que passa do limite conta um excesso (e não cada ponto acima dele).
-                boolean acimaDoLimite = velocidade > limite;
-                if (acimaDoLimite && !emExcesso) excessos++;
-                emExcesso = acimaDoLimite;
+                // Um excesso começa acima do limite e só termina 5 km/h abaixo (oscilar não conta de novo).
+                if (!emExcesso && velocidade > limite) {
+                    excessos++;
+                    emExcesso = true;
+                } else if (emExcesso && velocidade < limite - MARGEM_FIM_EXCESSO) {
+                    emExcesso = false;
+                }
 
                 // Eventos de condução marcados pela controladora (pontos antigos não têm evento).
                 if ("FREADA".equals(atual.getEvento())) freadas++;

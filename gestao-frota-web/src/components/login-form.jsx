@@ -9,7 +9,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react"
 import { Link } from "react-router-dom"
-import MapaAnimado from "@/components/MapaAnimado"
 import { useState } from "react"
 import { useTheme } from "../context/ThemeContext"
 import logoLight from "../assets/logocompleta-light.svg"
@@ -25,7 +24,7 @@ export function LoginForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className={cn("entrada overflow-hidden p-0", erro && "balancar")} onAnimationEnd={(e) => { if (e.animationName === "balancar") aoFimDoErro?.() }}>
-        <CardContent className="grid p-0 md:grid-cols-2">
+        <CardContent className="p-0">
           <form className="p-6 md:p-10" onSubmit={handleLogin}>
             <Link
               to="/"
@@ -104,18 +103,6 @@ export function LoginForm({
               </p>
             </FieldGroup>
           </form>
-
-          <div className="relative hidden flex-col justify-center gap-6 bg-sidebar p-8 md:flex">
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold text-sidebar-foreground">
-                Sua frota sob controle
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Quem está dirigindo, onde cada carro está e o que aconteceu na viagem.
-              </p>
-            </div>
-            <MapaAnimado compacto />
-          </div>
         </CardContent>
       </Card>
     </div>
