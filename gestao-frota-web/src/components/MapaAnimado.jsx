@@ -15,23 +15,16 @@ const CICLO_MS = 8200;
 // Rota desenhada sobre uma malha de ruas. O mesmo traço guia o carrinho (offset-path no CSS).
 const ROTA = "M60 300 L60 230 Q60 210 80 210 L210 210 Q230 210 230 190 L230 110 Q230 90 250 90 L420 90";
 
-function usaMovimentoReduzido() {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
 export default function MapaAnimado({ compacto = false, className }) {
-    const reduzido = usaMovimentoReduzido();
-    const [passo, setPasso] = useState(reduzido ? EVENTOS.length - 1 : 0);
+    const [passo, setPasso] = useState(0);
     const [ciclo, setCiclo] = useState(0);
 
     useEffect(() => {
-        if (reduzido) return;
         const t1 = setTimeout(() => setPasso(1), PASSO_MS);
         const t2 = setTimeout(() => setPasso(2), PASSO_MS * 2);
         const fim = setTimeout(() => { setPasso(0); setCiclo((c) => c + 1); }, CICLO_MS);
         return () => [t1, t2, fim].forEach(clearTimeout);
-    }, [ciclo, reduzido]);
+    }, [ciclo]);
 
     const visiveis = compacto ? [EVENTOS[passo]] : EVENTOS.slice(0, passo + 1);
 

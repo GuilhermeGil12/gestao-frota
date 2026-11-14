@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
     MapPin, Send, ShieldCheck, Home, CalendarClock, BarChart3, WifiOff, CheckCircle2, Minus, Plus,
@@ -60,6 +60,22 @@ function Apresentacao() {
     const { tema } = useTheme();
     const { autenticado } = useAuth();
     const [veiculos, setVeiculos] = useState(5);
+    const raiz = useRef(null);
+
+    // Cada elemento com a classe "revelar" aparece quando entra na tela (uma vez só).
+    useEffect(() => {
+        const observador = new IntersectionObserver((entradas) => {
+            entradas.forEach((e) => {
+                if (e.isIntersecting) {
+                    e.target.classList.add("visivel");
+                    observador.unobserve(e.target);
+                }
+            });
+        }, { threshold: 0.15, rootMargin: "0px 0px -40px 0px" });
+
+        raiz.current?.querySelectorAll(".revelar").forEach((el) => observador.observe(el));
+        return () => observador.disconnect();
+    }, []);
 
     const mudarVeiculos = (n) => setVeiculos(Math.min(500, Math.max(1, Number.isFinite(n) ? n : 1)));
 
@@ -68,9 +84,9 @@ function Apresentacao() {
         : { para: "/login", rotulo: "Entrar" };
 
     return (
-        <div className="min-h-svh bg-background text-foreground">
+        <div ref={raiz} className="min-h-svh bg-background text-foreground">
             {/* Topo */}
-            <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur">
+            <header className="entrada sticky top-0 z-40 border-b bg-background/85 backdrop-blur">
                 <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
                     <a href="#inicio" className="shrink-0 rounded-md focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none">
                         <img src={tema === "dark" ? logoDark : logoLight} alt="Frota System" className="w-[120px]" />
@@ -111,20 +127,20 @@ function Apresentacao() {
                 <section id="ideia" className="scroll-mt-16 border-t bg-card">
                     <div className="mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 md:grid-cols-[0.9fr_1.1fr] md:py-28">
                         <div className="max-w-md">
-                            <h2 className="text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl">
+                            <h2 className="revelar text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl">
                                 Quando ninguém sabe quem estava ao volante, a empresa paga a conta.
                             </h2>
                             <div className="mt-6 space-y-4 text-muted-foreground">
-                                <p>Se a empresa não indica quem dirigia, recebe uma segunda multa e o valor dobra.</p>
-                                <p>Entregar o carro a quem está com a CNH vencida há mais de 30 dias é infração gravíssima para o dono do veículo.</p>
-                                <p>E na empresa pequena quase nunca há alguém só para cuidar da frota.</p>
+                                <p className="revelar de-lado" style={{ "--ordem": 1 }}>Se a empresa não indica quem dirigia, recebe uma segunda multa e o valor dobra.</p>
+                                <p className="revelar de-lado" style={{ "--ordem": 2 }}>Entregar o carro a quem está com a CNH vencida há mais de 30 dias é infração gravíssima para o dono do veículo.</p>
+                                <p className="revelar de-lado" style={{ "--ordem": 3 }}>E na empresa pequena quase nunca há alguém só para cuidar da frota.</p>
                             </div>
                         </div>
 
                         <ol className="space-y-0">
                             {PASSOS.map((p, i) => (
-                                <li key={p.titulo} className="grid grid-cols-[3rem_1fr] gap-4 border-b py-6 first:pt-0 last:border-b-0">
-                                    <span className="flex size-10 items-center justify-center rounded-full border text-sm font-semibold tabular-nums">{i + 1}</span>
+                                <li key={p.titulo} className="revelar grid grid-cols-[3rem_1fr] gap-4 border-b py-6 first:pt-0 last:border-b-0" style={{ "--ordem": i }}>
+                                    <span className="numero-passo flex size-10 items-center justify-center rounded-full border text-sm font-semibold tabular-nums">{i + 1}</span>
                                     <span>
                                         <span className="block text-lg font-medium">{p.titulo}</span>
                                         <span className="mt-1 block text-muted-foreground">{p.texto}</span>
@@ -138,15 +154,15 @@ function Apresentacao() {
                 {/* Recursos */}
                 <section id="recursos" className="scroll-mt-16 border-t">
                     <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 md:py-28">
-                        <h2 className="max-w-2xl text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl">
+                        <h2 className="revelar max-w-2xl text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl">
                             O sistema trabalha sozinho e só chama você quando precisa.
                         </h2>
                         <dl className="mt-12 grid gap-x-12 gap-y-10 sm:grid-cols-2">
-                            {RECURSOS.map(({ icone, titulo, texto }) => {
+                            {RECURSOS.map(({ icone, titulo, texto }, i) => {
                                 const Icone = icone;
                                 return (
-                                <div key={titulo} className="grid grid-cols-[2.5rem_1fr] gap-4">
-                                    <span className="flex size-10 items-center justify-center rounded-lg bg-muted">
+                                <div key={titulo} className="revelar item-recurso grid grid-cols-[2.5rem_1fr] gap-4" style={{ "--ordem": i % 2 }}>
+                                    <span className="icone-recurso flex size-10 items-center justify-center rounded-lg bg-muted">
                                         <Icone className="size-5" aria-hidden="true" />
                                     </span>
                                     <span>
@@ -164,14 +180,14 @@ function Apresentacao() {
                 <section id="planos" className="scroll-mt-16 border-t bg-card">
                     <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 md:py-28">
                         <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
-                            <div className="max-w-xl">
+                            <div className="revelar max-w-xl">
                                 <h2 className="text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">Planos</h2>
                                 <p className="mt-4 text-muted-foreground">
                                     O aparelho custa {reais(PRECO_APARELHO)} por veículo, pago uma vez. Depois, uma mensalidade por veículo. Sem fidelidade.
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-3">
+                            <div className="revelar flex items-center gap-3" style={{ "--ordem": 1 }}>
                                 <label htmlFor="qtd-veiculos" className="text-sm text-muted-foreground">Quantos veículos?</label>
                                 <div className="flex items-center rounded-lg border bg-background">
                                     <Button variant="ghost" size="icon" onClick={() => mudarVeiculos(veiculos - 1)} aria-label="Menos um veículo"><Minus /></Button>
@@ -191,17 +207,17 @@ function Apresentacao() {
                         </div>
 
                         <div className="mt-10 grid gap-4 lg:grid-cols-3">
-                            {PLANOS.map((p) => (
+                            {PLANOS.map((p, i) => (
+                                <div key={p.nome} className="revelar crescer flex" style={{ "--ordem": i }}>
                                 <article
-                                    key={p.nome}
                                     className={cn(
-                                        "flex flex-col rounded-2xl border bg-background p-6",
+                                        "flutuar flex w-full flex-col rounded-2xl border bg-background p-6",
                                         p.destaque && "border-foreground ring-1 ring-foreground"
                                     )}
                                 >
                                     <div className="flex items-center justify-between gap-2">
                                         <h3 className="text-lg font-semibold">{p.nome}</h3>
-                                        {p.destaque && <span className="rounded-full bg-foreground px-2.5 py-0.5 text-xs font-medium text-background">Recomendado</span>}
+                                        {p.destaque && <span className="selo-pulsar rounded-full bg-foreground px-2.5 py-0.5 text-xs font-medium text-background">Recomendado</span>}
                                     </div>
                                     <p className="mt-1 text-sm text-muted-foreground">{p.resumo}</p>
                                     <p className="mt-6 text-4xl font-semibold tracking-tight tabular-nums">
@@ -220,14 +236,15 @@ function Apresentacao() {
                                     <div className="mt-6 space-y-1.5 border-t pt-5 text-sm" aria-live="polite">
                                         <p className="flex justify-between gap-2">
                                             <span className="text-muted-foreground">{veiculos} {veiculos === 1 ? "aparelho" : "aparelhos"}, uma vez</span>
-                                            <span className="font-medium tabular-nums">{reais(veiculos * PRECO_APARELHO)}</span>
+                                            <span key={veiculos} className="valor-mudou inline-block font-medium tabular-nums">{reais(veiculos * PRECO_APARELHO)}</span>
                                         </p>
                                         <p className="flex justify-between gap-2">
                                             <span className="text-muted-foreground">Mensalidade</span>
-                                            <span className="font-medium tabular-nums">{reais(veiculos * p.preco)}/mês</span>
+                                            <span key={veiculos} className="valor-mudou inline-block font-medium tabular-nums">{reais(veiculos * p.preco)}/mês</span>
                                         </p>
                                     </div>
                                 </article>
+                                </div>
                             ))}
                         </div>
                     </div>
@@ -236,10 +253,10 @@ function Apresentacao() {
                 {/* Fechamento */}
                 <section className="border-t">
                     <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-4 py-20 sm:px-6 md:flex-row md:items-center md:justify-between">
-                        <h2 className="max-w-xl text-2xl leading-tight font-semibold tracking-tight text-balance sm:text-3xl">
+                        <h2 className="revelar de-lado max-w-xl text-2xl leading-tight font-semibold tracking-tight text-balance sm:text-3xl">
                             Já usa o Frota System? Entre e veja a sua frota agora.
                         </h2>
-                        <Button asChild size="lg"><Link to={acesso.para}>{autenticado ? "Abrir o painel" : "Entrar no sistema"}</Link></Button>
+                        <Button asChild size="lg" className="revelar crescer" style={{ "--ordem": 2 }}><Link to={acesso.para}>{autenticado ? "Abrir o painel" : "Entrar no sistema"}</Link></Button>
                     </div>
                 </section>
             </main>

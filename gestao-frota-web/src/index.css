@@ -195,12 +195,51 @@ option {
   40%, 80% { transform: translateX(6px); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .mapa-rota { animation: none; stroke-dashoffset: 0; }
-  .mapa-carro { animation: none; offset-distance: 100%; }
-  .mapa-pulso, .entrada, .balancar, .mapa-evento { animation: none; }
-  .mapa-destino { animation: none; opacity: 1; }
-  html { scroll-behavior: auto; }
+/* Revelar ao rolar: o elemento começa escondido e aparece quando entra na tela
+   (a classe "visivel" é colocada pelo IntersectionObserver da página de apresentação). */
+.revelar {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition-delay: calc(var(--ordem, 0) * 100ms);
 }
+.revelar.de-lado { transform: translateX(-32px); }
+.revelar.crescer { transform: scale(0.94); }
+.revelar.visivel { opacity: 1; transform: none; }
+
+/* Cartões que sobem um pouco ao passar o mouse. */
+.flutuar {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.flutuar:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px -12px color-mix(in oklab, var(--foreground) 25%, transparent);
+}
+
+/* Ícone dos recursos gira levemente ao passar o mouse no item. */
+.item-recurso .icone-recurso { transition: transform 0.3s ease, background-color 0.3s ease; }
+.item-recurso:hover .icone-recurso { transform: rotate(-8deg) scale(1.1); background-color: var(--accent); }
+
+/* Número dos passos acende quando aparece. */
+.revelar.visivel .numero-passo {
+  animation: numero-acender 0.6s ease-out both;
+  animation-delay: calc(var(--ordem, 0) * 100ms + 0.3s);
+}
+@keyframes numero-acender {
+  0% { transform: scale(0.6); background-color: transparent; }
+  60% { transform: scale(1.15); background-color: var(--foreground); color: var(--background); }
+  100% { transform: scale(1); }
+}
+
+/* Selo "Recomendado" pulsando de leve. */
+.selo-pulsar { animation: selo-pulsar 2.4s ease-in-out infinite; }
+@keyframes selo-pulsar {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--foreground) 35%, transparent); }
+  50% { box-shadow: 0 0 0 6px transparent; }
+}
+
+/* Valor da calculadora "pisca" quando muda. */
+.valor-mudou { animation: valor-mudou 0.35s ease-out; }
+@keyframes valor-mudou { from { transform: scale(1.12); opacity: 0.5; } }
 
 html { scroll-behavior: smooth; }
