@@ -3,6 +3,7 @@ import { useNavigate, Navigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { LoginForm } from "@/components/login-form";
+import FundoCidade from "@/components/FundoCidade";
 import { useAuth } from "../context/AuthContext";
 
 function Login() {
@@ -30,8 +31,9 @@ function Login() {
     };
 
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10">
-            <div className="w-full max-w-sm md:max-w-4xl">
+        <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-background p-6 md:p-10">
+            <FundoCidade />
+            <div className="relative z-10 w-full max-w-sm md:max-w-4xl">
                 <LoginForm
                     email={email}
                     senha={senha}
