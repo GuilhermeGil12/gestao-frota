@@ -2,9 +2,10 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /**
- * Botão de "adicionar" flutuante no canto de baixo à direita.
- * No celular fica só o "+" redondo; a partir de 640px aparece o texto junto.
- * Fica acima dos mapas (z 1000), mas abaixo do menu aberto e das janelas.
+ * Botão de "adicionar".
+ * No celular (abaixo de 768px) flutua no canto de baixo à direita, só com o "+" redondo,
+ * acima dos mapas (z 1000) e abaixo do menu aberto e das janelas.
+ * No computador vira um botão normal, no lugar onde foi colocado (o cabeçalho da página).
  */
 function BotaoFlutuante({ rotulo, onClick, icone = Plus }) {
     const Icone = icone;
@@ -13,10 +14,10 @@ function BotaoFlutuante({ rotulo, onClick, icone = Plus }) {
             onClick={onClick}
             aria-label={rotulo}
             title={rotulo}
-            className="fixed bottom-5 right-5 z-[1050] size-14 rounded-full p-0 shadow-lg sm:size-auto sm:h-12 sm:px-5 md:bottom-8 md:right-8"
+            className="max-md:fixed max-md:bottom-5 max-md:right-5 max-md:z-[1050] max-md:size-14 max-md:rounded-full max-md:p-0 max-md:shadow-lg"
         >
-            <Icone className="size-5" />
-            <span className="hidden sm:inline">{rotulo}</span>
+            <Icone className="max-md:size-5" />
+            <span className="hidden md:inline">{rotulo}</span>
         </Button>
     );
 }

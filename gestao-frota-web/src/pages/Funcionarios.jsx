@@ -430,14 +430,14 @@ function Funcionarios() {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[10%]">ID</TableHead>
-                        <TableHead className="w-[25%]">Nome</TableHead>
-                        <TableHead className="w-[15%]">CPF</TableHead>
-                        <TableHead className="w-[15%]">RG</TableHead>
-                        <TableHead className="w-[15%]">Setor</TableHead>
-                        <TableHead className="w-[10%]">Nível</TableHead>
-                        <TableHead className="w-[10%]">Status</TableHead>
-                        <TableHead className="w-[20%] text-center">Ações</TableHead>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>CPF</TableHead>
+                        <TableHead>RG</TableHead>
+                        <TableHead>Setor</TableHead>
+                        <TableHead>Nível</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -466,14 +466,14 @@ function Funcionarios() {
                                     <div className="flex flex-col items-start gap-1">
                                         <span>{f.ativo ? "Ativo" : "Desativado"}</span>
                                         {f.cnhPendente ? (
-                                            <Badge variant="destructive" title="Cartões bloqueados até validar a nova CNH">CNH pendente</Badge>
+                                            <Badge variant="outline" className="whitespace-nowrap border-destructive/40 text-destructive" title="Cartões bloqueados até validar a nova CNH">CNH pendente</Badge>
                                         ) : cnhVencida(f) && (
-                                            <Badge variant="outline" className="text-destructive">CNH vencida</Badge>
+                                            <Badge variant="outline" className="whitespace-nowrap border-destructive/40 text-destructive">CNH vencida</Badge>
                                         )}
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    <div className="flex gap-2 justify-center">
+                                    <div className="flex justify-end gap-2 whitespace-nowrap">
                                         {f.ativo ? (
                                             <>
                                                 {temPermissao("funcionarios.editar") && (
@@ -493,7 +493,7 @@ function Funcionarios() {
                                                     await api.put(`/funcionarios/${f.id}`, { ...f, ativo: true });
                                                     toast.success("Funcionário reativado!");
                                                     carregar();
-                                                } catch (e) { toast.error("Erro ao reativar."); }
+                                                } catch { toast.error("Erro ao reativar."); }
                                             }}>Reativar</Button>
                                             )
                                         )}

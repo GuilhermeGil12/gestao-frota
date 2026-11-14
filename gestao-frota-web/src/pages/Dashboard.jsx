@@ -27,7 +27,7 @@ import {
     AlertDialogTitle,
 } from "../components/ui/alert-dialog";
 
-import { Ellipsis, BellRing } from "lucide-react";
+import { Ellipsis, BellRing, Info, MapPin, Lock, Ban, MapPinOff, Navigation, CircleParking } from "lucide-react";
 
 function Dashboard() {
     const [veiculoBloquear, setVeiculoBloquear] = useState(null)
@@ -45,7 +45,7 @@ function Dashboard() {
             try {
               const resLoc = await api.get(`/localizacao/ultima/${veiculo.id}`);
               return { ...veiculo, ultimaLocalizacao: resLoc.data || null };
-            } catch (err) {
+            } catch {
               console.error(
                 `O carro ${veiculo.placa} ainda nao tem localizacao no banco.`,
               );
@@ -75,9 +75,9 @@ function Dashboard() {
     }
 
     try {
-      const resp = await api.post(`/comandos/${idControladora}`, { tipo: "BLOQUEAR" });
+      await api.post(`/comandos/${idControladora}`, { tipo: "BLOQUEAR" });
       toast.success(`Comando enviado! O veículo ${veiculoBloquear.placa} será bloqueado quando estiver parado ou com a chave desligada.`);
-    } catch (e) {
+    } catch {
       toast.error("Não foi possível bloquear o veículo.");
     } finally {
       setVeiculoBloquear(null);
@@ -94,7 +94,7 @@ function Dashboard() {
     try {
       await api.post(`/comandos/${idControladora}`, { tipo: "APITAR" });
       toast.success(`Comando enviado! ${veiculo.placa} vai apitar assim que receber.`);
-    } catch (e) {
+    } catch {
       toast.error("Não foi possível enviar o comando de apito.");
     }
   };
@@ -117,21 +117,13 @@ function Dashboard() {
 
   const definirStatus = (veiculo) => {
     if (!veiculo.ativo)
-      return { texto: "Inativo", cor: "bg-red-500", textCor: "text-red-400" };
+      return { texto: "Inativo", Icone: Ban };
     if (!veiculo.controladora)
-      return {
-        texto: "Sem Rastreador",
-        cor: "bg-orange-500",
-        textCor: "text-orange-400",
-      };
+      return { texto: "Sem rastreador", Icone: MapPinOff };
     const loc = veiculo.ultimaLocalizacao;
     if (loc && loc.velocidade > 0)
-      return {
-        texto: "Em Movimento",
-        cor: "bg-green-500",
-        textCor: "text-green-400",
-      };
-    return { texto: "Parado", cor: "bg-blue-500", textCor: "text-blue-400" };
+      return { texto: "Em movimento", Icone: Navigation };
+    return { texto: "Parado", Icone: CircleParking };
   };
 
   return (
@@ -158,25 +150,29 @@ function Dashboard() {
                 className="hover:-translate-y-1 transition-transform duration-200"
               >
                 <CardHeader className="pb-3">
-                  <CardTitle
-                    className={`flex items-center gap-2 text-base ${status.textCor}`}
-                  >
-                    <span
-                      className={`h-3 w-3 rounded-full ${status.cor} shadow-[0_0_8px] shadow-current`}
-                    ></span>
+                  <CardTitle className="flex items-center gap-2.5 text-base text-foreground">
+                    <span className="flex size-8 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground">
+                      <status.Icone className="size-4" aria-hidden="true" />
+                    </span>
                     {status.texto}
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild className="ml-auto">
-                        <Ellipsis className="cursor-pointer text-muted-foreground" />
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="ml-auto size-8 text-muted-foreground" aria-label={`Ações do veículo ${veiculo.placa}`}>
+                          <Ellipsis />
+                        </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
-                        <DropdownMenuItem>Ver no mapa</DropdownMenuItem>
-                        <DropdownMenuItem className="items-center" onClick={() => apitarVeiculo(veiculo)}>
-                         <BellRing/>  localizar
+                        <DropdownMenuItem>
+                          <Info /> Ver detalhes
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-500" onClick={() => setVeiculoBloquear(veiculo)}>
-                          Bloquear veículo
+                        <DropdownMenuItem>
+                          <MapPin /> Ver no mapa
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => apitarVeiculo(veiculo)}>
+                          <BellRing /> Localizar (apitar)
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive [&_svg]:text-destructive" onClick={() => setVeiculoBloquear(veiculo)}>
+                          <Lock /> Bloquear veículo
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
