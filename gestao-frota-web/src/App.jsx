@@ -22,6 +22,7 @@ import Permissoes         from './pages/configuracoes/Permissoes';
 import Relatorios         from './pages/Relatorios';
 import Comandos           from './pages/comandos';
 import Login              from './pages/login';
+import Apresentacao       from './pages/Apresentacao';
 import Setores            from './pages/configuracoes/Setores';
 import Usuario from './pages/configuracoes/Usuario';
 import Perfil from './pages/Perfil';
@@ -140,6 +141,7 @@ function App() {
     return (
         <Router>
             <Routes>
+                <Route path="/"      element={<Apresentacao />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/*"    element={<LayoutPrincipal />} />
             </Routes>

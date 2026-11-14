@@ -9,6 +9,7 @@ function Login() {
     const [email, setEmail] = useState("");
     const [senha, setSenha] = useState("");
     const [carregando, setCarregando] = useState(false);
+    const [erro, setErro] = useState(false);
     const { login, autenticado } = useAuth();
     const navigate = useNavigate();
 
@@ -21,7 +22,8 @@ function Login() {
             await login(email, senha);
             navigate("/dashboard", { replace: true });
         } catch (err) {
-            toast.error(err?.response?.data?.message || "Não foi possível entrar.");
+            setErro(true);
+            toast.error(err?.response?.data?.message || "Não foi possível entrar. Confira o e-mail e a senha.");
         } finally {
             setCarregando(false);
         }
@@ -37,6 +39,8 @@ function Login() {
                     setSenha={setSenha}
                     handleLogin={handleLogin}
                     carregando={carregando}
+                    erro={erro}
+                    aoFimDoErro={() => setErro(false)}
                 />
             </div>
             <Toaster theme="dark" richColors position="bottom-center" />

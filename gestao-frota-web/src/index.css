@@ -144,3 +144,63 @@ option {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
+
+/* ---------- Página de apresentação e login ---------- */
+
+/* Mapa animado: a rota se desenha, o carro percorre o traço e o destino acende no fim. */
+.mapa-rota {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: mapa-desenhar 6.6s cubic-bezier(0.45, 0, 0.3, 1) forwards;
+}
+
+.mapa-carro {
+  offset-path: path("M60 300 L60 230 Q60 210 80 210 L210 210 Q230 210 230 190 L230 110 Q230 90 250 90 L420 90");
+  offset-rotate: 0deg;
+  animation: mapa-percorrer 6.6s cubic-bezier(0.45, 0, 0.3, 1) forwards;
+}
+
+.mapa-pulso {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: mapa-pulsar 1.6s ease-out infinite;
+}
+
+.mapa-destino {
+  opacity: 0.35;
+  animation: mapa-chegar 0.5s ease-out 6.4s forwards;
+}
+
+.mapa-evento {
+  animation: mapa-evento-entrar 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes mapa-desenhar { to { stroke-dashoffset: 0; } }
+@keyframes mapa-percorrer { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+@keyframes mapa-pulsar { from { transform: scale(0.6); opacity: 0.35; } to { transform: scale(1.8); opacity: 0; } }
+@keyframes mapa-chegar { to { opacity: 1; } }
+@keyframes mapa-evento-entrar { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+
+/* Entrada da página: um único movimento em sequência, controlado por --ordem. */
+.entrada {
+  animation: entrada-subir 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--ordem, 0) * 90ms);
+}
+@keyframes entrada-subir { from { opacity: 0; transform: translateY(14px); } }
+
+/* Erro no login: o formulário balança para mostrar que algo deu errado. */
+.balancar { animation: balancar 0.4s ease-in-out; }
+@keyframes balancar {
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mapa-rota { animation: none; stroke-dashoffset: 0; }
+  .mapa-carro { animation: none; offset-distance: 100%; }
+  .mapa-pulso, .entrada, .balancar, .mapa-evento { animation: none; }
+  .mapa-destino { animation: none; opacity: 1; }
+  html { scroll-behavior: auto; }
+}
+
+html { scroll-behavior: smooth; }
