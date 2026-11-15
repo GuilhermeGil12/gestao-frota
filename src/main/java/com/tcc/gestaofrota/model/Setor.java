@@ -1,6 +1,7 @@
 package com.tcc.gestaofrota.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
@@ -11,6 +12,9 @@ import java.util.Set;
 
 @Entity
 @Table(name = "setor")
+// Mesmo cuidado do Funcionario: se o setor vier como "substituto" (proxy) do Hibernate,
+// o JSON ignora as peças internas dele em vez de quebrar.
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Setor {
 
    @Id

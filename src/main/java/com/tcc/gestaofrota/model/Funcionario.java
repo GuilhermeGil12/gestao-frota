@@ -15,6 +15,11 @@ import java.util.List;
 @Entity
 @EntityListeners(AuditingEntityListener.class) //preenche as datas criado_em / atualizado
 @Table(name = "funcionario")
+// O líder é carregado sob demanda (LAZY): o Hibernate põe um "substituto" (proxy) no lugar.
+// Se a listagem lê o liderado antes do líder, o próprio líder vem na lista como esse substituto,
+// e o Jackson quebrava tentando converter as peças internas dele (erro 400 "ByteBuddyInterceptor").
+// Aconteceu ao inativar uma líder: a linha dela muda de posição no banco e passa a vir depois.
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Funcionario {
 
     @Id
