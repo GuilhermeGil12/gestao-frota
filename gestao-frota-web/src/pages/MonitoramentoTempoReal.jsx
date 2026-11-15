@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap 
 import L from 'leaflet';
 import { Car, Gauge, Power, WifiOff, MapPin } from "lucide-react";
 import api from '../services/api';
+import { CORES_TRAJETO, LINHA_CONTORNO, linhaTrecho, dividirTrechos } from '../utils/trajeto';
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -179,23 +180,9 @@ function MonitoramentoTempoReal() {
         ? ultimas.map(p => [p.lat, p.lng])
         : rota.map(p => [p.lat, p.lng]);
 
-    // Divide o rastro em trechos: azul no limite, vermelho acima do limite do veículo.
+    // Divide o rastro em trechos: verde no limite, vermelho acima do limite do veículo.
     const limiteSelecionado = Number(selecionado?.velocidadeMaxima) > 0 ? Number(selecionado.velocidadeMaxima) : LIMITE_VELOCIDADE;
-    const trechos = useMemo(() => {
-        const lista = [];
-        rota.forEach((p, i) => {
-            const excesso = Number(p.velocidade) > limiteSelecionado;
-            const atual = lista[lista.length - 1];
-            if (!atual || atual.excesso !== excesso) {
-                // Começa o trecho novo no ponto anterior, para a linha não ficar com buraco.
-                const anterior = i > 0 ? [[rota[i - 1].lat, rota[i - 1].lng]] : [];
-                lista.push({ excesso, pontos: [...anterior, [p.lat, p.lng]] });
-            } else {
-                atual.pontos.push([p.lat, p.lng]);
-            }
-        });
-        return lista;
-    }, [rota, limiteSelecionado]);
+    const trechos = useMemo(() => dividirTrechos(rota, limiteSelecionado), [rota, limiteSelecionado]);
 
     // Troca de veículo: limpa o rastro anterior na hora, para o mapa não enquadrar o carro errado.
     const escolherVeiculo = (id) => { setRota([]); setVeiculoSelecionado(id); };
@@ -271,15 +258,13 @@ function MonitoramentoTempoReal() {
                         {veiculoSelecionado !== "TODOS" && ultimo && (
                             <>
                                 {/* Contorno branco por baixo: o rastro aparece em qualquer fundo do mapa */}
-                                <Polyline positions={rota.map(p => [p.lat, p.lng])}
-                                          pathOptions={{ color: '#ffffff', weight: 8, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }} />
+                                <Polyline positions={rota.map(p => [p.lat, p.lng])} pathOptions={LINHA_CONTORNO} />
                                 {trechos.map((t, i) => (
-                                    <Polyline key={i} positions={t.pontos}
-                                              pathOptions={{ color: t.excesso ? CORES_MAPA.excesso : CORES_MAPA.movimento, weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round' }} />
+                                    <Polyline key={i} positions={t.pontos} pathOptions={linhaTrecho(t.excesso)} />
                                 ))}
                                 {rota.length > 1 && (
                                     <CircleMarker center={[rota[0].lat, rota[0].lng]} radius={6}
-                                                  pathOptions={{ fillColor: '#ffffff', color: CORES_MAPA.movimento, weight: 3, fillOpacity: 1 }}>
+                                                  pathOptions={{ fillColor: CORES_TRAJETO.normal, color: '#ffffff', weight: 2, fillOpacity: 1 }}>
                                         <Popup><DetalhesPonto titulo="Início do dia" ponto={rota[0]} /></Popup>
                                     </CircleMarker>
                                 )}

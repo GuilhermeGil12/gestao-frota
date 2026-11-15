@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from "sonner";
 import { MapContainer, TileLayer, Polyline, Popup, CircleMarker, useMap } from 'react-leaflet';
+import { CORES_TRAJETO, LINHA_CONTORNO, linhaTrecho, dividirTrechos } from '../../utils/trajeto';
 import L from 'leaflet';
 import api from '../../services/api';
 import { Button } from "../../components/ui/button";
@@ -40,7 +41,6 @@ const CORES_MAPA = {
     parado: '#eab308',
     movimento: '#3b82f6',
     excesso: '#ef4444',
-    trajeto: '#ef4444',
 };
 
 // Por que a controladora gerou o ponto (campo "evento" do firmware).
@@ -156,10 +156,13 @@ function Rotas() {
             distancia,
             maxima: Math.max(...velocidades),
             media: emMovimento.length ? emMovimento.reduce((s, v) => s + v, 0) / emMovimento.length : 0,
+            // Cada ponto acima do limite conta como um excesso.
             excessos: velocidades.filter(v => v > limite).length,
             motoristas: [...motoristas],
         };
     }, [historicoRotas, limite]);
+
+    const trechos = useMemo(() => dividirTrechos(historicoRotas, limite), [historicoRotas, limite]);
 
     const handleBuscarRotas = async () => {
         if (!dataBusca || !veiculoSelecionado) { toast.error("Selecione a data e o veículo."); return; }
@@ -229,7 +232,7 @@ function Rotas() {
             {resumo && (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
                     <Resumo icone={<Clock className="size-4" />} rotulo="Período" valor={`${String(resumo.inicio).slice(0, 5)} – ${String(resumo.fim).slice(0, 5)}`} />
-                    <Resumo icone={<Route className="size-4" />} rotulo="Distância" valor={`${resumo.distancia.toFixed(1)} km`} />
+                    <Resumo icone={<Route className="size-4" />} rotulo="Distância" valor={`${resumo.distancia.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} km`} />
                     <Resumo icone={<Gauge className="size-4" />} rotulo="Velocidade máxima" valor={`${resumo.maxima.toFixed(0)} km/h`} destaque={resumo.maxima > limite} />
                     <Resumo icone={<Gauge className="size-4" />} rotulo="Média em movimento" valor={`${resumo.media.toFixed(0)} km/h`} />
                     <Resumo icone={<AlertTriangle className="size-4" />} rotulo="Excessos" valor={resumo.excessos} destaque={resumo.excessos > 0} />
@@ -241,17 +244,22 @@ function Rotas() {
             <div className="isolate w-full h-[55vh] min-h-80 md:h-[600px] rounded-xl overflow-hidden border border-border relative">
                 <div className="absolute top-3 right-3 z-[1000] space-y-1 rounded-lg border border-border bg-card/95 p-3 text-xs text-card-foreground shadow-md">
                     <p className="mb-1 font-semibold">Legenda</p>
-                    {[
-                        ['desligado', 'Desligado'],
-                        ['parado', 'Ligado parado'],
-                        ['movimento', 'Em movimento'],
-                        ['excesso', `Acima de ${limite} km/h`],
-                    ].map(([chave, rotulo]) => (
-                        <div key={chave} className="flex items-center gap-2">
-                            <span className="size-3 rounded-full border border-border" style={{ backgroundColor: CORES_MAPA[chave] }} />
-                            {rotulo}
-                        </div>
-                    ))}
+                    <div className="flex items-center gap-2">
+                        <span className="h-1.5 w-5 rounded-full" style={{ backgroundColor: CORES_TRAJETO.normal }} />
+                        Trajeto
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="h-1.5 w-5 rounded-full" style={{ backgroundColor: CORES_TRAJETO.excesso }} />
+                        Acima de {limite} km/h
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="size-3 rounded-full border-2 border-white shadow" style={{ backgroundColor: CORES_TRAJETO.normal }} />
+                        Início
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="size-3 rounded-full border-2 border-white shadow" style={{ backgroundColor: CORES_TRAJETO.fim }} />
+                        Fim
+                    </div>
                 </div>
 
                 <MapContainer center={[-23.5505, -46.6333]} zoom={13} style={{ height: "100%", width: "100%" }}>
@@ -262,23 +270,34 @@ function Rotas() {
                     <FocarMapa alvo={alvoMapa} />
                     {historicoRotas.length > 0 && (
                         <>
-                            <Polyline positions={historicoRotas.map(p => [p.lat, p.lng])} color={CORES_MAPA.trajeto} weight={3} opacity={0.7} />
+                            {/* Contorno branco por baixo + trechos verdes/vermelhos por cima */}
+                            <Polyline positions={historicoRotas.map(p => [p.lat, p.lng])}
+                                      pathOptions={LINHA_CONTORNO} />
+                            {trechos.map((t, i) => (
+                                <Polyline key={`trecho-${i}`} positions={t.pontos}
+                                          pathOptions={linhaTrecho(t.excesso)} />
+                            ))}
                             {historicoRotas.map((ponto, index) => {
                                 const situacao = classificar(ponto, limite);
-                                const extremo = index === 0 || index === historicoRotas.length - 1;
+                                const inicio = index === 0;
+                                const fim = index === historicoRotas.length - 1;
                                 const ativo = index === pontoAtivo;
+                                const excesso = Number(ponto.velocidade) > limite;
                                 const motorista = separarMotorista(ponto.motorista);
+                                // Pontos brancos com a borda da cor do trecho; início verde e fim escuro, maiores.
+                                const estilo = ativo
+                                    ? { radius: 7, fillColor: '#ffffff', color: CORES_TRAJETO.fim, weight: 3 }
+                                    : inicio
+                                        ? { radius: 6, fillColor: CORES_TRAJETO.normal, color: '#ffffff', weight: 2 }
+                                        : fim
+                                            ? { radius: 6, fillColor: CORES_TRAJETO.fim, color: '#ffffff', weight: 2 }
+                                            : { radius: 3, fillColor: '#ffffff', color: excesso ? CORES_TRAJETO.excesso : CORES_TRAJETO.normal, weight: 1.5 };
                                 return (
                                     <CircleMarker
                                         key={index}
                                         center={[ponto.lat, ponto.lng]}
-                                        radius={ativo ? 7 : extremo ? 5 : 3}
-                                        pathOptions={{
-                                            fillColor: CORES_MAPA[situacao.chave],
-                                            color: ativo ? '#000' : 'white',
-                                            weight: ativo ? 2 : 0.5,
-                                            fillOpacity: 1,
-                                        }}
+                                        radius={estilo.radius}
+                                        pathOptions={{ fillColor: estilo.fillColor, color: estilo.color, weight: estilo.weight, fillOpacity: 1 }}
                                     >
                                         <Popup>
                                             <div className="min-w-[200px] space-y-1 text-sm">

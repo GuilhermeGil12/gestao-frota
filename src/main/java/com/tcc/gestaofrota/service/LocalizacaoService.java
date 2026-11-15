@@ -31,8 +31,8 @@ public class LocalizacaoService {
 
     // Mesmos valores da controladora e da tela de Rotas.
     private static final double LIMITE_VELOCIDADE = 110;  // padrão, quando o veículo não tem limite cadastrado
-    // Histerese do excesso: entra acima do limite e só termina 5 km/h abaixo dele.
-    // Sem isso, andar a 109/111 km/h viraria vários excessos (e vários avisos).
+    // Só para o AVISO no Telegram: o aviso abre acima do limite e só fecha 5 km/h abaixo dele.
+    // Sem isso, andar a 109/111 km/h mandaria várias mensagens. (A CONTAGEM de excessos é por ponto.)
     private static final double MARGEM_FIM_EXCESSO = 5;
     private static final double VELOCIDADE_PARADO = 3;    // abaixo disso o GPS oscila mesmo parado
     private static final long INTERVALO_MAXIMO_SEGUNDOS = 300; // mais que isso entre pontos = sem sinal
@@ -296,7 +296,6 @@ public class LocalizacaoService {
             double velMaxima = 0.0;
             long segundosEmMovimento = 0;
             int excessos = 0, freadas = 0, aceleracoes = 0, viradasBruscas = 0;
-            boolean emExcesso = false;
             Set<String> motoristas = new LinkedHashSet<>();
             Veiculo veiculo = listaPontos.get(0).getVeiculo();
             String placa = veiculo.getPlaca();
@@ -310,13 +309,8 @@ public class LocalizacaoService {
 
                 velMaxima = Math.max(velMaxima, velocidade);
 
-                // Um excesso começa acima do limite e só termina 5 km/h abaixo (oscilar não conta de novo).
-                if (!emExcesso && velocidade > limite) {
-                    excessos++;
-                    emExcesso = true;
-                } else if (emExcesso && velocidade < limite - MARGEM_FIM_EXCESSO) {
-                    emExcesso = false;
-                }
+                // Cada ponto acima do limite conta como um excesso (mesma regra das Rotas e do e-mail).
+                if (velocidade > limite) excessos++;
 
                 // Eventos de condução marcados pela controladora (pontos antigos não têm evento).
                 if ("FREADA".equals(atual.getEvento())) freadas++;

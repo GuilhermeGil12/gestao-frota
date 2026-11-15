@@ -176,16 +176,11 @@ public class RelatorioLiderService {
         for (List<Localizacao> pontos : porVeiculo.values()) {
             double limite = pontos.get(0).getVeiculo().getVelocidadeMaxima() != null && pontos.get(0).getVeiculo().getVelocidadeMaxima() > 0
                     ? pontos.get(0).getVeiculo().getVelocidadeMaxima() : LIMITE_PADRAO;
-            Long motoristaAnterior = null;
-            boolean estavaAcima = false;
 
             for (int i = 0; i < pontos.size(); i++) {
                 Localizacao p = pontos.get(i);
                 Long motorista = donoDoCartao.get(uidDoPonto(p.getMotorista()));
                 double v = p.getVelocidade() != null ? p.getVelocidade() : 0;
-                // Trocou de motorista: o excesso do anterior não conta pro novo.
-                if (!Objects.equals(motorista, motoristaAnterior)) estavaAcima = false;
-                motoristaAnterior = motorista;
                 if (motorista == null) continue;
 
                 Conducao c = resultado.computeIfAbsent(motorista, k -> new Conducao());
@@ -193,13 +188,8 @@ public class RelatorioLiderService {
                 c.veiculos.add(p.getVeiculo().getPlaca());
                 if (p.getDataHora() != null) c.dias.add(p.getDataHora().toLocalDate());
 
-                // Excesso começa acima do limite e só termina 5 km/h abaixo (oscilar não conta de novo).
-                if (!estavaAcima && v > limite) {
-                    c.excessos++;
-                    estavaAcima = true;
-                } else if (estavaAcima && v < limite - 5) {
-                    estavaAcima = false;
-                }
+                // Cada ponto acima do limite conta como um excesso (mesma regra das Rotas e do Relatório).
+                if (v > limite) c.excessos++;
 
                 if ("FREADA".equals(p.getEvento())) c.freadas++;
                 else if ("ACELERACAO".equals(p.getEvento())) c.aceleracoes++;
