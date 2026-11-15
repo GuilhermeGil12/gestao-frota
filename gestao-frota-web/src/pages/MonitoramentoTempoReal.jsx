@@ -72,6 +72,20 @@ function Centralizar({ pontos, gatilho }) {
     return null;
 }
 
+// Acompanha o carro escolhido: quando ele chega perto da borda do mapa, o mapa anda junto.
+// Não mexe enquanto o carro está bem visível, para não atrapalhar quem está olhando outro ponto.
+function SeguirCarro({ posicao }) {
+    const map = useMap();
+    const [lat, lng] = posicao;
+    useEffect(() => {
+        const areaConfortavel = map.getBounds().pad(-0.2);
+        if (!areaConfortavel.contains([lat, lng])) {
+            map.panTo([lat, lng], { animate: true });
+        }
+    }, [lat, lng, map]);
+    return null;
+}
+
 function Resumo({ icone, rotulo, valor }) {
     return (
         <Card className="py-0">
@@ -160,11 +174,32 @@ function MonitoramentoTempoReal() {
 
     const selecionado = frota.find(v => v.id === veiculoSelecionado);
     const ultimo = rota.length > 0 ? rota[rota.length - 1] : null;
+    // Ao escolher um carro, enquadra o rastro do dia inteiro (não só onde ele está agora).
     const pontosFoco = veiculoSelecionado === "TODOS"
         ? ultimas.map(p => [p.lat, p.lng])
-        : ultimo ? [[ultimo.lat, ultimo.lng]] : [];
+        : rota.map(p => [p.lat, p.lng]);
 
-    const alternarVeiculo = (id) => setVeiculoSelecionado(atual => atual === id ? "TODOS" : id);
+    // Divide o rastro em trechos: azul no limite, vermelho acima do limite do veículo.
+    const limiteSelecionado = Number(selecionado?.velocidadeMaxima) > 0 ? Number(selecionado.velocidadeMaxima) : LIMITE_VELOCIDADE;
+    const trechos = useMemo(() => {
+        const lista = [];
+        rota.forEach((p, i) => {
+            const excesso = Number(p.velocidade) > limiteSelecionado;
+            const atual = lista[lista.length - 1];
+            if (!atual || atual.excesso !== excesso) {
+                // Começa o trecho novo no ponto anterior, para a linha não ficar com buraco.
+                const anterior = i > 0 ? [[rota[i - 1].lat, rota[i - 1].lng]] : [];
+                lista.push({ excesso, pontos: [...anterior, [p.lat, p.lng]] });
+            } else {
+                atual.pontos.push([p.lat, p.lng]);
+            }
+        });
+        return lista;
+    }, [rota, limiteSelecionado]);
+
+    // Troca de veículo: limpa o rastro anterior na hora, para o mapa não enquadrar o carro errado.
+    const escolherVeiculo = (id) => { setRota([]); setVeiculoSelecionado(id); };
+    const alternarVeiculo = (id) => escolherVeiculo(veiculoSelecionado === id ? "TODOS" : id);
 
     return (
         <div className="w-full space-y-6">
@@ -188,16 +223,9 @@ function MonitoramentoTempoReal() {
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
                 <h1 className="text-xl font-semibold text-foreground">Monitoramento</h1>
                 <div className="flex flex-wrap items-center gap-3">
-                    <Badge variant="outline" className="gap-2 py-1">
-                        <span className="relative flex size-2">
-                            <span className="absolute inline-flex size-full animate-ping rounded-full bg-destructive opacity-75" />
-                            <span className="relative inline-flex size-2 rounded-full bg-destructive" />
-                        </span>
-                        Ao vivo · atualiza a cada {INTERVALO_MS / 1000}s
-                    </Badge>
                     <div className="flex items-center gap-2">
                         <Label htmlFor="filtro-veiculo" className="sr-only">Veículo</Label>
-                        <Select value={veiculoSelecionado} onValueChange={setVeiculoSelecionado}>
+                        <Select value={veiculoSelecionado} onValueChange={escolherVeiculo}>
                             <SelectTrigger id="filtro-veiculo" className="w-56">
                                 <SelectValue placeholder="Selecione um veículo" />
                             </SelectTrigger>
@@ -239,23 +267,26 @@ function MonitoramentoTempoReal() {
                             </Marker>
                         ))}
 
-                        {/* Um carro: trajeto do dia + cada ponto clicável + posição atual pulsando */}
+                        {/* Um carro: rastro do dia (cresce a cada 5 s) + onde começou + posição atual pulsando */}
                         {veiculoSelecionado !== "TODOS" && ultimo && (
                             <>
-                                <Polyline positions={rota.map(p => [p.lat, p.lng])} color={CORES_MAPA.movimento} weight={3} opacity={0.5} />
-                                {rota.map((ponto, index) => (
-                                    <CircleMarker
-                                        key={index}
-                                        center={[ponto.lat, ponto.lng]}
-                                        radius={5}
-                                        pathOptions={{ fillColor: CORES_MAPA[classificar(ponto).chave], color: 'white', weight: 1, fillOpacity: 1 }}
-                                    >
-                                        <Popup><DetalhesPonto titulo={`Ponto ${index + 1} de ${rota.length}`} ponto={ponto} /></Popup>
-                                    </CircleMarker>
+                                {/* Contorno branco por baixo: o rastro aparece em qualquer fundo do mapa */}
+                                <Polyline positions={rota.map(p => [p.lat, p.lng])}
+                                          pathOptions={{ color: '#ffffff', weight: 8, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }} />
+                                {trechos.map((t, i) => (
+                                    <Polyline key={i} positions={t.pontos}
+                                              pathOptions={{ color: t.excesso ? CORES_MAPA.excesso : CORES_MAPA.movimento, weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round' }} />
                                 ))}
+                                {rota.length > 1 && (
+                                    <CircleMarker center={[rota[0].lat, rota[0].lng]} radius={6}
+                                                  pathOptions={{ fillColor: '#ffffff', color: CORES_MAPA.movimento, weight: 3, fillOpacity: 1 }}>
+                                        <Popup><DetalhesPonto titulo="Início do dia" ponto={rota[0]} /></Popup>
+                                    </CircleMarker>
+                                )}
                                 <Marker position={[ultimo.lat, ultimo.lng]} icon={iconeCarro(selecionado?.placa)}>
                                     <Popup><DetalhesPonto titulo={`Posição atual — ${selecionado?.placa ?? ''}`} ponto={ultimo} /></Popup>
                                 </Marker>
+                                <SeguirCarro posicao={[ultimo.lat, ultimo.lng]} />
                             </>
                         )}
                     </MapContainer>

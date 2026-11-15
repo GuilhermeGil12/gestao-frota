@@ -41,8 +41,8 @@ public class LocalizacaoController {
         return ultimaLoc.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
     }
 
-    // 3. Busca a rota completa do dia (Usado na tela de Rotas/Mapa)
-    @PreAuthorize("hasAuthority('veiculos.rotas')")
+    // 3. Busca a rota completa do dia (tela de Rotas e o rastro do veículo no Monitoramento)
+    @PreAuthorize("hasAnyAuthority('veiculos.rotas', 'monitoramento.visualizar')")
     @GetMapping("/rota")
     public ResponseEntity<List<Map<String, Object>>> obterRota(
             @RequestParam Long idVeiculo,
