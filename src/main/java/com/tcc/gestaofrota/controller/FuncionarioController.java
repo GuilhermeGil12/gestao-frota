@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import com.tcc.gestaofrota.repository.FuncionarioRepository;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/funcionarios")
@@ -87,16 +88,11 @@ public class FuncionarioController {
         return ResponseEntity.noContent().build();
     }
 
+    // Inativa (não apaga). Devolve de quais setores e de quantos liderados a pessoa deixou de ser líder:
+    // { "setores": ["Comercial"], "liderados": 2 }
     @PreAuthorize("hasAuthority('funcionarios.inativar')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> inativarFuncionario(@PathVariable Long id){
-
-        // O controller apenas delega para o Service realizar a inativação
-        funcionarioService.inativar(id);
-
-        // Retorna 204 No Content, que é o padrão correto para DELETE/exclusão com sucesso
-        return ResponseEntity.noContent().build();
-
-
+    public ResponseEntity<Map<String, Object>> inativarFuncionario(@PathVariable Long id){
+        return ResponseEntity.ok(funcionarioService.inativar(id));
     }
 }

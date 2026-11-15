@@ -23,5 +23,11 @@ public interface FuncionarioRepository  extends JpaRepository<Funcionario, Long>
 
     long countBySetorId(Long idSetor);
 
+    // Liderados diretos de alguém.
+    List<Funcionario> findByLider_Id(Long idLider);
+
+    // Quem ainda tem como líder alguém que está inativo.
+    List<Funcionario> findByLider_AtivoFalse();
+
 
 }

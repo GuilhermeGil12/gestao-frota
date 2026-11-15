@@ -5,7 +5,15 @@ import com.tcc.gestaofrota.model.Cerca;
 import com.tcc.gestaofrota.model.Funcionario;
 import com.tcc.gestaofrota.repository.CercaRepository;
 import com.tcc.gestaofrota.repository.FuncionarioRepository;
+import com.tcc.gestaofrota.model.Setor;
+import com.tcc.gestaofrota.repository.SetorRepository;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.List;
@@ -22,13 +30,14 @@ public class FuncionarioService {
 
     private final FuncionarioRepository funcionarioRepository;
     private final CercaRepository cercaRepository;
-    
+    private final SetorRepository setorRepository;
 
     public FuncionarioService(FuncionarioRepository funcionarioRepository, CercaRepository cercaRepository,
-            AtividadeService atividadeService) {
+            AtividadeService atividadeService, SetorRepository setorRepository) {
         this.funcionarioRepository = funcionarioRepository;
         this.cercaRepository = cercaRepository;
         this.atividadeService = atividadeService;
+        this.setorRepository = setorRepository;
     }
 
     private void criarOuAtualizarCercaCasa(Funcionario funcionario) {
@@ -162,9 +171,11 @@ public class FuncionarioService {
         return caixaMisteriosa.get();
     }
 
+    @Transactional
     public Funcionario atualizar(Long id, Funcionario funcionarioNovo){
         Funcionario funcionarioAntigo = buscarPorId(id);
         validarCampos(funcionarioNovo, funcionarioAntigo);
+        boolean estavaAtivo = !Boolean.FALSE.equals(funcionarioAntigo.getAtivo()); // antes dos setters
 
         funcionarioAntigo.setNome(funcionarioNovo.getNome());
         funcionarioAntigo.setCpf(funcionarioNovo.getCpf());
@@ -192,6 +203,10 @@ public class FuncionarioService {
 
         aplicarLider(funcionarioAntigo, funcionarioNovo);
         Funcionario atualizado = funcionarioRepository.save(funcionarioAntigo);
+        // Inativado pela edição (ativo=false): também deixa de liderar, igual ao botão Inativar.
+        if (estavaAtivo && Boolean.FALSE.equals(atualizado.getAtivo())) {
+            liberarLideranca(atualizado);
+        }
         atividadeService.registrar("FUNCIONARIO", "Editou o funcionário " + atualizado.getNome());
         criarOuAtualizarCercaCasa(atualizado);
         return atualizado;
@@ -225,13 +240,66 @@ public class FuncionarioService {
         destino.setLider(lider);
     }
 
-    public void inativar(Long id){
+    /**
+     * Inativa o funcionário. Quem está inativo não lidera ninguém: ele deixa de ser líder
+     * dos setores e dos liderados diretos (que passam a seguir o líder do setor).
+     * Devolve o que mudou, para a tela avisar.
+     */
+    @Transactional
+    public Map<String, Object> inativar(Long id){
         Funcionario funcionarioInativo = buscarPorId(id);
 
         funcionarioInativo.setAtivo(false);
-
         funcionarioRepository.save(funcionarioInativo);
-        atividadeService.registrar("FUNCIONARIO", "Inativou o funcionário " + funcionarioInativo.getNome());
+
+        Map<String, Object> liberado = liberarLideranca(funcionarioInativo);
+        atividadeService.registrar("FUNCIONARIO", "Inativou o funcionário " + funcionarioInativo.getNome()
+                + descreverLiberacao(liberado));
+        return liberado;
+    }
+
+    /** Tira o funcionário da liderança de setores e de liderados diretos. */
+    private Map<String, Object> liberarLideranca(Funcionario lider) {
+        List<Setor> setores = setorRepository.findByLider_Id(lider.getId());
+        setores.forEach(s -> s.setLider(null));
+        setorRepository.saveAll(setores);
+
+        List<Funcionario> liderados = funcionarioRepository.findByLider_Id(lider.getId());
+        liderados.forEach(f -> f.setLider(null));
+        funcionarioRepository.saveAll(liderados);
+
+        Map<String, Object> resultado = new HashMap<>();
+        resultado.put("setores", setores.stream().map(Setor::getNome).toList());
+        resultado.put("liderados", liderados.size());
+        return resultado;
+    }
+
+    private static String descreverLiberacao(Map<String, Object> liberado) {
+        @SuppressWarnings("unchecked")
+        List<String> setores = (List<String>) liberado.get("setores");
+        int liderados = (int) liberado.get("liderados");
+        if (setores.isEmpty() && liderados == 0) return "";
+        StringBuilder sb = new StringBuilder(" (deixou de liderar");
+        if (!setores.isEmpty()) sb.append(" o setor ").append(String.join(", ", setores));
+        if (!setores.isEmpty() && liderados > 0) sb.append(" e");
+        if (liderados > 0) sb.append(" ").append(liderados).append(liderados == 1 ? " funcionário" : " funcionários");
+        return sb.append(")").toString();
+    }
+
+    /**
+     * Ao subir o servidor: quem já estava inativo e ainda aparece como líder
+     * (inativado antes desta regra existir) é tirado da liderança.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void liberarLiderancaDeInativos() {
+        List<Setor> setores = setorRepository.findByLider_AtivoFalse();
+        setores.forEach(s -> s.setLider(null));
+        setorRepository.saveAll(setores);
+
+        List<Funcionario> liderados = funcionarioRepository.findByLider_AtivoFalse();
+        liderados.forEach(f -> f.setLider(null));
+        funcionarioRepository.saveAll(liderados);
     }
 
     public void deletar(Long id){

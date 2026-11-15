@@ -15,6 +15,12 @@ public interface SetorRepository extends JpaRepository<Setor, Long> {
     Optional<Setor> findByNome(String nome);
     Optional<Setor> findByAtivoTrue();
 
+    // Setores liderados por alguém.
+    List<Setor> findByLider_Id(Long idLider);
+
+    // Setores cujo líder está inativo.
+    List<Setor> findByLider_AtivoFalse();
+
 
 
 }

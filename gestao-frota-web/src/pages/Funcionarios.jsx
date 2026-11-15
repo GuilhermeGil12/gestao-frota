@@ -187,12 +187,31 @@ function Funcionarios() {
         } catch (e) { toast.error(erroMsg(e, "Não foi possível salvar o funcionário.")); }
     };
 
+    // "do setor Comercial e de 2 funcionários" — para avisar antes e depois de inativar um líder.
+    const descreverLideranca = (setores, liderados) => {
+        const partes = [];
+        if (setores.length) partes.push(`do setor ${setores.join(", ")}`);
+        if (liderados > 0) partes.push(`de ${liderados} ${liderados === 1 ? "funcionário" : "funcionários"}`);
+        return partes.join(" e ");
+    };
+
+    const lideranca = funcionarioParaExcluir
+        ? descreverLideranca(
+            setor.filter(s => s.liderId === funcionarioParaExcluir.id).map(s => s.nome),
+            funcionarios.filter(f => f.liderId === funcionarioParaExcluir.id).length,
+        )
+        : "";
+
     const confirmarExclusao = async () => {
         if (!funcionarioParaExcluir) return;
         try {
-            await api.delete(`/funcionarios/${funcionarioParaExcluir.id}`);
+            const res = await api.delete(`/funcionarios/${funcionarioParaExcluir.id}`);
             carregar();
-            toast.success("Funcionário inativado com sucesso!");
+            carregarSetores();
+            const deixou = descreverLideranca(res.data?.setores ?? [], res.data?.liderados ?? 0);
+            toast.success(deixou
+                ? `${funcionarioParaExcluir.nome} inativado(a). Deixou de ser líder ${deixou}.`
+                : `${funcionarioParaExcluir.nome} inativado(a).`);
         } catch (e) { toast.error(erroMsg(e, "Não foi possível inativar o funcionário.")); }
         finally { setFuncionarioParaExcluir(null); }
     };
@@ -555,9 +574,14 @@ function Funcionarios() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            <span>
-                                Deseja INATIVAR o funcionário <strong className="font-bold text-foreground">{funcionarioParaExcluir?.nome}.</strong>? Ele perderá seu acesso!
+                            <span className="block">
+                                Deseja inativar <strong className="font-bold text-foreground">{funcionarioParaExcluir?.nome}</strong>? Os cartões param de funcionar.
                             </span>
+                            {lideranca && (
+                                <span className="mt-2 block">
+                                    É líder {lideranca}. Ao inativar, deixa de ser; os liderados passam a seguir o líder do setor.
+                                </span>
+                            )}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
