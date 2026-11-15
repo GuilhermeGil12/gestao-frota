@@ -2,7 +2,10 @@ package com.tcc.gestaofrota.service;
 
 import com.tcc.gestaofrota.model.Cerca;
 import com.tcc.gestaofrota.repository.CercaRepository;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +34,22 @@ public class CercaService {
     public Cerca buscarPorId(Long id) {
         return cercaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cerca não encontrada!"));
+    }
+
+    /**
+     * Ao subir o servidor: cercas de casa criadas antes do campo casaFuncionario existir
+     * (reconhecidas pelo nome "Casa - ..." e por terem funcionário) passam a ser marcadas.
+     * Assim aparecem como "Casa de funcionário" nos Alertas e no Telegram sem editar ninguém.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void marcarCercasDeCasaAntigas() {
+        List<Cerca> antigas = cercaRepository.findAll().stream()
+                .filter(c -> !c.isCasaFuncionario() && c.getFuncionario() != null
+                        && c.getNome() != null && c.getNome().startsWith("Casa - "))
+                .toList();
+        antigas.forEach(c -> c.setCasaFuncionario(true));
+        cercaRepository.saveAll(antigas);
     }
 
     public Cerca salvar(Cerca cerca) {

@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { toast } from "sonner";
 import api from '../../services/api';
 import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
+import DataPicker from "../../components/DataPicker";
 import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
 import { Card, CardContent } from "../../components/ui/card";
@@ -11,15 +12,11 @@ import { Search } from "lucide-react";
 import Paginacao from "../../components/Paginacao";
 import { usePaginacao } from "../../utils/usePaginacao";
 
-const LIMITE_PADRAO = 110;
-
 const TIPOS = [
     { valor: "todos", rotulo: "Todos" },
     { valor: "velocidade", rotulo: "Excesso de velocidade" },
     { valor: "visitas", rotulo: "Visitas às cercas" },
 ];
-
-const SELECT = "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 
 // Data local em yyyy-MM-dd (toISOString usaria UTC e, à noite, pularia para o dia seguinte).
 function dataLocal(d) {
@@ -42,14 +39,13 @@ function duracao(minutos) {
 
 // Excesso e visita viram o mesmo formato de linha, para a tabela mostrar os dois juntos.
 function linhaDeExcesso(a) {
-    const limite = Number(a.veiculo?.velocidadeMaxima) > 0 ? Number(a.veiculo.velocidadeMaxima) : LIMITE_PADRAO;
     return {
         chave: `v-${a.id}`,
         tipo: "velocidade",
         data: a.dataHora ? new Date(a.dataHora) : null,
         placa: a.veiculo?.placa,
         motorista: separarMotorista(a.motorista),
-        detalhe: <><span className="font-semibold text-destructive">{kmh(a.velocidade)}</span> <span className="text-muted-foreground">(limite {kmh(limite)})</span></>,
+        detalhe: <span className="font-semibold text-destructive">{kmh(a.velocidade)}</span>,
     };
 }
 
@@ -79,7 +75,7 @@ function Alertas() {
     const [dataInicio, setDataInicio] = useState(dataLocal(seteDiasAtras));
     const [dataFinal, setDataFinal] = useState(dataLocal(hoje));
     const [tipo, setTipo] = useState("todos");
-    const [veiculoSelecionado, setVeiculoSelecionado] = useState("");
+    const [veiculoSelecionado, setVeiculoSelecionado] = useState("todos");
     const [veiculos, setVeiculos] = useState([]);
     const [linhas, setLinhas] = useState([]);
     const [carregando, setCarregando] = useState(false);
@@ -118,7 +114,7 @@ function Alertas() {
     const filtrar = () => {
         if (!dataInicio || !dataFinal) return toast.error("Selecione as datas de início e fim.");
         if (dataInicio > dataFinal) return toast.error("A data inicial é depois da data final.");
-        carregar(dataInicio, dataFinal, tipo, veiculoSelecionado);
+        carregar(dataInicio, dataFinal, tipo, veiculoSelecionado === "todos" ? null : veiculoSelecionado);
     };
 
     const paginacao = usePaginacao(linhas, 20);
@@ -135,26 +131,32 @@ function Alertas() {
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.2fr_1.2fr_auto] lg:items-end">
                         <div className="space-y-2">
                             <Label htmlFor="alerta-inicio">Data inicial</Label>
-                            <Input id="alerta-inicio" type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+                            <DataPicker id="alerta-inicio" value={dataInicio} onChange={setDataInicio} />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="alerta-fim">Data final</Label>
-                            <Input id="alerta-fim" type="date" value={dataFinal} onChange={(e) => setDataFinal(e.target.value)} />
+                            <DataPicker id="alerta-fim" value={dataFinal} onChange={setDataFinal} />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="alerta-tipo">Tipo de alerta</Label>
-                            <select id="alerta-tipo" value={tipo} onChange={(e) => setTipo(e.target.value)} className={SELECT}>
-                                {TIPOS.map(t => <option key={t.valor} value={t.valor}>{t.rotulo}</option>)}
-                            </select>
+                            <Select value={tipo} onValueChange={setTipo}>
+                                <SelectTrigger id="alerta-tipo" className="w-full"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    {TIPOS.map(t => <SelectItem key={t.valor} value={t.valor}>{t.rotulo}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="alerta-veiculo">Veículo</Label>
-                            <select id="alerta-veiculo" value={veiculoSelecionado} onChange={(e) => setVeiculoSelecionado(e.target.value)} className={SELECT}>
-                                <option value="">Todos os veículos</option>
-                                {veiculos.map((v) => (
-                                    <option key={v.id} value={v.id}>{v.placa}{v.nome ? ` · ${v.nome}` : ""}</option>
-                                ))}
-                            </select>
+                            <Select value={veiculoSelecionado} onValueChange={setVeiculoSelecionado}>
+                                <SelectTrigger id="alerta-veiculo" className="w-full"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="todos">Todos os veículos</SelectItem>
+                                    {veiculos.map((v) => (
+                                        <SelectItem key={v.id} value={String(v.id)}>{v.placa}{v.nome ? ` · ${v.nome}` : ""}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <Button onClick={filtrar} disabled={carregando}><Search className="size-4" />Filtrar</Button>
                     </div>
