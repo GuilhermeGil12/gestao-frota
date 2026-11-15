@@ -18,7 +18,13 @@ import {
     AlertDialogTitle,
 } from "../components/ui/alert-dialog";
 
-import { maskCPF, maskRG } from '../utils/mascaras';
+import { maskCPF, maskRG, maskTelefone, maskCEP, maskNumeros } from '../utils/mascaras';
+import {
+    validarNomeCompleto, validarCPF, validarRG, validarTelefone, validarEmail, validarCEP,
+    validarCNH, validarValidadeCNH, obrigatorio, tamanho, primeiroErro, sePreenchido,
+} from '../utils/validacoes';
+import { useErros } from '../utils/useErros';
+import Campo from "../components/Campo";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Input } from "../components/ui/input";
@@ -55,6 +61,14 @@ function Funcionarios() {
     };
 
     const [formData, setFormData] = useState(initialState);
+    const { erros, validar, limpar, resetar } = useErros();
+    const naoDirige = String(formData.nivelMotorista) === "0";
+
+    // Muda um campo e apaga o erro dele (a pessoa está corrigindo).
+    const mudar = (campo, valor) => {
+        setFormData(prev => ({ ...prev, [campo]: valor }));
+        limpar(campo);
+    };
 
     const carregar = async () => {
         try {
@@ -113,11 +127,9 @@ function Funcionarios() {
         }
     };
 
-    const maskCEP = (v) => v.replace(/\D/g, "").replace(/^(\d{5})(\d)/, "$1-$2").slice(0, 9);
-
     const handleCepChange = async (valor) => {
         const cepFormatado = maskCEP(valor);
-        setFormData(prev => ({ ...prev, cep: cepFormatado }));
+        mudar("cep", cepFormatado);
 
         const apenasNumeros = cepFormatado.replace(/\D/g, "");
         if (apenasNumeros.length === 8) {
@@ -145,22 +157,27 @@ function Funcionarios() {
 
     const handleSalvar = async (e) => {
         e.preventDefault();
-        if (!formData.nome.trim()) return toast.error("Nome é obrigatório.");
-        if (!formData.cpf.trim()) return toast.error("CPF é obrigatório.");
-        if (!formData.rg.trim()) return toast.error("RG é obrigatório.");
-        if (!formData.numeroTelefone.trim()) return toast.error("Telefone é obrigatório.");
-        if (!formData.email.trim()) return toast.error("E-mail é obrigatório.");
-        if (!formData.matricula.trim()) return toast.error("Matrícula é obrigatório.");
-        if (!formData.cargo.trim()) return toast.error("Cargo é obrigatório.");
-        if (!formData.setor) return toast.error("Setor é obrigatório.");
+        const motorista = formData.nivelMotorista !== "" && String(formData.nivelMotorista) !== "0";
 
+        const ok = validar({
+            nome: validarNomeCompleto(formData.nome),
+            cpf: validarCPF(formData.cpf),
+            rg: validarRG(formData.rg),
+            numeroTelefone: validarTelefone(formData.numeroTelefone),
+            email: validarEmail(formData.email),
+            numero: tamanho(formData.numero, 0, 10, "Número"),
+            cep: sePreenchido(formData.cep, validarCEP),
+            matricula: primeiroErro(obrigatorio(formData.matricula, "Matrícula"), tamanho(formData.matricula, 1, 20, "Matrícula")),
+            cargo: primeiroErro(obrigatorio(formData.cargo, "Cargo"), tamanho(formData.cargo, 2, 60, "Cargo")),
+            setor: obrigatorio(formData.setor?.id, "Setor"),
+            nivelMotorista: obrigatorio(formData.nivelMotorista, "Nível de motorista"),
+            numCNH: motorista ? validarCNH(formData.numCNH) : null,
+            categoriaCNH: motorista && (!formData.categoriaCNH || formData.categoriaCNH === "naopossui")
+                ? "Escolha a categoria da CNH." : null,
+            validadeCNH: motorista ? validarValidadeCNH(formData.validadeCNH) : null,
+        });
+        if (!ok) return;
 
-        if (formData.email) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(formData.email)) {
-                return toast.error("Endereço de e-mail inválido.");
-            }
-        }
         try {
             if (formData.id) await api.put(`/funcionarios/${formData.id}`, formData);
             else await api.post('/funcionarios', formData);
@@ -180,7 +197,7 @@ function Funcionarios() {
         finally { setFuncionarioParaExcluir(null); }
     };
 
-    const abrirModal = (f = null) => { setFormData(f || initialState); setIsModalOpen(true); };
+    const abrirModal = (f = null) => { setFormData(f || initialState); resetar(); setIsModalOpen(true); };
     const abrirModalVisualizacao = (f) => { setFuncionarioSelecionado(f); setIsViewModalOpen(true); };
 
     // 2. FILTRAGEM DUPLA: Filtra por texto E por status de ativação
@@ -279,18 +296,38 @@ function Funcionarios() {
                     <form onSubmit={handleSalvar} className="space-y-6" noValidate>
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados Pessoais</h3>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                            <div className="sm:col-span-2 space-y-2"><Label>Nome Completo</Label><Input value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} required /></div>
-                            <div className="space-y-2"><Label>CPF</Label><Input value={formData.cpf} onChange={e => setFormData({ ...formData, cpf: maskCPF(e.target.value) })} placeholder="000.000.000-00" required /></div>
+                            <Campo id="campo-nome" rotulo="Nome completo" erro={erros.nome} obrigatorio className="sm:col-span-2">
+                                <Input value={formData.nome} onChange={e => mudar("nome", e.target.value)} maxLength={120} autoComplete="off" />
+                            </Campo>
+                            <Campo id="campo-cpf" rotulo="CPF" erro={erros.cpf} obrigatorio>
+                                <Input value={formData.cpf} onChange={e => mudar("cpf", maskCPF(e.target.value))} placeholder="000.000.000-00" inputMode="numeric" />
+                            </Campo>
                         </div>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                            <div className="space-y-2"><Label>RG</Label><Input value={formData.rg} onChange={e => setFormData({ ...formData, rg: maskRG(e.target.value) })} required /></div>
-                            <div className="space-y-2"><Label>Telefone</Label><Input value={formData.numeroTelefone} onChange={e => setFormData({ ...formData, numeroTelefone: e.target.value })} placeholder="(17) 99999-9999" /></div>
-                            <div className="space-y-2"><Label>E-mail</Label><Input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="funcionario@empresa.com" /></div>
-                            <div className="space-y-2"><Label>Rua/Logradouro</Label><Input type="" value={formData.endereco} onChange={e => setFormData({ ...formData, endereco: e.target.value })} placeholder="Rua Amazonas" /></div>
-                            <div className="space-y-2"><Label>Número</Label><Input type="text" value={formData.numero} onChange={e => setFormData({ ...formData, numero: e.target.value })} placeholder="123" /></div>
-                            <div className="space-y-2"><Label>Bairro</Label><Input type="text" value={formData.bairro} onChange={e => setFormData({ ...formData, bairro: e.target.value })} placeholder="Centro" /></div>
-                            <div className="space-y-2"><Label>Cidade</Label><Input type="text" value={formData.cidade} onChange={e => setFormData({ ...formData, cidade: e.target.value })} placeholder="São Paulo" /></div>
-                            <div className="space-y-2"><Label>CEP</Label><Input type="text" value={formData.cep} onChange={e => handleCepChange(e.target.value)} placeholder="00000-000" maxLength={9} /></div>
+                            <Campo id="campo-rg" rotulo="RG" erro={erros.rg} obrigatorio>
+                                <Input value={formData.rg} onChange={e => mudar("rg", maskRG(e.target.value))} placeholder="00.000.000-0" />
+                            </Campo>
+                            <Campo id="campo-numeroTelefone" rotulo="Telefone" erro={erros.numeroTelefone} obrigatorio>
+                                <Input type="tel" value={formData.numeroTelefone} onChange={e => mudar("numeroTelefone", maskTelefone(e.target.value))} placeholder="(17) 99999-9999" inputMode="numeric" />
+                            </Campo>
+                            <Campo id="campo-email" rotulo="E-mail" erro={erros.email} obrigatorio>
+                                <Input type="email" value={formData.email} onChange={e => mudar("email", e.target.value.trim())} placeholder="funcionario@empresa.com" maxLength={120} />
+                            </Campo>
+                            <Campo id="campo-cep" rotulo="CEP" erro={erros.cep} ajuda="Preenche a rua, o bairro e a cidade.">
+                                <Input value={formData.cep} onChange={e => handleCepChange(e.target.value)} placeholder="00000-000" inputMode="numeric" />
+                            </Campo>
+                            <Campo id="campo-endereco" rotulo="Rua/Logradouro">
+                                <Input value={formData.endereco} onChange={e => mudar("endereco", e.target.value)} placeholder="Rua Amazonas" maxLength={120} />
+                            </Campo>
+                            <Campo id="campo-numero" rotulo="Número" erro={erros.numero}>
+                                <Input value={formData.numero} onChange={e => mudar("numero", e.target.value)} placeholder="123" maxLength={10} />
+                            </Campo>
+                            <Campo id="campo-bairro" rotulo="Bairro">
+                                <Input value={formData.bairro} onChange={e => mudar("bairro", e.target.value)} placeholder="Centro" maxLength={80} />
+                            </Campo>
+                            <Campo id="campo-cidade" rotulo="Cidade">
+                                <Input value={formData.cidade} onChange={e => mudar("cidade", e.target.value)} placeholder="São Paulo" maxLength={80} />
+                            </Campo>
                             <div className="sm:col-span-3 flex justify-end">
                                 <Button type="button" variant="outline" onClick={buscarCoordenadas} disabled={buscandoLocal}>
                                     {buscandoLocal ? (
@@ -333,20 +370,18 @@ function Funcionarios() {
 
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados Corporativos</h3>
                         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                            <div className="space-y-2"><Label>Matrícula</Label><Input value={formData.matricula} onChange={e => setFormData({ ...formData, matricula: e.target.value })} placeholder="Ex: 107858" required /></div>
-                            <div className="space-y-2"><Label>Cargo</Label><Input value={formData.cargo} onChange={e => setFormData({ ...formData, cargo: e.target.value })} required /></div>
-                            <div className="space-y-2">
-                                <Label>Setor</Label>
-                                
-                                <select value={formData.setor?.id} onChange={e => setFormData({ ...formData, setor: {id: Number(e.target.value)} })} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                                    {setor.map (s => (
-
-                                        <option value={s.id}>{s.nome}</option>
-
-                                    ))}
-                                   
+                            <Campo id="campo-matricula" rotulo="Matrícula" erro={erros.matricula} obrigatorio>
+                                <Input value={formData.matricula} onChange={e => mudar("matricula", e.target.value)} placeholder="Ex: 107858" maxLength={20} />
+                            </Campo>
+                            <Campo id="campo-cargo" rotulo="Cargo" erro={erros.cargo} obrigatorio>
+                                <Input value={formData.cargo} onChange={e => mudar("cargo", e.target.value)} maxLength={60} />
+                            </Campo>
+                            <Campo id="campo-setor" rotulo="Setor" erro={erros.setor} obrigatorio>
+                                <select value={formData.setor?.id ?? ""} onChange={e => mudar("setor", e.target.value ? { id: Number(e.target.value) } : "")} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                                    <option value="">Selecione...</option>
+                                    {setor.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
                                 </select>
-                            </div>
+                            </Campo>
                             <div className="space-y-2 col-span-2 md:col-span-4">
                                 <Label htmlFor="func-lider">Líder</Label>
                                 <select
@@ -367,30 +402,31 @@ function Funcionarios() {
                                     Sem líder próprio, vale o líder do setor.
                                 </p>
                             </div>
-                            <div className="space-y-2">
-                                <Label>Nível Motorista</Label>
-                                <select value={formData.nivelMotorista} onChange={e => setFormData({ ...formData, nivelMotorista: e.target.value })} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            <Campo id="campo-nivelMotorista" rotulo="Nível motorista" erro={erros.nivelMotorista} obrigatorio>
+                                <select value={formData.nivelMotorista ?? ""} onChange={e => mudar("nivelMotorista", e.target.value)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                                     <option value="">Selecione...</option>
-                                    <option value="0">Não possui</option>
+                                    <option value="0">Não dirige</option>
                                     <option value="1">1 (Básico)</option>
                                     <option value="2">2 (Intermediário)</option>
                                     <option value="3">3 (Avançado)</option>
                                 </select>
-                            </div>
+                            </Campo>
                         </div>
 
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Dados de Direção</h3>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                            <div className="space-y-2"><Label>Número CNH</Label><Input value={formData.numCNH} onChange={e => setFormData({ ...formData, numCNH: e.target.value })} disabled={formData.nivelMotorista === "0"} required /></div>
-                            <div className="space-y-2">
-                                <Label>Categoria CNH</Label>
-                                <select value={formData.categoriaCNH} onChange={e => setFormData({ ...formData, categoriaCNH: e.target.value })} disabled={formData.nivelMotorista === "0"} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                            <Campo id="campo-numCNH" rotulo="Número da CNH" erro={erros.numCNH} obrigatorio={!naoDirige}>
+                                <Input value={formData.numCNH ?? ""} onChange={e => mudar("numCNH", maskNumeros(e.target.value, 11))} placeholder="11 números" inputMode="numeric" disabled={naoDirige} />
+                            </Campo>
+                            <Campo id="campo-categoriaCNH" rotulo="Categoria da CNH" erro={erros.categoriaCNH} obrigatorio={!naoDirige}>
+                                <select value={formData.categoriaCNH ?? ""} onChange={e => mudar("categoriaCNH", e.target.value)} disabled={naoDirige} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                                     <option value="">Selecione...</option>
-                                    <option value="A">A</option><option value="B">B</option><option value="AB">AB</option>
-                                    <option value="C">C</option><option value="D">D</option><option value="naopossui">Não possui</option>
+                                    {["A", "B", "C", "D", "E", "AB", "AC", "AD", "AE"].map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
-                            </div>
-                            <div className="space-y-2"><Label>Validade CNH</Label><Input type="date" value={formData.validadeCNH} onChange={e => setFormData({ ...formData, validadeCNH: e.target.value })} disabled={formData.nivelMotorista === "0"} /></div>
+                            </Campo>
+                            <Campo id="campo-validadeCNH" rotulo="Validade da CNH" erro={erros.validadeCNH} obrigatorio={!naoDirige}>
+                                <Input type="date" value={formData.validadeCNH ?? ""} onChange={e => mudar("validadeCNH", e.target.value)} disabled={naoDirige} />
+                            </Campo>
                         </div>
 
                         <DialogFooter className="border-t border-border pt-4">

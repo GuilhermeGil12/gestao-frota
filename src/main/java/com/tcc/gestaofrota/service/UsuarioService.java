@@ -17,6 +17,8 @@ import com.tcc.gestaofrota.model.Usuario;
 import com.tcc.gestaofrota.repository.FuncionarioRepository;
 import com.tcc.gestaofrota.repository.PermissaoRepository;
 import com.tcc.gestaofrota.repository.UsuarioRepository;
+import com.tcc.gestaofrota.security.LimiteLoginService;
+import com.tcc.gestaofrota.util.Validacoes;
 import com.tcc.gestaofrota.security.RefreshTokenService;
 
 @Service
@@ -29,6 +31,7 @@ public class UsuarioService {
     private final PermissaoRepository permissaoRepository;
     private final RefreshTokenService refreshTokenService;
     private final SetorService setorService;
+    private final LimiteLoginService limiteLogin;
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     public UsuarioService(UsuarioRepository usuarioRepository,
@@ -36,7 +39,9 @@ public class UsuarioService {
                           PermissaoRepository permissaoRepository,
                           RefreshTokenService refreshTokenService,
                           SetorService setorService,
-            AtividadeService atividadeService) {
+            AtividadeService atividadeService,
+                          LimiteLoginService limiteLogin) {
+        this.limiteLogin = limiteLogin;
         this.usuarioRepository = usuarioRepository;
         this.funcionarioRepository = funcionarioRepository;
         this.permissaoRepository = permissaoRepository;
@@ -84,8 +89,16 @@ public class UsuarioService {
 
 
 
+        String nomeNovo = dados.get("nomeUsuario") == null ? null : dados.get("nomeUsuario").toString();
+        String emailNovo = dados.get("email") == null ? null : dados.get("email").toString();
+        String senhaNova = dados.get("senha") == null ? null : dados.get("senha").toString();
+        Validacoes.obrigatorio(nomeNovo, "Nome");
+        Validacoes.tamanho(nomeNovo, 2, 80, "Nome");
+        Validacoes.email(emailNovo);
+        Validacoes.senha(senhaNova);
+
         Usuario u = new Usuario();
-        u.setNomeUsuario(dados.get("nomeUsuario").toString());
+        u.setNomeUsuario(nomeNovo.trim());
         u.setFuncionario(funcionario);
         u.setEmail(dados.get("email").toString().trim().toLowerCase());
         u.setSenha(encoder.encode(dados.get("senha").toString()));
@@ -126,9 +139,19 @@ public class UsuarioService {
                 u.setFuncionario(f);
             }
         }
-        if(dados.containsKey("nomeUsuario")) u.setNomeUsuario(dados.get("nomeUsuario").toString());
-        if (dados.containsKey("email")) u.setEmail(dados.get("email").toString().trim().toLowerCase());
-        if (dados.containsKey("senha") && !dados.get("senha").toString().isBlank()) {
+        if (dados.containsKey("nomeUsuario")) {
+            String nomeNovo = String.valueOf(dados.get("nomeUsuario"));
+            Validacoes.obrigatorio(nomeNovo, "Nome");
+            Validacoes.tamanho(nomeNovo, 2, 80, "Nome");
+            u.setNomeUsuario(nomeNovo.trim());
+        }
+        if (dados.containsKey("email")) {
+            String emailNovo = String.valueOf(dados.get("email"));
+            Validacoes.email(emailNovo);
+            u.setEmail(emailNovo.trim().toLowerCase());
+        }
+        if (dados.containsKey("senha") && dados.get("senha") != null && !dados.get("senha").toString().isBlank()) {
+            Validacoes.senha(dados.get("senha").toString());
             u.setSenha(encoder.encode(dados.get("senha").toString()));
         }
         boolean permissoesMudaram = false;
@@ -180,13 +203,19 @@ public class UsuarioService {
             throw new RuntimeException("Informe e-mail e senha");
         }
 
-        // Mensagem igual para e-mail inexistente e senha errada: nao revela quais e-mails existem.
-        Usuario u = usuarioRepository.findByEmail(email.trim().toLowerCase())
-                .orElseThrow(() -> new RuntimeException("E-mail ou senha inválidos"));
+        // Bloqueado por muitas tentativas erradas? Recusa antes mesmo de olhar a senha.
+        limiteLogin.verificar(email);
 
-        if (!encoder.matches(senha, u.getSenha())) {
+        // Mensagem igual para e-mail inexistente e senha errada: nao revela quais e-mails existem.
+        // E-mail inexistente também conta como tentativa errada, pelo mesmo motivo.
+        Usuario u = usuarioRepository.findByEmail(email.trim().toLowerCase()).orElse(null);
+
+        if (u == null || !encoder.matches(senha, u.getSenha())) {
+            limiteLogin.registrarFalha(email);
             throw new RuntimeException("E-mail ou senha inválidos");
         }
+
+        limiteLogin.registrarSucesso(email);
 
         if (!Boolean.TRUE.equals(u.getAtivo())) {
             throw new RuntimeException("Usuário inativo. Procure o administrador");

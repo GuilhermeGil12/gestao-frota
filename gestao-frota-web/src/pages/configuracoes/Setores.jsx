@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import Paginacao from "../../components/Paginacao";
 import { usePaginacao } from "../../utils/usePaginacao";
+import { obrigatorio, tamanho, primeiroErro } from "../../utils/validacoes";
 
 const FORM_VAZIO = { id: null, nome: "", descricao: "", liderId: "" };
 
@@ -55,8 +56,13 @@ function Setores() {
 
     const handleSalvar = async (e) => {
         e.preventDefault();
-        if (!formData.nome.trim()) {
-            toast.error("O nome é obrigatório.");
+        const erro = primeiroErro(
+            obrigatorio(formData.nome, "Nome do setor"),
+            tamanho(formData.nome, 2, 60, "Nome do setor"),
+            tamanho(formData.descricao, 0, 255, "A descrição"),
+        );
+        if (erro) {
+            toast.error(erro);
             return;
         }
         setSalvando(true);
@@ -128,12 +134,12 @@ function Setores() {
                     <form onSubmit={handleSalvar} className="space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="setor-nome">Nome</Label>
-                            <Input id="setor-nome" value={formData.nome} placeholder="Ex.: Logística"
+                            <Input id="setor-nome" value={formData.nome} placeholder="Ex.: Logística" maxLength={60}
                                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="setor-descricao">Descrição</Label>
-                            <Textarea id="setor-descricao" value={formData.descricao} rows={3} placeholder="Opcional"
+                            <Textarea id="setor-descricao" value={formData.descricao} rows={3} placeholder="Opcional" maxLength={255}
                                       onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} />
                         </div>
                         <div className="space-y-2">

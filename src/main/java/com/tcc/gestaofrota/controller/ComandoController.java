@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/comandos")
@@ -52,27 +51,9 @@ public class ComandoController {
         }
     }
 
-    // ESP → verifica se tem algum comando pendente para executar.
-    // Exemplo: GET /api/comandos/pendente/5
-    // Resposta: 200 com o comando, ou 204 se não houver nenhum.
-    @GetMapping("/pendente/{idControladora}")
-    public ResponseEntity<Comando> buscarPendente(@PathVariable Long idControladora) {
-        Optional<Comando> pendente = comandoService.buscarPendente(idControladora);
-
-        if (pendente.isEmpty()) {
-            return ResponseEntity.noContent().build(); // 204 = sem conteúdo
-        }
-
-        return ResponseEntity.ok(pendente.get());
-    }
-
-    // ESP → confirma que executou o comando.
-    // Exemplo: POST /api/comandos/12/confirmar
-    @PostMapping("/{idComando}/confirmar")
-    public ResponseEntity<Comando> confirmar(@PathVariable Long idComando) {
-        Comando comando = comandoService.confirmarExecucao(idComando);
-        return ResponseEntity.ok(comando);
-    }
+    // A controladora recebe comandos pelo MQTT (frota/<código>/comando) e confirma em
+    // frota/<código>/resposta. As antigas rotas HTTP /pendente e /confirmar eram abertas,
+    // sem login (qualquer um podia marcar um bloqueio como executado), e foram removidas.
 
     // Frontend → lista o histórico de comandos de uma controladora.
     // Exemplo: GET /api/comandos/historico/5

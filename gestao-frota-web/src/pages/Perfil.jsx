@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import PreferenciasNotificacao from "../components/PreferenciasNotificacao";
 import ConexaoTelegram from "../components/ConexaoTelegram";
 import { useAuth } from "../context/AuthContext";
+import { validarSenha, validarConfirmacaoSenha, obrigatorio, tamanho, primeiroErro, SENHA_MINIMA } from "../utils/validacoes";
 
 const LADO_FOTO = 256;  // a foto é reduzida no navegador pra no máximo 256x256 antes de enviar
 
@@ -110,8 +111,9 @@ function Perfil() {
 
     const salvarNome = async (e) => {
         e.preventDefault();
-        if (!nome.trim()) {
-            toast.error("Informe o nome.");
+        const erroNome = primeiroErro(obrigatorio(nome, "Nome"), tamanho(nome, 2, 80, "Nome"));
+        if (erroNome) {
+            toast.error(erroNome);
             return;
         }
         setSalvandoNome(true);
@@ -128,12 +130,9 @@ function Perfil() {
 
     const trocarSenha = async (e) => {
         e.preventDefault();
-        if (senhas.nova.length < 6) {
-            toast.error("A nova senha precisa ter pelo menos 6 caracteres.");
-            return;
-        }
-        if (senhas.nova !== senhas.confirmar) {
-            toast.error("A confirmação não é igual à nova senha.");
+        const erroSenha = validarSenha(senhas.nova) || validarConfirmacaoSenha(senhas.nova, senhas.confirmar);
+        if (erroSenha) {
+            toast.error(erroSenha);
             return;
         }
         setSalvandoSenha(true);
@@ -198,7 +197,7 @@ function Perfil() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Trocar senha</CardTitle>
-                            <CardDescription>Pelo menos 6 caracteres.</CardDescription>
+                            <CardDescription>Pelo menos {SENHA_MINIMA} caracteres.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={trocarSenha} className="space-y-4">

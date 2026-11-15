@@ -23,6 +23,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useAuth } from "../context/AuthContext";
 import Paginacao from "../components/Paginacao";
 import { usePaginacao } from "../utils/usePaginacao";
+import { maskUID } from "../utils/mascaras";
+import { validarUID } from "../utils/validacoes";
+import { useErros } from "../utils/useErros";
+import Campo from "../components/Campo";
 
 function Cartoes() {
     const { temPermissao } = useAuth();
@@ -50,11 +54,13 @@ function Cartoes() {
 
     const erroMsg = (e, fallback) => e?.response?.data?.message || fallback;
 
-    const abrirPainelCartoes = (f) => { setFuncionarioSelecionado(f); setNovoUid(""); setIsModalCartoesOpen(true); };
+    const { erros, validar, limpar, resetar } = useErros();
+
+    const abrirPainelCartoes = (f) => { setFuncionarioSelecionado(f); setNovoUid(""); resetar(); setIsModalCartoesOpen(true); };
 
     const handleVincularCartao = async () => {
-        if (!novoUid.trim()) return toast.warning("Digite ou aproxime o cartão no leitor RFID!");
         if (!funcionarioSelecionado?.ativo) return toast.error("Não é possível vincular cartão a um funcionário inativo.");
+        if (!validar({ uid: validarUID(novoUid) })) return;
         try {
             await api.post('/cartaorfid', { uid: novoUid.trim(), ativo: true, funcionario: { id: funcionarioSelecionado.id } });
             toast.success("Cartão vinculado com sucesso!");
@@ -159,10 +165,13 @@ function Cartoes() {
                                     <>
                                         <h3 className="text-sm font-semibold text-blue-400 mb-3">+ Novo Cartão</h3>
                                         <div className="space-y-3">
-                                            <div className="space-y-2">
-                                                <Label>Código RFID (Passe o crachá)</Label>
-                                                <Input type="text" placeholder="Ex: A1B2C3D4" value={novoUid} onChange={(e) => setNovoUid(e.target.value.toUpperCase())} />
-                                            </div>
+                                            <Campo id="campo-uid" rotulo="Código RFID (passe o crachá)" erro={erros.uid}
+                                                   ajuda="8, 14 ou 20 caracteres, só números e letras de A a F.">
+                                                <Input type="text" placeholder="Ex: A1B2C3D4" value={novoUid}
+                                                       onChange={(e) => { setNovoUid(maskUID(e.target.value)); limpar("uid"); }}
+                                                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleVincularCartao(); } }}
+                                                       autoComplete="off" spellCheck={false} />
+                                            </Campo>
                                             <Button className="w-full" onClick={handleVincularCartao}>Vincular</Button>
                                         </div>
                                     </>

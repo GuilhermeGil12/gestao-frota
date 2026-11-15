@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import com.tcc.gestaofrota.util.Validacoes;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -62,6 +63,8 @@ public class CartaoRfidService {
     }
 
     public CartaoRfid salvar(CartaoRfid cartaoRfid){
+        // Valida e padroniza (maiúsculo, sem espaços/dois-pontos), igual ao que a controladora lê.
+        cartaoRfid.setUid(Validacoes.uid(cartaoRfid.getUid()));
         Optional<CartaoRfid> jaExiste = cartaoRfidRepository.findByUid(cartaoRfid.getUid());
         if (jaExiste.isPresent()){
             throw new RuntimeException("Já existe um cartão com o UID '" + cartaoRfid.getUid() + "' cadastrado no sistema.");

@@ -7,6 +7,7 @@ import org.aspectj.apache.bcel.classfile.Module;
 import org.springframework.expression.spel.ast.OpAnd;
 import org.springframework.stereotype.Service;
 
+import com.tcc.gestaofrota.util.Validacoes;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,6 +40,9 @@ public class ControladoraService {
     }
 
     public Controladora salvar(Controladora controladora){
+        Validacoes.ip(controladora.getIpControladora());
+        Validacoes.mac(controladora.getMacControladora());
+        Validacoes.senha(controladora.getSenha());
 
 
         if (controladoraRepository.existsByIpControladora(controladora.getIpControladora())){
@@ -83,9 +87,19 @@ public class ControladoraService {
         Controladora controladoraAntiga = buscarPorId(id);
 
         //pego o valor que está na nova (vem do body) e pego da nova e coloco na antiga e depois descarto a antiga
+        if (Validacoes.mudou(controladoraNova.getIpControladora(), controladoraAntiga.getIpControladora(), false)) {
+            Validacoes.ip(controladoraNova.getIpControladora());
+        }
+        if (Validacoes.mudou(controladoraNova.getMacControladora(), controladoraAntiga.getMacControladora(), false)) {
+            Validacoes.mac(controladoraNova.getMacControladora());
+        }
         controladoraAntiga.setIpControladora(controladoraNova.getIpControladora());
         controladoraAntiga.setMacControladora(controladoraNova.getMacControladora());
-        controladoraAntiga.setSenha(controladoraNova.getSenha());
+        // A senha não vai para a tela; em branco na edição = mantém a atual.
+        if (!Validacoes.vazio(controladoraNova.getSenha())) {
+            Validacoes.senha(controladoraNova.getSenha());
+            controladoraAntiga.setSenha(controladoraNova.getSenha());
+        }
 
         controladoraAntiga.setVeiculo(controladoraNova.getVeiculo());
 

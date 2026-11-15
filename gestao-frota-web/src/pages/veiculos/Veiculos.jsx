@@ -4,7 +4,10 @@ import api from "../../services/api";
 //import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import {toast} from 'sonner';
-import { maskPlaca } from '../../utils/mascaras';
+import { maskPlaca, maskNumeros } from '../../utils/mascaras';
+import { validarPlaca, validarRenavam, validarVelocidadeMaxima, obrigatorio, tamanho, primeiroErro } from '../../utils/validacoes';
+import { useErros } from '../../utils/useErros';
+import Campo from "../../components/Campo";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
@@ -37,6 +40,12 @@ function Veiculos() {
 
     const initialState = { id: null, nome: "", placa: "", renavam: "", kmAtual: "", velocidadeMaxima: "", ativo: true, controladoraId: "" };
     const [formData, setFormData] = useState(initialState);
+    const { erros, validar, limpar, resetar } = useErros();
+
+    const mudar = (campo, valor) => {
+        setFormData(prev => ({ ...prev, [campo]: valor }));
+        limpar(campo);
+    };
 
     const carregarDados = async () => {
         try {
@@ -53,6 +62,13 @@ function Veiculos() {
 
     const handleSalvar = async (e) => {
         e.preventDefault();
+        const ok = validar({
+            nome: primeiroErro(obrigatorio(formData.nome, "Nome do veículo"), tamanho(formData.nome, 2, 60, "Nome do veículo")),
+            placa: validarPlaca(formData.placa),
+            renavam: validarRenavam(formData.renavam),
+            velocidadeMaxima: validarVelocidadeMaxima(formData.velocidadeMaxima),
+        });
+        if (!ok) return;
         try {
             const payload = { ...formData };
             payload.controladora = payload.controladoraId ? { idControladora: payload.controladoraId } : null;
@@ -68,7 +84,7 @@ function Veiculos() {
         const confirmacao = await Swal.fire({ title: 'Tem certeza?', text: "Deseja alterar o status deste veículo?", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'Sim!', cancelButtonText: 'Cancelar', background: '#1e1e1e', color: '#ffffff' });
         if (confirmacao.isConfirmed) {
             try { await api.put(`/veiculos/${veiculo.id}`, { ...veiculo, ativo: !veiculo.ativo }); carregarDados(); toast.success("Status alterado com sucesso!"); }
-            catch (e) { toast.error("Ops! Não foi possível alterar este veículo."); }
+            catch { toast.error("Ops! Não foi possível alterar este veículo."); }
         }
     };
 
@@ -94,6 +110,7 @@ function Veiculos() {
     const abrirModal = (v = null) => {
         if (v) setFormData({ ...v, controladoraId: v.controladora ? v.controladora.idControladora : "" });
         else setFormData(initialState);
+        resetar();
         setIsModalOpen(true);
     };
 
@@ -119,14 +136,22 @@ function Veiculos() {
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="max-w-[700px]">
                     <DialogHeader><DialogTitle>{formData.id ? "Editar Veículo" : "Cadastrar Veículo"}</DialogTitle><DialogDescription>Preencha os dados do veículo.</DialogDescription></DialogHeader>
-                    <form onSubmit={handleSalvar} className="space-y-4">
-                        <div className="space-y-2"><Label>Nome do Veículo</Label><Input value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} required /></div>
+                    <form onSubmit={handleSalvar} className="space-y-4" noValidate>
+                        <Campo id="campo-nome" rotulo="Nome do veículo" erro={erros.nome} obrigatorio>
+                            <Input value={formData.nome} onChange={e => mudar("nome", e.target.value)} placeholder="Ex.: Strada branca" maxLength={60} />
+                        </Campo>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div className="space-y-2"><Label>Placa</Label><Input value={formData.placa} onChange={e => setFormData({ ...formData, placa: maskPlaca(e.target.value) })} required /></div>
-                            <div className="space-y-2"><Label>Renavam</Label><Input value={formData.renavam} onChange={e => setFormData({ ...formData, renavam: e.target.value })} required /></div>
+                            <Campo id="campo-placa" rotulo="Placa" erro={erros.placa} obrigatorio>
+                                <Input value={formData.placa} onChange={e => mudar("placa", maskPlaca(e.target.value))} placeholder="ABC-1234 ou ABC1D23" />
+                            </Campo>
+                            <Campo id="campo-renavam" rotulo="RENAVAM" erro={erros.renavam} obrigatorio>
+                                <Input value={formData.renavam ?? ""} onChange={e => mudar("renavam", maskNumeros(e.target.value, 11))} placeholder="11 números" inputMode="numeric" />
+                            </Campo>
                         </div>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div className="space-y-2"><Label>Vel. Máxima (km/h)</Label><Input type="number" value={formData.velocidadeMaxima} onChange={e => setFormData({ ...formData, velocidadeMaxima: e.target.value })} /></div>
+                            <Campo id="campo-velocidadeMaxima" rotulo="Limite de velocidade (km/h)" erro={erros.velocidadeMaxima} ajuda="Em branco, vale 110 km/h.">
+                                <Input type="number" min={20} max={200} step={1} value={formData.velocidadeMaxima ?? ""} onChange={e => mudar("velocidadeMaxima", e.target.value)} placeholder="110" inputMode="numeric" />
+                            </Campo>
                             <div className="space-y-2">
                                 <Label>Vincular Controladora</Label>
                                 <select value={formData.controladoraId} onChange={e => setFormData({ ...formData, controladoraId: e.target.value })} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">

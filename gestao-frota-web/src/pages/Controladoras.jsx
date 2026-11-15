@@ -4,6 +4,9 @@ import api from "../services/api";
 //import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import { maskIP, maskMAC } from "../utils/mascaras.js";
+import { validarIP, validarMAC, validarSenha, sePreenchido, SENHA_MINIMA } from "../utils/validacoes";
+import { useErros } from "../utils/useErros";
+import Campo from "../components/Campo";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -33,6 +36,12 @@ function Controladoras() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const initialState = { idControladora: null, ipControladora: "", macControladora: "", senha: "", ativo: true };
     const [formData, setFormData] = useState(initialState);
+    const { erros, validar, limpar, resetar } = useErros();
+
+    const mudar = (campo, valor) => {
+        setFormData(prev => ({ ...prev, [campo]: valor }));
+        limpar(campo);
+    };
 
     const [controladoraParaExcluir, setControladoraParaExcluir] = useState(null);
 
@@ -50,6 +59,13 @@ function Controladoras() {
 
     const handleSalvar = async (e) => {
         e.preventDefault();
+        const ok = validar({
+            ipControladora: validarIP(formData.ipControladora),
+            macControladora: validarMAC(formData.macControladora),
+            // Na edição a senha é opcional (em branco = mantém a atual).
+            senha: formData.idControladora ? sePreenchido(formData.senha, validarSenha) : validarSenha(formData.senha),
+        });
+        if (!ok) return;
         try {
             if (formData.idControladora) await api.put(`/controladora/${formData.idControladora}`, formData);
             else await api.post('/controladora', formData);
@@ -84,7 +100,7 @@ function Controladoras() {
         setControladoraParaExcluir(idControladora);
     };
 
-    const abrirModal = (c = null) => { setFormData(c || initialState); setIsModalOpen(true); };
+    const abrirModal = (c = null) => { setFormData(c || initialState); resetar(); setIsModalOpen(true); };
 
     const paginacao = usePaginacao(controladoras, 20);
 
@@ -100,11 +116,18 @@ function Controladoras() {
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="max-w-[600px]">
                     <DialogHeader><DialogTitle>{formData.idControladora ? "Editar Controladora" : "Cadastrar Controladora"}</DialogTitle><DialogDescription>Preencha os dados da controladora.</DialogDescription></DialogHeader>
-                    <form onSubmit={handleSalvar} className="space-y-4">
-                        <div className="space-y-2"><Label>Endereço IP</Label><Input placeholder="192.168.0.1" value={formData.ipControladora} onChange={e => setFormData({ ...formData, ipControladora: maskIP(e.target.value) })} required /></div>
+                    <form onSubmit={handleSalvar} className="space-y-4" noValidate>
+                        <Campo id="campo-ipControladora" rotulo="Endereço IP" erro={erros.ipControladora} obrigatorio>
+                            <Input placeholder="192.168.0.1" value={formData.ipControladora} onChange={e => mudar("ipControladora", maskIP(e.target.value))} inputMode="decimal" />
+                        </Campo>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div className="space-y-2"><Label>Endereço MAC</Label><Input placeholder="00:1B:44:11:3A:B7" value={formData.macControladora} onChange={e => setFormData({ ...formData, macControladora: maskMAC(e.target.value) })} required /></div>
-                            <div className="space-y-2"><Label>Senha</Label><Input type="password" placeholder="Senha do equipamento" value={formData.senha} onChange={e => setFormData({ ...formData, senha: e.target.value })} required /></div>
+                            <Campo id="campo-macControladora" rotulo="Endereço MAC" erro={erros.macControladora} obrigatorio>
+                                <Input placeholder="00:1B:44:11:3A:B7" value={formData.macControladora} onChange={e => mudar("macControladora", maskMAC(e.target.value))} />
+                            </Campo>
+                            <Campo id="campo-senha" rotulo="Senha" erro={erros.senha} obrigatorio={!formData.idControladora}
+                                   ajuda={formData.idControladora ? "Em branco, mantém a senha atual." : `Pelo menos ${SENHA_MINIMA} caracteres.`}>
+                                <Input type="password" placeholder="Senha do equipamento" value={formData.senha ?? ""} onChange={e => mudar("senha", e.target.value)} autoComplete="new-password" />
+                            </Campo>
                         </div>
                         <DialogFooter className="border-t border-border pt-4"><Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button><Button type="submit">Confirmar</Button></DialogFooter>
                     </form>

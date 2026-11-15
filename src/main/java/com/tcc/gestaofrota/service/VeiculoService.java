@@ -8,6 +8,7 @@ import com.tcc.gestaofrota.repository.VeiculoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.tcc.gestaofrota.util.Validacoes;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,6 +44,11 @@ public class VeiculoService {
 
     @Transactional
     public Veiculo salvar(Veiculo veiculo){
+        Validacoes.obrigatorio(veiculo.getNome(), "Nome do veículo");
+        Validacoes.tamanho(veiculo.getNome(), 2, 60, "Nome do veículo");
+        Validacoes.placa(veiculo.getPlaca());
+        Validacoes.renavam(veiculo.getRenavam());
+        Validacoes.velocidadeMaximaOpcional(veiculo.getVelocidadeMaxima());
 
         Optional<Veiculo> jaExiste = veiculoRepository.findByPlaca(veiculo.getPlaca());
         if(jaExiste.isPresent()){
@@ -90,6 +96,16 @@ public class VeiculoService {
     public Veiculo atualizar(Long id, Veiculo veiculoNovo){
 
         Veiculo veiculoAntigo = buscarPorId(id);
+
+        // Só o que mudou (o botão de ativar/inativar reenvia o veículo inteiro).
+        if (Validacoes.mudou(veiculoNovo.getNome(), veiculoAntigo.getNome(), false)) {
+            Validacoes.obrigatorio(veiculoNovo.getNome(), "Nome do veículo");
+            Validacoes.tamanho(veiculoNovo.getNome(), 2, 60, "Nome do veículo");
+        }
+        if (Validacoes.mudou(veiculoNovo.getRenavam(), veiculoAntigo.getRenavam(), false)) Validacoes.renavam(veiculoNovo.getRenavam());
+        if (Validacoes.mudou(veiculoNovo.getVelocidadeMaxima(), veiculoAntigo.getVelocidadeMaxima(), false)) {
+            Validacoes.velocidadeMaximaOpcional(veiculoNovo.getVelocidadeMaxima());
+        }
 
         //vai pegar o valor que vem do front e coloca dentro da variavel antiga, substitui
         //não coloquei a mudança da placa pois não será possível alterar a placa

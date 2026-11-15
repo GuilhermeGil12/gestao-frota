@@ -1,6 +1,5 @@
 package com.tcc.gestaofrota.controller;
 
-import com.tcc.gestaofrota.dto.CoordenadaEsp32DTO;
 import com.tcc.gestaofrota.model.Localizacao;
 import com.tcc.gestaofrota.repository.LocalizacaoRepository;
 import com.tcc.gestaofrota.service.LocalizacaoService;
@@ -31,22 +30,8 @@ public class LocalizacaoController {
         this.relatorioService = relatorioService;
     }
 
-    // 1. Recebe dados do ESP32
-    @PostMapping("/enviar")
-    public ResponseEntity<String> receberDadosDoEsp32(
-            @RequestParam String codigo,
-            @RequestParam String senha,
-            @RequestBody List<CoordenadaEsp32DTO> loteDoEsp32){
-
-        System.out.println("=== RECEBIDO ===");
-        System.out.println("codigo: " + codigo);
-        System.out.println("senha: " + senha);
-        System.out.println("lote: " + loteDoEsp32.size());
-        System.out.println("lat: " + loteDoEsp32.get(0).getLatitude());
-
-        localizacaoService.processarLoteDoEsp32(codigo, senha, loteDoEsp32);
-        return ResponseEntity.ok("Dados recebidos e salvos com sucesso!");
-    }
+    // A controladora envia os pontos só pelo MQTT (frota/<código>/telemetria).
+    // A antiga rota HTTP POST /enviar foi removida: era aberta, sem login.
 
     // 2. Busca a última localização (Usado no Dashboard)
     @PreAuthorize("hasAuthority('monitoramento.visualizar')")

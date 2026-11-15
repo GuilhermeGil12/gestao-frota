@@ -1,8 +1,8 @@
 package com.tcc.gestaofrota.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -15,6 +15,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -22,9 +23,12 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final String origensCors;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter,
+                          @Value("${app.cors.origens}") String origensCors) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.origensCors = origensCors;
     }
 
     @Bean
@@ -45,11 +49,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/api/auth/**").permitAll()
 
-                    // Rotas usadas pelo ESP32, que nao tem como guardar token.
-                    .requestMatchers(HttpMethod.POST, "/api/localizacao/enviar").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/cartaorfid/liberados", "/api/cartaorfid/dispositivos").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/comandos/pendente/**").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/comandos/*/confirmar").permitAll()
+                    // A controladora fala só pelo MQTT. As antigas rotas HTTP do ESP
+                    // (abertas, sem login) foram removidas: nenhuma rota /api fica aberta além do login.
 
                     // Frontend estatico servido pelo proprio Spring Boot.
                     .requestMatchers("/", "/index.html", "/assets/**", "/*.svg", "/*.png", "/*.ico").permitAll()
@@ -62,10 +63,16 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * CORS: quais OUTROS sites podem chamar a API pelo navegador.
+     * Em produção o site é servido pelo próprio Spring (mesmo endereço), então nem precisa.
+     * Em desenvolvimento, o Vite (porta 5173). Configurável por CORS_ORIGENS (separado por vírgula).
+     */
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedOriginPatterns(Arrays.stream(origensCors.split(","))
+                .map(String::trim).filter(s -> !s.isEmpty()).toList());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(false);

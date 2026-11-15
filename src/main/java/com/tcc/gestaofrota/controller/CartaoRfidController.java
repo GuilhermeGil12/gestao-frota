@@ -60,12 +60,6 @@ public class CartaoRfidController
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping(value = "/dispositivos", produces = "text/plain")
-    public ResponseEntity<String> listarParaEsp32() {
-        String dados = cartaoRfidService.listarParaEsp32();
-        return ResponseEntity.ok(dados);
-    }
-
     @PreAuthorize("hasAuthority('cartoes.editar')")
     @PatchMapping("/{id}/ativar")
     public ResponseEntity<Void> ativar(@PathVariable Long id){
@@ -73,8 +67,10 @@ public class CartaoRfidController
         return ResponseEntity.noContent().build();
     }
 
-    // Endpoint para o novo ESP (T-A7670G) — retorna lista de UIDs ativos em JSON.
-    // GET /api/cartaorfid/liberados → ["A1B2C3D4","E5F6G7H8"]
+    // UIDs dos cartões liberados (usado na tela Configurações → Geral).
+    // A controladora recebe essa lista pelo MQTT (frota/<código>/cartoes), não por aqui.
+    // Exige login: com essa lista alguém poderia clonar um cartão.
+    @PreAuthorize("hasAnyAuthority('configuracoes.geral', 'cartoes.visualizar')")
     @GetMapping("/liberados")
     public ResponseEntity<List<String>> listarLiberados() {
         return ResponseEntity.ok(cartaoRfidService.listarUidsAtivos());

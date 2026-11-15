@@ -18,7 +18,11 @@ O projeto é dividido em dois módulos independentes:
 - **Banco:** PostgreSQL na porta **5433** (não 5432)
 - **Perfis locais:** `application-casa.properties` e `application-flash.properties` ficam fora do git (têm a senha do banco local) — cada máquina mantém o seu; `application-prod.properties` lê tudo de variáveis de ambiente
 - **Telegram:** `application.properties` ganhou `app.telegram.token=${TELEGRAM_TOKEN:}` — token do bot (avisos no Telegram). Vazio = integração desligada. Nunca commitar o token: em dev, pôr no perfil local fora do git; na VM, variável de ambiente `TELEGRAM_TOKEN`
-- **REST:** Controllers com `@CrossOrigin`; respostas em JSON; sem autenticação implementada ainda
+- **Segurança:** ver `SEGURANCA.md` (estado atual e pendências). `application.properties` ganhou:
+  - `app.cors.origens=${CORS_ORIGENS:http://localhost:5173,http://*.localhost:5173}` — sites que podem chamar a API pelo navegador (em produção o site é servido pelo próprio Spring, então só o dev precisa)
+  - `app.login.max-tentativas=5` e `app.login.bloqueio-minutos=15` — limite de senhas erradas por e-mail
+  - No perfil `prod`, o sistema **não sobe** sem `JWT_SECRET`, `ADMIN_SENHA`, `MQTT_BROKER` e `MQTT_USER` (`VerificacaoSegurancaProducao`)
+- **REST:** respostas em JSON; login com JWT; permissões com `@PreAuthorize` em todo controller. A controladora fala **só por MQTT** — não criar rotas HTTP abertas para o ESP
 - **Nomenclatura:** entidades e campos em português (ex: `Veiculo`, `placa`, `funcionario`)
 
 ### Frontend
@@ -29,7 +33,8 @@ O projeto é dividido em dois módulos independentes:
 - **HTTP:** Axios via instância em `services/api.js` (baseURL `http://localhost:8080/api`) — nunca usar `fetch` diretamente
 - **Roteamento:** React Router DOM 7 — rotas definidas em `App.jsx`
 - **Ícones:** lucide-react exclusivamente
-- **Máscaras:** centralizadas em `utils/mascaras.js` — CPF, placa, CNH, telefone
+- **Máscaras:** centralizadas em `utils/mascaras.js` — CPF, RG, placa, telefone, CEP, MAC, IP, UID do cartão, só-números (CNH/RENAVAM)
+- **Validações:** centralizadas em `utils/validacoes.js` (cada função devolve `null` ou a mensagem de erro). Nos formulários: `useErros()` (`utils/useErros.js`) + componente `Campo` (rótulo, borda vermelha e erro embaixo; id do campo = `campo-<nome>`). As mesmas regras existem no backend em `util/Validacoes.java`, chamadas nos Services — ao criar um campo novo, validar nos dois lados
 
 ## Regras de Código (Workflow)
 

@@ -1,6 +1,7 @@
 package com.tcc.gestaofrota.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -21,6 +22,8 @@ public class Controladora {
     @JoinColumn(name = "id_veiculo", referencedColumnName = "id_veiculo", unique = true)
     private Veiculo veiculo;
 
+    // Só entra pelo JSON (cadastro/edição); nunca sai na listagem para o navegador.
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "senha")
     private String senha;
 

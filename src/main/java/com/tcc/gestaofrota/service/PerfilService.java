@@ -21,7 +21,8 @@ public class PerfilService {
     // A foto chega já reduzida pelo navegador; o limite só impede abuso.
     private static final int TAMANHO_MAXIMO_FOTO = 400_000;
     private static final Pattern FORMATO_FOTO = Pattern.compile("^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$");
-    private static final int SENHA_MINIMA = 6;
+    // Mesma regra do cadastro de usuário e da recuperação de senha.
+    private static final int SENHA_MINIMA = com.tcc.gestaofrota.util.Validacoes.SENHA_MINIMA;
 
     private final UsuarioRepository usuarioRepository;
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();

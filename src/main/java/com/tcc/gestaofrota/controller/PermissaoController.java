@@ -6,12 +6,16 @@ import com.tcc.gestaofrota.model.Permissao;
 import com.tcc.gestaofrota.service.PermissaoService;
 import com.tcc.gestaofrota.service.VeiculoService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// Mexer nas permissões é só para quem administra permissões.
+// O catálogo (só leitura) também é usado nas telas de Usuários e Setores.
 @RestController
 @RequestMapping("/api/permissoes")
+@PreAuthorize("hasAuthority('configuracoes.permissoes')")
 public class PermissaoController {
 
     final
@@ -24,6 +28,7 @@ public class PermissaoController {
     }
 
     /** Arvore de telas e acoes que o frontend usa para montar a tela de permissoes. */
+    @PreAuthorize("hasAnyAuthority('configuracoes.permissoes', 'configuracoes.usuarios', 'configuracoes.setores')")
     @GetMapping("/catalogo")
     public ResponseEntity<List<CatalogoPermissoes.Grupo>> catalogo(){
         return ResponseEntity.ok(CatalogoPermissoes.GRUPOS);

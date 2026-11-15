@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment, useRef } from "react";
+import { useState, useEffect, Fragment } from "react";
 import api from "../../services/api";
 import { toast } from "sonner";
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents, useMap } from "react-leaflet";
@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import L from "leaflet";
 import Paginacao from "../../components/Paginacao";
 import { usePaginacao } from "../../utils/usePaginacao";
+import { obrigatorio, tamanho, primeiroErro, validarRaio } from "../../utils/validacoes";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -73,7 +74,10 @@ function Cercas() {
 
     const handleSalvarNova = async () => {
         if (!novaPos) return toast.error("Clique no mapa para posicionar a cerca.");
-        if (!novoNome.trim()) return toast.error("Nome é obrigatório.");
+        const erroNova = primeiroErro(
+            obrigatorio(novoNome, "Nome da cerca"), tamanho(novoNome, 2, 60, "Nome da cerca"), validarRaio(novoRaio),
+        );
+        if (erroNova) return toast.error(erroNova);
         try {
             await api.post("/cercas", {
                 nome: novoNome,
@@ -124,7 +128,10 @@ function Cercas() {
     };
 
     const handleSalvarEditar = async () => {
-        if (!cercaEditando.nome?.trim()) return toast.error("Nome é obrigatório.");
+        const erroEdicao = primeiroErro(
+            obrigatorio(cercaEditando.nome, "Nome da cerca"), tamanho(cercaEditando.nome, 2, 60, "Nome da cerca"), validarRaio(cercaEditando.raio),
+        );
+        if (erroEdicao) return toast.error(erroEdicao);
         try {
             await api.put(`/cercas/${cercaEditando.id}`, {
                 ...cercaEditando,

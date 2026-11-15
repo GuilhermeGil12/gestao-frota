@@ -11,6 +11,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.util.List;
 import java.util.Optional;
 
+import com.tcc.gestaofrota.util.Validacoes;
+
 import javax.management.RuntimeErrorException;
 
 @Service
@@ -67,8 +69,51 @@ public class FuncionarioService {
         return funcionarioRepository.findByCpf(cpf);
     }
 
+    /**
+     * Formato e tamanho dos campos (mesmas regras do formulário).
+     * antigo == null: cadastro novo, valida tudo. Na atualização, só o que mudou
+     * (o botão de reativar reenvia o registro inteiro, e cadastros antigos podem estar fora do padrão).
+     */
+    private void validarCampos(Funcionario f, Funcionario antigo) {
+        boolean novo = antigo == null;
+        if (Validacoes.mudou(f.getNome(), novo ? null : antigo.getNome(), novo)) Validacoes.nomeCompleto(f.getNome());
+        if (Validacoes.mudou(f.getCpf(), novo ? null : antigo.getCpf(), novo)) Validacoes.cpf(f.getCpf());
+        if (Validacoes.mudou(f.getRg(), novo ? null : antigo.getRg(), novo)) Validacoes.rg(f.getRg());
+        if (Validacoes.mudou(f.getNumeroTelefone(), novo ? null : antigo.getNumeroTelefone(), novo)) Validacoes.telefone(f.getNumeroTelefone());
+        if (Validacoes.mudou(f.getEmail(), novo ? null : antigo.getEmail(), novo)) Validacoes.email(f.getEmail());
+        if (Validacoes.mudou(f.getCep(), novo ? null : antigo.getCep(), novo)) Validacoes.cepOpcional(f.getCep());
+        if (Validacoes.mudou(f.getMatricula(), novo ? null : antigo.getMatricula(), novo)) {
+            Validacoes.obrigatorio(f.getMatricula(), "Matrícula");
+            Validacoes.tamanho(f.getMatricula(), 1, 20, "Matrícula");
+        }
+        if (Validacoes.mudou(f.getCargo(), novo ? null : antigo.getCargo(), novo)) {
+            Validacoes.obrigatorio(f.getCargo(), "Cargo");
+            Validacoes.tamanho(f.getCargo(), 2, 60, "Cargo");
+        }
+
+        // Quem dirige (nível 1 a 3) precisa de CNH completa.
+        boolean dirige = f.getNivelMotorista() != null && f.getNivelMotorista() > 0;
+        if (dirige) {
+            if (Validacoes.mudou(f.getNumCNH(), novo ? null : antigo.getNumCNH(), novo)
+                    || Validacoes.mudou(f.getNivelMotorista(), novo ? null : antigo.getNivelMotorista(), novo)) {
+                Validacoes.cnh(f.getNumCNH());
+            }
+            if (Validacoes.mudou(f.getCategoriaCNH(), novo ? null : antigo.getCategoriaCNH(), novo)
+                    || Validacoes.mudou(f.getNivelMotorista(), novo ? null : antigo.getNivelMotorista(), novo)) {
+                if (f.getCategoriaCNH() == null || !f.getCategoriaCNH().matches("A|B|C|D|E|AB|AC|AD|AE")) {
+                    throw new RuntimeException("Escolha a categoria da CNH.");
+                }
+            }
+            if (Validacoes.mudou(f.getValidadeCNH(), novo ? null : antigo.getValidadeCNH(), novo)
+                    || Validacoes.mudou(f.getNivelMotorista(), novo ? null : antigo.getNivelMotorista(), novo)) {
+                Validacoes.validadeCnh(f.getValidadeCNH());
+            }
+        }
+    }
+
     // Regra de negócio // se já existe eu não salvo
     public Funcionario salvar(Funcionario funcionario){
+        validarCampos(funcionario, null);
 
         //Regra de não cadastrar dois funcionarios com o mesmo cpf
         //Faz a busca cpf e coloca dentro da variaval jaExiste
@@ -119,6 +164,7 @@ public class FuncionarioService {
 
     public Funcionario atualizar(Long id, Funcionario funcionarioNovo){
         Funcionario funcionarioAntigo = buscarPorId(id);
+        validarCampos(funcionarioNovo, funcionarioAntigo);
 
         funcionarioAntigo.setNome(funcionarioNovo.getNome());
         funcionarioAntigo.setCpf(funcionarioNovo.getCpf());

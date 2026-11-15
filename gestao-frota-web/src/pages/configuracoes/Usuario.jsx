@@ -58,6 +58,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import Paginacao from "../../components/Paginacao";
 import { usePaginacao } from "../../utils/usePaginacao";
+import {
+    validarEmail, validarSenha, validarConfirmacaoSenha, obrigatorio, tamanho, primeiroErro, SENHA_MINIMA,
+} from "../../utils/validacoes";
+import { useErros } from "../../utils/useErros";
 
 function Usuario() {
     const { temPermissao } = useAuth();
@@ -71,6 +75,13 @@ function Usuario() {
     };
 
     const [formData, setFormData] = useState(initialState);
+    const [aba, setAba] = useState("dados");
+    const { erros, validar, limpar, resetar } = useErros();
+
+    const mudar = (campo, valor) => {
+        setFormData(prev => ({ ...prev, [campo]: valor }));
+        limpar(campo);
+    };
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [usuarioInativar, setUsuarioInativar] = useState(null);
@@ -108,6 +119,8 @@ function Usuario() {
         } else {
             setFormData(initialState);
         }
+        resetar();
+        setAba("dados");
         setIsModalOpen(true);
     };
     const [funcionarios, setFuncionarios] = useState([]);
@@ -198,32 +211,22 @@ function Usuario() {
 
 
 
-        if (formData.senha != formData.confirmarSenha) {
-            toast.error("As senhas precisam ser idênticas.");
+        const novo = !formData.id;
+        const ok = validar({
+            nomeUsuario: primeiroErro(obrigatorio(formData.nomeUsuario, "Nome"), tamanho(formData.nomeUsuario, 2, 80, "Nome")),
+            email: validarEmail(formData.email),
+            // Editando, a senha muda pelo botão "Redefinir senha".
+            senha: novo ? validarSenha(formData.senha) : null,
+            confirmarSenha: novo ? validarConfirmacaoSenha(formData.senha, formData.confirmarSenha) : null,
+        });
+        if (!ok) {
+            setAba("dados"); // os campos com erro ficam nesta aba
             return;
         }
 
-
-
         try {
-            if (formData.nomeUsuario) {
-                if (formData.id) {
-                    await api.put(`/usuario/${formData.id}`, payload);
-                } else {
-                    if (!formData.senha) {
-                        toast.error("Preencha todos os campos.");
-                        return
-                    }
-                    else {
-                        await api.post(`/usuario`, payload);
-
-                    }
-                }
-            }
-            else {
-                toast.error("Preencha todos os campos.");
-                return
-            }
+            if (formData.id) await api.put(`/usuario/${formData.id}`, payload);
+            else await api.post(`/usuario`, payload);
 
             toast.success("Usuário salvo com sucesso!")
             setIsModalOpen(false);
@@ -295,12 +298,10 @@ function Usuario() {
     };
 
     const handleRedefinirSenha = async () => {
-        if (redefinirData.novaSenha.length < 8) {
-            toast.error("A nova senha deve ter pelo menos 8 caracteres.");
-            return;
-        }
-        if (redefinirData.novaSenha !== redefinirData.confirmarNovaSenha) {
-            toast.error("As senhas precisam ser idênticas.");
+        const erroSenha = validarSenha(redefinirData.novaSenha)
+            || validarConfirmacaoSenha(redefinirData.novaSenha, redefinirData.confirmarNovaSenha);
+        if (erroSenha) {
+            toast.error(erroSenha);
             return;
         }
 
@@ -415,7 +416,7 @@ function Usuario() {
                         </DialogDescription>
                     </DialogHeader>
 
-                    <Tabs>
+                    <Tabs value={aba} onValueChange={setAba}>
                         <TabsList>
                             <TabsTrigger value="dados">
                                 <ClipboardList />
@@ -429,19 +430,19 @@ function Usuario() {
                         <TabsContent value="dados">
                             <FieldGroup className="grid grid-col-2">
                                 <Field>
-                                    <Label>Nome</Label>
+                                    <Label htmlFor="campo-nomeUsuario">Nome</Label>
                                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                        <Input
-                                            placeholder="Nome"
-                                            value={formData.nomeUsuario}
-                                            onChange={(e) =>
-                                                setFormData({
-                                                    ...formData,
-                                                    nomeUsuario: e.target.value,
-                                                })
-                                            }
-                                            required
-                                        />
+                                        <div className="space-y-2">
+                                            <Input
+                                                id="campo-nomeUsuario"
+                                                placeholder="Nome"
+                                                value={formData.nomeUsuario}
+                                                onChange={(e) => mudar("nomeUsuario", e.target.value)}
+                                                maxLength={80}
+                                                aria-invalid={erros.nomeUsuario ? true : undefined}
+                                            />
+                                            {erros.nomeUsuario && <p role="alert" className="text-sm text-destructive">{erros.nomeUsuario}</p>}
+                                        </div>
                                         <Select
                                             value={formData.idFuncionario}
                                             onValueChange={escolherFuncionario}
@@ -462,15 +463,17 @@ function Usuario() {
                                     </div>
                                 </Field>
                                 <Field>
-                                    <Label>Email</Label>
+                                    <Label htmlFor="campo-email">E-mail</Label>
                                     <Input
-                                        placeholder="example@email.com"
+                                        id="campo-email"
+                                        type="email"
+                                        placeholder="nome@empresa.com"
                                         value={formData.email}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, email: e.target.value })
-                                        }
-                                        required
-                                    ></Input>
+                                        onChange={(e) => mudar("email", e.target.value.trim())}
+                                        maxLength={120}
+                                        aria-invalid={erros.email ? true : undefined}
+                                    />
+                                    {erros.email && <p role="alert" className="text-sm text-destructive">{erros.email}</p>}
                                 </Field>
                                 {formData.id ? (
                                     <Field>
@@ -492,17 +495,18 @@ function Usuario() {
                                 ) : (
                                     <>
                                         <Field>
-                                            <Label>Senha</Label>
+                                            <Label htmlFor="campo-senha">Senha</Label>
                                             <div className="relative">
                                                 <Input
+                                                    id="campo-senha"
                                                     type={verSenha ? "text" : "password"}
                                                     className="pr-10"
+                                                    placeholder={`Mínimo ${SENHA_MINIMA} caracteres`}
+                                                    autoComplete="new-password"
                                                     value={formData.senha}
-                                                    onChange={(e) =>
-                                                        setFormData({ ...formData, senha: e.target.value })
-                                                    }
-                                                    required
-                                                ></Input>
+                                                    onChange={(e) => mudar("senha", e.target.value)}
+                                                    aria-invalid={erros.senha ? true : undefined}
+                                                />
                                                 <button
                                                     type="button"
                                                     onClick={() => setVerSenha(!verSenha)}
@@ -512,22 +516,20 @@ function Usuario() {
                                                     {verSenha ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                                                 </button>
                                             </div>
+                                            {erros.senha && <p role="alert" className="text-sm text-destructive">{erros.senha}</p>}
                                         </Field>
                                         <Field>
-                                            <Label>Confirme a senha</Label>
+                                            <Label htmlFor="campo-confirmarSenha">Confirme a senha</Label>
                                             <div className="relative">
                                                 <Input
+                                                    id="campo-confirmarSenha"
                                                     type={verConfirmarSenha ? "text" : "password"}
                                                     className="pr-10"
+                                                    autoComplete="new-password"
                                                     value={formData.confirmarSenha}
-                                                    onChange={(e) =>
-                                                        setFormData({
-                                                            ...formData,
-                                                            confirmarSenha: e.target.value,
-                                                        })
-                                                    }
-                                                    required
-                                                ></Input>
+                                                    onChange={(e) => mudar("confirmarSenha", e.target.value)}
+                                                    aria-invalid={erros.confirmarSenha ? true : undefined}
+                                                />
                                                 <button
                                                     type="button"
                                                     onClick={() => setVerConfirmarSenha(!verConfirmarSenha)}
@@ -537,6 +539,7 @@ function Usuario() {
                                                     {verConfirmarSenha ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                                                 </button>
                                             </div>
+                                            {erros.confirmarSenha && <p role="alert" className="text-sm text-destructive">{erros.confirmarSenha}</p>}
                                         </Field>
                                     </>
                                 )}
