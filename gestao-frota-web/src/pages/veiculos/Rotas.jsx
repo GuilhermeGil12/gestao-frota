@@ -290,7 +290,7 @@ function Rotas() {
                                                 <p>Velocidade: <b>{ponto.velocidade} km/h</b></p>
                                                 <p>Situação: <b>{situacao.rotulo}</b></p>
                                                 <p>Evento: <b>{rotuloEvento(ponto)}</b></p>
-                                                <p>Pós-chave: <b>{formatarTensao(ponto.tensaoPosChave)}</b> · Bateria: <b>{formatarTensao(ponto.tensaoSistema)}</b></p>
+                                                <p>Alternador: <b>{formatarTensao(ponto.tensaoSistema)}</b></p>
                                             </div>
                                         </Popup>
                                     </CircleMarker>
@@ -324,15 +324,14 @@ function Rotas() {
                                 <TableHead>Velocidade</TableHead>
                                 <TableHead>Situação</TableHead>
                                 <TableHead>Evento</TableHead>
-                                <TableHead>Pós-chave</TableHead>
-                                <TableHead>Bateria</TableHead>
+                                <TableHead>Alternador</TableHead>
                                 <TableHead>Coordenadas</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {paginacao.totalItens === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Nenhum ponto de rota carregado.</TableCell>
+                                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum ponto de rota carregado.</TableCell>
                                 </TableRow>
                             ) : (paginacao.visiveis.map((h, i) => {
                                 const indiceGlobal = paginacao.inicio - 1 + i;
@@ -358,7 +357,6 @@ function Rotas() {
                                         </TableCell>
                                         <TableCell><Badge variant={situacao.variante}>{situacao.rotulo}</Badge></TableCell>
                                         <TableCell className="text-muted-foreground">{rotuloEvento(h)}</TableCell>
-                                        <TableCell className="tabular-nums">{formatarTensao(h.tensaoPosChave)}</TableCell>
                                         <TableCell className="tabular-nums">{formatarTensao(h.tensaoSistema)}</TableCell>
                                         <TableCell className="text-xs text-muted-foreground tabular-nums">
                                             {Number(h.lat).toFixed(5)}, {Number(h.lng).toFixed(5)}

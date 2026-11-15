@@ -312,10 +312,10 @@ function Relatorios() {
                     d.excessos, d.freadas, d.aceleracoes, d.viradasBruscas]));
         } else if (aba === "detalhado") {
             baixarCsv(`relatorio-detalhado_${sufixo}.csv`,
-                ["Data/hora", "Placa", "Veículo", "Motorista", "Cartão", "Velocidade (km/h)", "Acima do limite", "Evento", "Ignição", "Satélites", "Latitude", "Longitude", "Pós-chave (V)", "Bateria (V)"],
+                ["Data/hora", "Placa", "Veículo", "Motorista", "Cartão", "Velocidade (km/h)", "Acima do limite", "Evento", "Ignição", "Satélites", "Latitude", "Longitude", "Alternador (V)"],
                 pontosFiltrados.map((p) => [dataHoraBr(p.dataHora), p.placa, p.nomeVeiculo, p.motorista, p.cartao,
                     (p.velocidade || 0).toFixed(1).replace(".", ","), p.excesso ? "Sim" : "Não", rotuloEvento(p.evento),
-                    p.ignicao ? "Ligada" : "Desligada", p.qtdSatelite, p.latitude, p.longitude, p.tensaoPosChave, p.tensaoSistema]));
+                    p.ignicao ? "Ligada" : "Desligada", p.qtdSatelite, p.latitude, p.longitude, p.tensaoSistema]));
         } else {
             baixarCsv(`relatorio-visitas_${sufixo}.csv`,
                 ["Local", "Responsável", "Placa", "Veículo", "Motorista", "Entrada", "Saída", "Duração (min)"],
