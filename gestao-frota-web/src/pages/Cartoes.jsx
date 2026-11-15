@@ -117,7 +117,7 @@ function Cartoes() {
                     <DialogHeader>
                         <DialogTitle>Cartões</DialogTitle>
                         <DialogDescription>
-                            {funcionarioSelecionado?.nome}
+                            <strong className="font-semibold text-foreground">{funcionarioSelecionado?.nome}</strong>
                             {funcionarioSelecionado?.cargo ? ` · ${funcionarioSelecionado.cargo}` : ""}
                         </DialogDescription>
                     </DialogHeader>
@@ -134,19 +134,17 @@ function Cartoes() {
                                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Vincular cartão</h3>
                                     <Label htmlFor="campo-uid">Código do cartão</Label>
                                     <div className="flex gap-2">
-                                        <Input id="campo-uid" type="text" placeholder="Passe o crachá no leitor ou digite" value={novoUid}
-                                               className={`font-mono tracking-wider ${erros.uid ? "border-destructive" : ""}`}
+                                        <Input id="campo-uid" type="text" placeholder="Ex.: A1B2C3D4" value={novoUid}
+                                               className={erros.uid ? "border-destructive" : undefined}
                                                aria-invalid={erros.uid ? true : undefined}
-                                               aria-describedby={erros.uid ? "campo-uid-erro" : "campo-uid-ajuda"}
+                                               aria-describedby={erros.uid ? "campo-uid-erro" : undefined}
                                                onChange={(e) => { setNovoUid(maskUID(e.target.value)); limpar("uid"); }}
                                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleVincularCartao(); } }}
                                                autoComplete="off" spellCheck={false} autoFocus />
                                         <Button onClick={handleVincularCartao}>Vincular</Button>
                                     </div>
-                                    {erros.uid ? (
+                                    {erros.uid && (
                                         <p id="campo-uid-erro" role="alert" className="text-sm text-destructive">{erros.uid}</p>
-                                    ) : (
-                                        <p id="campo-uid-ajuda" className="text-xs text-muted-foreground">8, 14 ou 20 caracteres, só números e letras de A a F.</p>
                                     )}
                                 </section>
                             )}
