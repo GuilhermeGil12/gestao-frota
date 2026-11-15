@@ -154,7 +154,7 @@ function Cercas() {
     return (
         <div className="w-full space-y-6">
             <div className="flex flex-wrap items-center justify-between border-b border-border pb-4 gap-3">
-                <h1 className="text-xl font-semibold text-foreground">Cercas Geográficas</h1>
+                <h1 className="text-xl font-semibold text-foreground">Cercas</h1>
                 <Button onClick={abrirModalNova}>+ Nova Cerca</Button>
             </div>
 
@@ -260,7 +260,7 @@ function Cercas() {
                         </div>
 
                         <p className="text-sm text-muted-foreground">
-                            {novaPos ? `📍 Posição: ${novaPos.lat.toFixed(5)}, ${novaPos.lng.toFixed(5)}` : "Clique no mapa para posicionar o pin."}
+                            {novaPos ? `Posição: ${novaPos.lat.toFixed(5)}, ${novaPos.lng.toFixed(5)}` : "Clique no mapa para posicionar o pin."}
                         </p>
 
                         {/* Mini mapa dentro do modal */}

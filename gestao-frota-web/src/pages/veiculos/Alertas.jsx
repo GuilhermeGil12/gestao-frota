@@ -56,12 +56,12 @@ function Alertas() {
     return (
         <div className="w-full space-y-6">
             <div className="flex flex-wrap items-center justify-between border-b border-border pb-4 gap-3">
-                <h1 className="text-xl font-semibold text-foreground">Histórico de Alertas (Velocidade &gt; 110km/h)</h1>
+                <h1 className="text-xl font-semibold text-foreground">Alertas</h1>
             </div>
 
             {/* Filtros */}
             <Card>
-                <CardContent className="pt-6">
+                <CardContent>
                     <div className="flex gap-4 items-end flex-wrap">
                         <div className="flex-1 min-w-[200px] space-y-2">
                             <Label>Data Início</Label>

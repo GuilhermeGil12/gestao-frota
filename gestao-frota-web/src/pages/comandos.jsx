@@ -46,7 +46,7 @@ function Comandos() {
         try {
             const resp = await api.get('/controladora');
             setControladoras(resp.data);
-        } catch (err) {
+        } catch {
             toast.error("Erro ao buscar controladoras.");
         }
     }
@@ -91,7 +91,7 @@ function Comandos() {
         <div className="w-full space-y-6">
             {/* Cabeçalho */}
             <div className="flex flex-wrap items-center justify-between border-b border-border pb-4 gap-3">
-                <h1 className="text-xl font-semibold text-foreground">Comandos Remotos</h1>
+                <h1 className="text-xl font-semibold text-foreground">Comandos</h1>
                 {podeEnviarComando && (
                     <BotaoFlutuante rotulo="Novo comando" onClick={() => setDialogAberto(true)} />
                 )}

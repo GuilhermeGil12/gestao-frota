@@ -188,12 +188,12 @@ function Rotas() {
     return (
         <div className="w-full space-y-6">
             <div className="flex flex-wrap items-center justify-between border-b border-border pb-4 gap-3">
-                <h1 className="text-xl font-semibold text-foreground">Rastreamento de Percurso Diário</h1>
+                <h1 className="text-xl font-semibold text-foreground">Rotas</h1>
             </div>
 
             {/* Filtros */}
             <Card>
-                <CardContent className="pt-6">
+                <CardContent>
                     <div className="flex gap-4 items-end flex-wrap">
                         <div className="flex-1 min-w-[200px] space-y-2">
                             <Label htmlFor="data-viagem">Data da viagem</Label>
@@ -310,8 +310,8 @@ function Rotas() {
                     </CardTitle>
                     <CardDescription>
                         {veiculo && historicoRotas.length > 0
-                            ? `${veiculo.placa}${veiculo.nome ? ` · ${veiculo.nome}` : ''} — clique em uma linha para localizar o ponto no mapa.`
-                            : 'Selecione a data e o veículo para listar os pontos registrados.'}
+                            ? `${veiculo.placa}${veiculo.nome ? ` · ${veiculo.nome}` : ''}`
+                            : 'Nenhum veículo selecionado.'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

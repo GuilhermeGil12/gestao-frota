@@ -186,7 +186,7 @@ function MonitoramentoTempoReal() {
 
             {/* Cabeçalho */}
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
-                <h1 className="text-xl font-semibold text-foreground">Monitoramento em Tempo Real</h1>
+                <h1 className="text-xl font-semibold text-foreground">Monitoramento</h1>
                 <div className="flex flex-wrap items-center gap-3">
                     <Badge variant="outline" className="gap-2 py-1">
                         <span className="relative flex size-2">
@@ -265,7 +265,6 @@ function MonitoramentoTempoReal() {
                 <Card className="flex h-[60vh] min-h-80 flex-col gap-0 py-0 lg:h-[640px]">
                     <CardHeader className="border-b border-border py-4">
                         <CardTitle className="text-base">Veículos</CardTitle>
-                        <CardDescription>Clique para acompanhar um veículo.</CardDescription>
                     </CardHeader>
                     <CardContent className="flex-1 overflow-y-auto p-2">
                         {frota.length === 0 ? (

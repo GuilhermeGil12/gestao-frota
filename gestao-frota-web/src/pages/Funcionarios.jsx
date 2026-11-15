@@ -271,7 +271,7 @@ function Funcionarios() {
     return (
         <div className="w-full">
             <div className="flex flex-wrap items-center justify-between mb-6 border-b border-border pb-4 gap-4">
-                <h1 className="text-xl font-semibold text-foreground">Gestão de Funcionários</h1>
+                <h1 className="text-xl font-semibold text-foreground">Funcionários</h1>
 
                 <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-1 sm:flex-row sm:items-center sm:max-w-xl">
                     {/* Barra de Pesquisa */}
@@ -416,10 +416,6 @@ function Funcionarios() {
                                         .filter(f => f.ativo && f.id !== formData.id)
                                         .map(f => <option key={f.id} value={f.id}>{f.nome}{f.cargo ? ` — ${f.cargo}` : ""}</option>)}
                                 </select>
-                                <p className="text-xs text-muted-foreground">
-                                    O líder recebe toda segunda, por e-mail, o relatório de condução dos seus liderados.
-                                    Sem líder próprio, vale o líder do setor.
-                                </p>
                             </div>
                             <Campo id="campo-nivelMotorista" rotulo="Nível motorista" erro={erros.nivelMotorista} obrigatorio>
                                 <select value={formData.nivelMotorista ?? ""} onChange={e => mudar("nivelMotorista", e.target.value)} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">

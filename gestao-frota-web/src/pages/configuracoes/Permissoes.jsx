@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Search, ShieldCheck, Loader2 } from "lucide-react";
 import api from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import PainelPermissoes from "@/components/PainelPermissoes";
@@ -77,25 +75,12 @@ function Permissoes() {
     return (
         <div className="w-full space-y-6">
             <div className="flex flex-wrap items-center justify-between border-b border-border pb-4 gap-4">
-                <h1 className="text-xl font-semibold text-foreground">Papel inicial por setor</h1>
+                <h1 className="text-xl font-semibold text-foreground">Permissões</h1>
                 <div className="relative w-full sm:w-auto">
                     <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input className="w-full sm:w-64 pl-8" placeholder="Buscar setor..." value={busca} onChange={(e) => setBusca(e.target.value)} />
                 </div>
             </div>
-
-            <Card>
-                <CardContent className="pt-6 text-sm text-muted-foreground space-y-1">
-                    <p>
-                        O papel inicial é o conjunto de permissões com que um <strong className="text-foreground">usuário novo</strong> começa.
-                        Ao cadastrar um usuário para um funcionário deste setor, essas permissões já vêm marcadas.
-                    </p>
-                    <p>
-                        Mudar o papel inicial não altera os usuários que já existem. Para ajustar um usuário,
-                        use <Link to="/configuracoes/usuario" className="text-foreground underline underline-offset-4">Configurações → Usuários</Link>.
-                    </p>
-                </CardContent>
-            </Card>
 
             <Table>
                 <TableHeader>

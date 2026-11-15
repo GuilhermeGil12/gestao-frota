@@ -130,7 +130,7 @@ function Dashboard() {
     <div className="w-full">
       <div className="flex flex-wrap items-center justify-between mb-6 border-b border-border pb-4 gap-3">
         <h1 className="text-xl font-semibold text-foreground">
-          Dashboard de Monitoramento
+          Dashboard
         </h1>
       </div>
 

@@ -155,9 +155,6 @@ function Setores() {
                                     <option key={f.id} value={f.id}>{f.nome}{f.cargo ? ` — ${f.cargo}` : ""}</option>
                                 ))}
                             </select>
-                            <p className="text-xs text-muted-foreground">
-                                Recebe o relatório semanal de quem é do setor e não tem um líder próprio.
-                            </p>
                         </div>
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setModalAberto(false)}>Cancelar</Button>

@@ -114,7 +114,7 @@ function Controladoras() {
     return (
         <div className="w-full">
             <div className="flex flex-wrap items-center justify-between mb-6 border-b border-border pb-4 gap-3">
-                <h1 className="text-xl font-semibold text-foreground">Gestão de Controladoras</h1>
+                <h1 className="text-xl font-semibold text-foreground">Controladoras</h1>
                 {temPermissao("controladoras.cadastrar") && (
                     <BotaoFlutuante rotulo="Nova controladora" onClick={() => abrirModal()} />
                 )}

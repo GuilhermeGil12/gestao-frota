@@ -163,7 +163,7 @@ function Perfil() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Foto</CardTitle>
-                            <CardDescription>Aparece no menu lateral. PNG ou JPG; é recortada em quadrado.</CardDescription>
+                            <CardDescription>PNG ou JPG.</CardDescription>
                         </CardHeader>
                         <CardContent className="flex flex-col items-center gap-4">
                             <div className="relative size-32 overflow-hidden rounded-full border border-border bg-muted">
@@ -235,7 +235,6 @@ function Perfil() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Dados pessoais</CardTitle>
-                            <CardDescription>O e-mail é o seu login e só pode ser trocado por um administrador.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <form onSubmit={salvarNome} className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -286,7 +285,6 @@ function Perfil() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Telegram</CardTitle>
-                            <CardDescription>Avisos no celular, mesmo com o site fechado.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <ConexaoTelegram />
@@ -296,7 +294,6 @@ function Perfil() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Minhas notificações</CardTitle>
-                            <CardDescription>Escolha o que aparece no sino. Vale só para você.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <PreferenciasNotificacao />

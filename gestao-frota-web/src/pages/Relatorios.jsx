@@ -350,7 +350,7 @@ function Relatorios() {
 
             {/* Filtros */}
             <Card>
-                <CardContent className="pt-6 space-y-4">
+                <CardContent className="space-y-4">
                     <div className="flex gap-4 items-end flex-wrap">
                         <div className="flex-1 min-w-[200px] space-y-2">
                             <Label htmlFor="data-inicio">Data inicial</Label>
@@ -406,7 +406,7 @@ function Relatorios() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Resumo por veículo</CardTitle>
-                            <CardDescription>{descricaoPeriodo} Eventos de condução = freadas, acelerações e viradas bruscas detectadas pela controladora.</CardDescription>
+                            <CardDescription>{descricaoPeriodo}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <Table>
@@ -550,8 +550,7 @@ function Relatorios() {
                         <CardHeader>
                             <CardTitle>Visitas às cercas</CardTitle>
                             <CardDescription>
-                                {descricaoPeriodo} Cada visita vai da entrada do veículo na cerca até a saída.
-                                Passagens de menos de 1 minuto não contam. Cadastre os locais em Veículos → Cercas.
+                                {descricaoPeriodo}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">

@@ -147,7 +147,7 @@ function Configuracoes() {
     return (
         <div className="w-full space-y-6">
             <div className="flex flex-wrap items-center justify-between border-b border-border pb-4 gap-3">
-                <h1 className="text-xl font-semibold text-foreground">Configurações do Sistema</h1>
+                <h1 className="text-xl font-semibold text-foreground">Configurações</h1>
                 <Button onClick={handleSalvar} disabled={carregando || salvando}>
                     {salvando ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                     Salvar alterações
@@ -159,7 +159,6 @@ function Configuracoes() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Empresa</CardTitle>
-                        <CardDescription>Aparece no cabeçalho dos relatórios em PDF.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
                         <Label htmlFor="nome-empresa">Nome da empresa</Label>
@@ -177,7 +176,6 @@ function Configuracoes() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Avisos</CardTitle>
-                        <CardDescription>Quando o sistema deve avisar nas notificações.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="flex items-center justify-between gap-4">
@@ -194,7 +192,7 @@ function Configuracoes() {
                                     <Label htmlFor="km-revisao">Revisão a cada</Label>
                                     <Badge variant="outline">Em breve</Badge>
                                 </div>
-                                <p className="text-xs text-muted-foreground">Km entre revisões. O aviso ainda não é gerado.</p>
+                                <p className="text-xs text-muted-foreground">Km entre revisões.</p>
                             </div>
                             <Input id="km-revisao" type="number" min={1} step={1000} value={config.kmRevisao}
                                    onChange={(e) => alterar("kmRevisao", e.target.value)} className="w-28 text-center" disabled={carregando} />
@@ -206,15 +204,13 @@ function Configuracoes() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Regras de acesso ao veículo</CardTitle>
-                        <CardDescription>O que impede um motorista de liberar o veículo com o cartão.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="flex items-center justify-between gap-4">
                             <div className="space-y-0.5">
                                 <Label htmlFor="cnh-vencida">Bloquear CNH vencida</Label>
                                 <p className="text-xs text-muted-foreground">
-                                    Quando a CNH vence, os cartões do motorista são bloqueados e a CNH fica pendente
-                                    até ser validada em Funcionários. Verificado todo dia e ao salvar o funcionário.
+                                    Bloqueia os cartões até a nova CNH ser validada em Funcionários.
                                 </p>
                             </div>
                             <Switch id="cnh-vencida" checked={!!config.bloquearCnhVencida}
@@ -238,7 +234,6 @@ function Configuracoes() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Minhas notificações</CardTitle>
-                        <CardDescription>O que aparece no seu sino. Salva na hora e vale só para você.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <PreferenciasNotificacao />
@@ -250,8 +245,7 @@ function Configuracoes() {
                     <CardHeader>
                         <CardTitle>Relatório semanal dos líderes</CardTitle>
                         <CardDescription>
-                            Toda segunda às 7h, cada líder recebe por e-mail a condução da semana anterior dos seus liderados,
-                            e um aviso no Telegram (se conectou).
+                            Toda segunda às 7h, por e-mail.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -283,7 +277,7 @@ function Configuracoes() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Dados</CardTitle>
-                        <CardDescription>Exporta veículos, funcionários e cartões em um arquivo CSV (abre no Excel).</CardDescription>
+                        <CardDescription>Veículos, funcionários e cartões em CSV.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Button variant="outline" className="w-full" onClick={handleBackup} disabled={exportando}>

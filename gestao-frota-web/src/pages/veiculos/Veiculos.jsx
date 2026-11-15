@@ -126,7 +126,7 @@ function Veiculos() {
     return (
         <div className="w-full">
             <div className="flex flex-wrap items-center justify-between mb-6 border-b border-border pb-4 gap-4">
-                <h1 className="text-xl font-semibold text-foreground">Gestão de Veículos</h1>
+                <h1 className="text-xl font-semibold text-foreground">Veículos</h1>
                 <Input type="text" placeholder="Pesquisar por Nome ou Placa..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} className="max-w-xs" />
                 {temPermissao("veiculos.cadastrar") && (
                     <BotaoFlutuante rotulo="Novo veículo" onClick={() => abrirModal()} />

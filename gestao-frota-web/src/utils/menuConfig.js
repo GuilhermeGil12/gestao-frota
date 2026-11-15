@@ -15,7 +15,7 @@ import {
         { to: "/funcionarios", icon: Users, label: "Funcionários" },
         {to: "/comandos", icon: ShieldAlert, label: "Comandos"},
         {to: "/veiculos", label: "Veículos", icon: Car, children: [
-            {to: "/rotas", label: "Lista de Veículos"}, 
+            {to: "/rotas", label: "Rotas"}, 
             {to: "/alertas", label: "Alertas"},
             {to: "/cercas", label: "Cercas"}]},
         {to: "/controladoras", icon: Cpu, label: "Controladoras"},

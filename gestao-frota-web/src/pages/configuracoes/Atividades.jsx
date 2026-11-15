@@ -78,12 +78,11 @@ function Atividades() {
     return (
         <div className="w-full space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
-                <h1 className="text-xl font-semibold text-foreground">Registro de atividades</h1>
-                <p className="text-sm text-muted-foreground">Quem fez o quê no sistema. Passe o mouse na foto para ver o nome.</p>
+                <h1 className="text-xl font-semibold text-foreground">Atividades</h1>
             </div>
 
             <Card>
-                <CardContent className="pt-6">
+                <CardContent>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
                         <div className="space-y-2">
                             <Label htmlFor="ativ-inicio">Data inicial</Label>
