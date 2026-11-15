@@ -108,8 +108,8 @@ public class LocalizacaoController {
         return ResponseEntity.ok(relatorioService.pontos(inicio, fim, idVeiculo));
     }
 
-    // Relatório de visitas: entradas e saídas dos veículos nas cercas.
-    @PreAuthorize("hasAuthority('relatorios.visualizar')")
+    // Visitas: entradas e saídas dos veículos nas cercas (aba Visitas dos Relatórios e tela de Alertas).
+    @PreAuthorize("hasAnyAuthority('relatorios.visualizar', 'veiculos.alertas')")
     @GetMapping("/relatorio-visitas")
     public ResponseEntity<List<Map<String, Object>>> obterRelatorioVisitas(
             @RequestParam("inicio") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,

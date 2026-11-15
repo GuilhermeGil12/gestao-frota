@@ -45,28 +45,29 @@ public class FuncionarioService {
 
         List<Cerca> cercasDoFuncionario = cercaRepository.findByFuncionarioId(funcionario.getId());
 
-        // Busca a cerca "Casa" já existente (criada automaticamente)
-        cercasDoFuncionario.stream()
-                .filter(c -> c.getNome() != null && c.getNome().startsWith("Casa - "))
-                .findFirst()
-                .ifPresentOrElse(
-                    cercaExistente -> {
-                        cercaExistente.setLatitude(funcionario.getLatitude());
-                        cercaExistente.setLongitude(funcionario.getLongitude());
-                        cercaExistente.setNome("Casa - " + funcionario.getNome());
-                        cercaRepository.save(cercaExistente);
-                    },
-                    () -> {
-                        Cerca nova = new Cerca();
-                        nova.setNome("Casa - " + funcionario.getNome());
-                        nova.setLatitude(funcionario.getLatitude());
-                        nova.setLongitude(funcionario.getLongitude());
-                        nova.setRaio(100.0);
-                        nova.setAtivo(true);
-                        nova.setFuncionario(funcionario);
-                        cercaRepository.save(nova);
-                    }
-                );
+        // A cerca da casa é a marcada como casaFuncionario. Cercas antigas (de antes do campo)
+        // são reconhecidas pelo nome "Casa - ..." uma última vez e passam a ser marcadas.
+        Cerca casa = cercasDoFuncionario.stream().filter(Cerca::isCasaFuncionario).findFirst()
+                .or(() -> cercasDoFuncionario.stream()
+                        .filter(c -> c.getNome() != null && c.getNome().startsWith("Casa - "))
+                        .findFirst())
+                .orElse(null);
+
+        if (casa == null) {
+            casa = new Cerca();
+            casa.setNome("Casa - " + funcionario.getNome());
+            casa.setRaio(100.0);
+            casa.setAtivo(true);
+            casa.setFuncionario(funcionario);
+        } else if (casa.getNome() == null || casa.getNome().startsWith("Casa - ")) {
+            // Acompanha o nome do funcionário, a não ser que o gestor tenha dado outro nome à cerca.
+            casa.setNome("Casa - " + funcionario.getNome());
+        }
+        casa.setCasaFuncionario(true);
+        // Mesma cerca, só muda de lugar (sem criar outra).
+        casa.setLatitude(funcionario.getLatitude());
+        casa.setLongitude(funcionario.getLongitude());
+        cercaRepository.save(casa);
     }
 
     public Funcionario buscarPorNome(String nome) { //

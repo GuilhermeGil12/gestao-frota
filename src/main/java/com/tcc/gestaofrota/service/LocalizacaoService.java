@@ -41,13 +41,16 @@ public class LocalizacaoService {
     private final LocalizacaoRepository localizacaoRepository;
     private final ControladoraRepository controladoraRepository;
     private final CartaoRfidRepository cartaoRfidRepository;
+    private final AvisoCercaService avisoCercaService;
 
     // Construtor com todas as dependências injetadas
     public LocalizacaoService(LocalizacaoRepository localizacaoRepository,
                               ControladoraRepository controladoraRepository,
                               FuncionarioRepository funcionarioRepository,
                               CartaoRfidRepository cartaoRfidRepository,
-            TelegramService telegramService) {
+            TelegramService telegramService,
+                              AvisoCercaService avisoCercaService) {
+        this.avisoCercaService = avisoCercaService;
         this.localizacaoRepository = localizacaoRepository;
         this.controladoraRepository = controladoraRepository;
         this.funcionarioRepository = funcionarioRepository;
@@ -163,6 +166,8 @@ public class LocalizacaoService {
 
         // Antes de salvar: compara com o último ponto gravado pra saber se o excesso COMEÇOU agora.
         avisarExcessos(carroDoEsp32, localizacoesParaSalvar);
+        // Entrou ou saiu de alguma cerca? Avisa no Telegram.
+        avisoCercaService.processar(carroDoEsp32, localizacoesParaSalvar);
 
         // Salva todos os pontos do lote de uma vez (mais performático)
         localizacaoRepository.saveAll(localizacoesParaSalvar);

@@ -143,6 +143,7 @@ public class RelatorioService {
         visita.put("idCerca", cerca.getId());
         visita.put("cerca", cerca.getNome());
         visita.put("responsavel", cerca.getFuncionario() != null ? cerca.getFuncionario().getNome() : null);
+        visita.put("casaFuncionario", cerca.isCasaFuncionario());
         visita.put("idVeiculo", v.getId());
         visita.put("placa", v.getPlaca());
         visita.put("nomeVeiculo", v.getNome());

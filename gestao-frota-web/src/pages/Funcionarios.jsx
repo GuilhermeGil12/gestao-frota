@@ -36,6 +36,10 @@ import { useAuth } from "../context/AuthContext";
 import Paginacao from "../components/Paginacao";
 import { usePaginacao } from "../utils/usePaginacao";
 
+// Identifica o endereço: se qualquer parte mudar, a posição precisa ser buscada de novo.
+const chaveEndereco = (f) =>
+    [f.endereco, f.numero, f.bairro, f.cidade, f.cep].map(x => String(x ?? "").trim().toLowerCase()).join("|");
+
 function Funcionarios() {
     const { temPermissao } = useAuth();
     const [funcionarios, setFuncionarios] = useState([]);
@@ -52,6 +56,9 @@ function Funcionarios() {
     const [funcionarioSelecionado, setFuncionarioSelecionado] = useState(null);
     const [funcionarioParaExcluir, setFuncionarioParaExcluir] = useState(null);
     const [buscandoLocal, setBuscandoLocal] = useState(false);
+    // Endereço que gerou a posição (latitude/longitude) atual. Se o endereço mudar,
+    // a posição é buscada de novo ao salvar, e a cerca da casa vai junto.
+    const [enderecoLocalizado, setEnderecoLocalizado] = useState(null);
 
     const initialState = {
         id: null, nome: "", cpf: "", rg: "", numeroTelefone: "", email: "",
@@ -178,9 +185,23 @@ function Funcionarios() {
         });
         if (!ok) return;
 
+        // Endereço novo ou mudado e ainda não localizado no mapa: localiza agora, para a
+        // cerca da casa ser criada (ou movida) sem depender do botão "Localizar no Mapa".
+        let dados = formData;
+        const temRua = formData.endereco?.trim() && formData.cidade?.trim();
+        if (temRua && chaveEndereco(formData) !== enderecoLocalizado) {
+            try {
+                const pos = await geocodificar(formData, { soComRua: true });
+                if (pos) dados = { ...formData, latitude: pos.lat, longitude: pos.lng };
+                else toast.warning("Endereço não encontrado no mapa. Use \"Localizar no Mapa\" para posicionar a casa.");
+            } catch {
+                toast.warning("Não foi possível localizar o endereço agora. A cerca da casa não foi atualizada.");
+            }
+        }
+
         try {
-            if (formData.id) await api.put(`/funcionarios/${formData.id}`, formData);
-            else await api.post('/funcionarios', formData);
+            if (dados.id) await api.put(`/funcionarios/${dados.id}`, dados);
+            else await api.post('/funcionarios', dados);
             setIsModalOpen(false);
             carregar();
             toast.success("Funcionário salvo com sucesso!");
@@ -216,7 +237,13 @@ function Funcionarios() {
         finally { setFuncionarioParaExcluir(null); }
     };
 
-    const abrirModal = (f = null) => { setFormData(f || initialState); resetar(); setIsModalOpen(true); };
+    const abrirModal = (f = null) => {
+        setFormData(f || initialState);
+        setEnderecoLocalizado(f && f.latitude != null && f.longitude != null ? chaveEndereco(f) : null);
+        setMapaAberto(false);
+        resetar();
+        setIsModalOpen(true);
+    };
     const abrirModalVisualizacao = (f) => { setFuncionarioSelecionado(f); setIsViewModalOpen(true); };
 
     // 2. FILTRAGEM DUPLA: Filtra por texto E por status de ativação
@@ -232,34 +259,42 @@ function Funcionarios() {
         return bateTexto; // "todos"
     });
 
+    /**
+     * Procura o endereço no mapa (OpenStreetMap). Devolve { lat, lng } ou null.
+     * soComRua: ao salvar, só aceita achar a rua; nunca põe a cerca no centro da cidade.
+     */
+    const geocodificar = async (dados, { soComRua = false } = {}) => {
+        const tentativas = [
+            `${dados.endereco}, ${dados.numero}, ${dados.bairro}, ${dados.cidade}, Brasil`,
+            `${dados.endereco}, ${dados.cidade}, Brasil`,
+        ];
+        if (!soComRua) tentativas.push(`${dados.cidade}, Brasil`);
+
+        for (const query of tentativas) {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
+                { headers: { "Accept-Language": "pt-BR" } }
+            );
+            const achados = await res.json();
+            if (achados.length > 0) return { lat: parseFloat(achados[0].lat), lng: parseFloat(achados[0].lon) };
+        }
+        return null;
+    };
+
     const buscarCoordenadas = async () => {
         if (!formData.cidade) return toast.error("Preencha pelo menos a cidade.");
 
         setBuscandoLocal(true);
         const toastId = toast.loading("Buscando localização...");
-
-        const tentativas = [
-            `${formData.endereco}, ${formData.numero}, ${formData.bairro}, ${formData.cidade}, SP, Brasil`,
-            `${formData.endereco}, ${formData.cidade}, SP, Brasil`,
-            `${formData.cidade}, SP, Brasil`,
-        ];
-
         try {
-            for (const query of tentativas) {
-                const res = await fetch(
-                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
-                    { headers: { "Accept-Language": "pt-BR" } }
-                );
-                const dados = await res.json();
-
-                if (dados.length > 0) {
-                    setPinPos({ lat: parseFloat(dados[0].lat), lng: parseFloat(dados[0].lon) });
-                    setMapaAberto(true);
-                    toast.success("Localização encontrada!", { id: toastId });
-                    return;
-                }
+            const pos = await geocodificar(formData);
+            if (pos) {
+                setPinPos(pos);
+                setMapaAberto(true);
+                toast.success("Localização encontrada!", { id: toastId });
+            } else {
+                toast.error("Endereço não encontrado no mapa.", { id: toastId });
             }
-            toast.error("Endereço não encontrado no mapa.", { id: toastId });
         } catch {
             toast.error("Não foi possível buscar o endereço.", { id: toastId });
         } finally {
@@ -376,6 +411,7 @@ function Funcionarios() {
                                         type="button"
                                         onClick={() => {
                                             setFormData(prev => ({ ...prev, latitude: pinPos.lat, longitude: pinPos.lng }));
+                                            setEnderecoLocalizado(chaveEndereco(formData));
                                             setMapaAberto(false);
                                             toast.success("Localização confirmada!");
                                         }}

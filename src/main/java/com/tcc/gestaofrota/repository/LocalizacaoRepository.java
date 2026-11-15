@@ -12,6 +12,11 @@ import java.util.Optional;
 
 public interface LocalizacaoRepository extends JpaRepository <Localizacao, Long> {
 
+    // Limite de velocidade do veículo em JPQL: o cadastrado, ou 110 km/h se não tiver.
+    String LIMITE_DO_VEICULO = "(CASE WHEN l.veiculo.velocidadeMaxima IS NULL OR l.veiculo.velocidadeMaxima <= 0"
+            + " THEN 110 ELSE l.veiculo.velocidadeMaxima END)";
+
+
     // Aqui o Spring injeta automaticamente comandos como save(), findAll(), findById(), etc.
      Optional<Localizacao> findByVeiculoId(Long id);
 
@@ -32,15 +37,17 @@ public interface LocalizacaoRepository extends JpaRepository <Localizacao, Long>
 
     Optional<Localizacao> findTopByVeiculoIdOrderByDataHoraDesc(Long veiculoId);
 
-    @Query("SELECT l FROM Localizacao l WHERE l.veiculo.id = :veiculoId AND l.velocidade > 110 AND l.dataHora BETWEEN :inicio AND :fim")
+    // Alerta = ponto acima do limite DO VEÍCULO (sem limite cadastrado, vale 110 km/h). Mais recentes primeiro.
+    @Query("SELECT l FROM Localizacao l WHERE l.veiculo.id = :veiculoId AND l.velocidade > " + LIMITE_DO_VEICULO
+            + " AND l.dataHora BETWEEN :inicio AND :fim ORDER BY l.dataHora DESC")
     List<Localizacao> buscarAlertaPorVeiculo(
             @Param("veiculoId") Long veiculoId,
             @Param("inicio") LocalDateTime inicio,
             @Param("fim") LocalDateTime fim
     );
 
-    // Repare no final: l.dataHora BETWEEN :inicio AND :fim
-    @Query("SELECT l FROM Localizacao l WHERE l.velocidade > 110 AND l.dataHora BETWEEN :inicio AND :fim")
+    @Query("SELECT l FROM Localizacao l WHERE l.velocidade > " + LIMITE_DO_VEICULO
+            + " AND l.dataHora BETWEEN :inicio AND :fim ORDER BY l.dataHora DESC")
     List<Localizacao> buscarTodosAlertasNoPeriodo(
             @Param("inicio") LocalDateTime inicio,
             @Param("fim") LocalDateTime fim

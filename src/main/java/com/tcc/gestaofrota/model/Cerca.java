@@ -1,5 +1,6 @@
 package com.tcc.gestaofrota.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -39,6 +40,13 @@ public class Cerca {
     @JoinColumn(name = "id_funcionario", referencedColumnName = "id_funcionario")
     private Funcionario funcionario;
 
+    // true = é a cerca da casa do funcionário, criada e movida sozinha pelo cadastro dele.
+    // Marcada por este campo (e não pelo nome) para que renomear a cerca não gere uma duplicada.
+    // Só o sistema define: o JSON vindo da tela não consegue mudar.
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @Column(name = "casa_funcionario")
+    private Boolean casaFuncionario = false;
+
     // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -63,4 +71,7 @@ public class Cerca {
 
     public Funcionario getFuncionario() { return funcionario; }
     public void setFuncionario(Funcionario funcionario) { this.funcionario = funcionario; }
+
+    public boolean isCasaFuncionario() { return Boolean.TRUE.equals(casaFuncionario); }
+    public void setCasaFuncionario(Boolean casaFuncionario) { this.casaFuncionario = casaFuncionario; }
 }
