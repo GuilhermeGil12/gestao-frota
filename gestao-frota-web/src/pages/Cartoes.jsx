@@ -26,7 +26,7 @@ import { usePaginacao } from "../utils/usePaginacao";
 import { maskUID } from "../utils/mascaras";
 import { validarUID } from "../utils/validacoes";
 import { useErros } from "../utils/useErros";
-import Campo from "../components/Campo";
+import { Trash2 } from "lucide-react";
 
 function Cartoes() {
     const { temPermissao } = useAuth();
@@ -113,71 +113,84 @@ function Cartoes() {
             </div>
 
             <Dialog open={isModalCartoesOpen} onOpenChange={setIsModalCartoesOpen}>
-                <DialogContent className="max-w-[850px]">
+                <DialogContent className="sm:max-w-xl">
                     <DialogHeader>
-                        <DialogTitle>Cartões de: <span className="text-blue-400">{funcionarioSelecionado?.nome}</span></DialogTitle>
-                        <DialogDescription>Gerencie os cartões RFID vinculados a este funcionário.</DialogDescription>
+                        <DialogTitle>Cartões</DialogTitle>
+                        <DialogDescription>
+                            {funcionarioSelecionado?.nome}
+                            {funcionarioSelecionado?.cargo ? ` · ${funcionarioSelecionado.cargo}` : ""}
+                        </DialogDescription>
                     </DialogHeader>
-                    {funcionarioSelecionado && (
-                        <div className="flex gap-6 mt-4">
-                            {/* Lado esquerdo: lista de cartoes */}
-                            <div className="flex-[2]">
-                                <h3 className="text-sm text-muted-foreground border-b border-border pb-2 mb-3">Cartões Vinculados</h3>
-                                {(!funcionarioSelecionado.cartoes || funcionarioSelecionado.cartoes.length === 0) ? (
-                                    <div className="bg-muted/50 p-4 rounded-lg text-center text-muted-foreground text-sm">Nenhum cartão vinculado no momento.</div>
-                                ) : (
-                                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                                        {funcionarioSelecionado.cartoes.map(cartao => (
-                                            <div key={cartao.id} className={`flex justify-between items-center bg-card p-3 rounded-md border-l-4 ${cartao.ativo ? 'border-l-green-500' : 'border-l-red-500'}`}>
-                                                <div>
-                                                    <strong className="block text-foreground text-base tracking-wider">{cartao.uid}</strong>
-                                                    <Badge variant={cartao.ativo ? "default" : "destructive"} className={`text-xs mt-1 ${cartao.ativo ? 'bg-green-600' : ''}`}>{cartao.ativo ? "ATIVO" : "INATIVO"}</Badge>
-                                                    {cartao.bloqueadoPorCnh && (
-                                                        <span className="block text-xs text-destructive mt-1">Bloqueado: CNH pendente (valide em Funcionários)</span>
-                                                    )}
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    {/* CORREÇÃO DO EVENTO AQUI (Passando o 'e' corretamente) */}
-                                                    <Button size="sm" variant={cartao.ativo ? "secondary" : "default"} onClick={(e) => { e.stopPropagation(); handleAlternarStatus(cartao); }}>
-                                                        {cartao.ativo ? "Inativar" : "Ativar"}
-                                                    </Button>
-                                                    
-                                                    {/* BOTÃO DE EXCLUIR APENAS ABRE O MODAL DO SHADCN */}
-                                                    <Button size="sm" variant="destructive" onClick={(e) => { e.stopPropagation(); setIdCartaoParaExcluir(cartao.id); }}>
-                                                        Excluir
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
 
-                            {/* Lado direito: novo cartao */}
-                            <div className="flex-1 bg-card p-5 rounded-lg border border-border h-fit">
-                                {funcionarioSelecionado?.ativo === false ? (
-                                    <div className="text-center space-y-2">
-                                        <p className="text-sm font-semibold text-red-400">Funcionário Inativo</p>
-                                        <p className="text-xs text-muted-foreground">Reative o funcionário antes de vincular novos cartões.</p>
+                    {funcionarioSelecionado && (
+                        <div className="space-y-6">
+                            {/* Vincular um cartão novo */}
+                            {funcionarioSelecionado.ativo === false ? (
+                                <p className="rounded-md border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                                    Funcionário inativo. Reative em Funcionários para vincular cartões.
+                                </p>
+                            ) : temPermissao("cartoes.vincular") && (
+                                <section className="space-y-2">
+                                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">Vincular cartão</h3>
+                                    <Label htmlFor="campo-uid">Código do cartão</Label>
+                                    <div className="flex gap-2">
+                                        <Input id="campo-uid" type="text" placeholder="Passe o crachá no leitor ou digite" value={novoUid}
+                                               className={`font-mono tracking-wider ${erros.uid ? "border-destructive" : ""}`}
+                                               aria-invalid={erros.uid ? true : undefined}
+                                               aria-describedby={erros.uid ? "campo-uid-erro" : "campo-uid-ajuda"}
+                                               onChange={(e) => { setNovoUid(maskUID(e.target.value)); limpar("uid"); }}
+                                               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleVincularCartao(); } }}
+                                               autoComplete="off" spellCheck={false} autoFocus />
+                                        <Button onClick={handleVincularCartao}>Vincular</Button>
                                     </div>
+                                    {erros.uid ? (
+                                        <p id="campo-uid-erro" role="alert" className="text-sm text-destructive">{erros.uid}</p>
+                                    ) : (
+                                        <p id="campo-uid-ajuda" className="text-xs text-muted-foreground">8, 14 ou 20 caracteres, só números e letras de A a F.</p>
+                                    )}
+                                </section>
+                            )}
+
+                            {/* Cartões que o funcionário já tem */}
+                            <section className="space-y-2">
+                                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide border-b border-border pb-2">
+                                    Vinculados{funcionarioSelecionado.cartoes?.length ? ` (${funcionarioSelecionado.cartoes.length})` : ""}
+                                </h3>
+                                {(!funcionarioSelecionado.cartoes || funcionarioSelecionado.cartoes.length === 0) ? (
+                                    <p className="py-6 text-center text-sm text-muted-foreground">Nenhum cartão vinculado.</p>
                                 ) : (
-                                    temPermissao("cartoes.vincular") && (
-                                    <>
-                                        <h3 className="text-sm font-semibold text-blue-400 mb-3">+ Novo Cartão</h3>
-                                        <div className="space-y-3">
-                                            <Campo id="campo-uid" rotulo="Código RFID (passe o crachá)" erro={erros.uid}
-                                                   ajuda="8, 14 ou 20 caracteres, só números e letras de A a F.">
-                                                <Input type="text" placeholder="Ex: A1B2C3D4" value={novoUid}
-                                                       onChange={(e) => { setNovoUid(maskUID(e.target.value)); limpar("uid"); }}
-                                                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleVincularCartao(); } }}
-                                                       autoComplete="off" spellCheck={false} />
-                                            </Campo>
-                                            <Button className="w-full" onClick={handleVincularCartao}>Vincular</Button>
-                                        </div>
-                                    </>
-                                    )
+                                    <ul className="max-h-72 divide-y divide-border overflow-y-auto rounded-md border border-border">
+                                        {funcionarioSelecionado.cartoes.map(cartao => (
+                                            <li key={cartao.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                                                <div className="min-w-0 space-y-1">
+                                                    <span className={`block font-mono text-sm tracking-wider ${cartao.ativo ? "text-foreground" : "text-muted-foreground line-through"}`}>
+                                                        {cartao.uid}
+                                                    </span>
+                                                    <div className="flex flex-wrap items-center gap-1.5">
+                                                        <Badge variant={cartao.ativo ? "outline" : "secondary"}>{cartao.ativo ? "Ativo" : "Inativo"}</Badge>
+                                                        {cartao.bloqueadoPorCnh && (
+                                                            <Badge variant="outline" className="border-destructive/40 text-destructive" title="Valide a CNH em Funcionários para liberar">
+                                                                CNH pendente
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                {temPermissao("cartoes.editar") && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Button size="sm" variant="outline" onClick={() => handleAlternarStatus(cartao)}>
+                                                            {cartao.ativo ? "Inativar" : "Ativar"}
+                                                        </Button>
+                                                        <Button size="icon" variant="ghost" className="size-8 text-muted-foreground hover:text-destructive"
+                                                                onClick={() => setIdCartaoParaExcluir(cartao.id)} aria-label={`Excluir o cartão ${cartao.uid}`} title="Excluir">
+                                                            <Trash2 className="size-4" />
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </li>
+                                        ))}
+                                    </ul>
                                 )}
-                            </div>
+                            </section>
                         </div>
                     )}
                 </DialogContent>
@@ -185,19 +198,24 @@ function Cartoes() {
 
             <Table>
                 <TableHeader><TableRow>
-                    <TableHead className="w-[30%]">Nome do Funcionário</TableHead><TableHead className="w-[20%]">Cargo</TableHead>
-                    <TableHead className="w-[20%]">Setor</TableHead><TableHead className="w-[30%] text-center">Açao</TableHead>
+                    <TableHead>Funcionário</TableHead><TableHead>Cargo</TableHead>
+                    <TableHead>Setor</TableHead><TableHead>Cartões</TableHead><TableHead className="text-right">Ações</TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
                     {(!Array.isArray(funcionariosFiltrados) || funcionariosFiltrados.length === 0) ? (
-                        <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Nenhum funcionário encontrado.</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum funcionário encontrado.</TableCell></TableRow>
                     ) : (
                         paginacao.visiveis.map(f => (
                             <TableRow key={f.id}>
                                 <TableCell className="font-semibold">{f.nome}</TableCell>
                                 <TableCell>{f.cargo}</TableCell>
                                 <TableCell className="uppercase">{f.setor?.nome}</TableCell>
-                                <TableCell className="text-center"><Button size="sm" onClick={() => abrirPainelCartoes(f)}>Gerenciar Cartões</Button></TableCell>
+                                <TableCell className="tabular-nums text-muted-foreground">
+                                    {f.cartoes?.length
+                                        ? `${f.cartoes.filter(c => c.ativo).length} ativo${f.cartoes.filter(c => c.ativo).length === 1 ? "" : "s"} de ${f.cartoes.length}`
+                                        : "Nenhum"}
+                                </TableCell>
+                                <TableCell className="text-right"><Button size="sm" variant="outline" onClick={() => abrirPainelCartoes(f)}>Gerenciar cartões</Button></TableCell>
                             </TableRow>
                         ))
                     )}
@@ -216,17 +234,17 @@ function Cartoes() {
             <AlertDialog open={idCartaoParaExcluir !== null} onOpenChange={(open) => !open && setIdCartaoParaExcluir(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Remover Cartão?</AlertDialogTitle>
+                        <AlertDialogTitle>Excluir este cartão?</AlertDialogTitle>
                             <AlertDialogDescription asChild>
                                 <span>
-                                O funcionario perderá o acesso deste cartao permanentemente.
+                                O cartão deixa de ligar o veículo e sai da lista. Para só bloquear por um tempo, use Inativar.
                                 </span>
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={confirmarExclusao}>
-                            Sim, remover
+                            Excluir
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
