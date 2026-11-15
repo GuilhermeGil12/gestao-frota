@@ -19,7 +19,7 @@ O projeto é dividido em dois módulos independentes:
 - **Perfis locais:** `application-casa.properties` e `application-flash.properties` ficam fora do git (têm a senha do banco local) — cada máquina mantém o seu; `application-prod.properties` lê tudo de variáveis de ambiente
 - **Telegram:** `application.properties` ganhou `app.telegram.token=${TELEGRAM_TOKEN:}` — token do bot (avisos no Telegram). Vazio = integração desligada. Nunca commitar o token: em dev, pôr no perfil local fora do git; na VM, variável de ambiente `TELEGRAM_TOKEN`
 - **Segurança:** ver `SEGURANCA.md` (estado atual e pendências). `application.properties` ganhou:
-  - `app.cors.origens=${CORS_ORIGENS:http://localhost:5173,http://*.localhost:5173}` — sites que podem chamar a API pelo navegador (em produção o site é servido pelo próprio Spring, então só o dev precisa)
+  - `app.cors.origens=${CORS_ORIGENS:https://frotasystem.com,https://*.frotasystem.com,http://localhost:5173,http://*.localhost:5173}` — sites que podem chamar a API pelo navegador. **O domínio de produção precisa estar na lista**: atrás do Cloudflare/Nginx o Spring vê a requisição como `localhost:8080`, então até o próprio site conta como "outro endereço" (sem ele, 403 em todos os arquivos do site). Para testar CORS, mandar o cabeçalho `Origin` (`curl -H "Origin: https://frotasystem.com" ...`)
   - `app.login.max-tentativas=5` e `app.login.bloqueio-minutos=15` — limite de senhas erradas por e-mail
   - No perfil `prod`, o sistema **não sobe** sem `JWT_SECRET`, `ADMIN_SENHA`, `MQTT_BROKER` e `MQTT_USER` (`VerificacaoSegurancaProducao`)
 - **REST:** respostas em JSON; login com JWT; permissões com `@PreAuthorize` em todo controller. A controladora fala **só por MQTT** — não criar rotas HTTP abertas para o ESP
