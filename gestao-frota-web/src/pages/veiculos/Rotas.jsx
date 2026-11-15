@@ -116,7 +116,7 @@ function Resumo({ icone, rotulo, valor, destaque }) {
             </div>
             <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">{rotulo}</p>
-                <p className={`truncate text-sm font-semibold ${destaque ? 'text-destructive' : 'text-foreground'}`}>{valor}</p>
+                <p className={`break-words text-sm font-semibold leading-snug ${destaque ? 'text-destructive' : 'text-foreground'}`}>{valor}</p>
             </div>
         </div>
     );
@@ -227,12 +227,12 @@ function Rotas() {
 
             {/* Resumo do trajeto */}
             {resumo && (
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-                    <Resumo icone={<Clock className="size-4" />} rotulo="Período" valor={`${resumo.inicio} – ${resumo.fim}`} />
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+                    <Resumo icone={<Clock className="size-4" />} rotulo="Período" valor={`${String(resumo.inicio).slice(0, 5)} – ${String(resumo.fim).slice(0, 5)}`} />
                     <Resumo icone={<Route className="size-4" />} rotulo="Distância" valor={`${resumo.distancia.toFixed(1)} km`} />
                     <Resumo icone={<Gauge className="size-4" />} rotulo="Velocidade máxima" valor={`${resumo.maxima.toFixed(0)} km/h`} destaque={resumo.maxima > limite} />
                     <Resumo icone={<Gauge className="size-4" />} rotulo="Média em movimento" valor={`${resumo.media.toFixed(0)} km/h`} />
-                    <Resumo icone={<AlertTriangle className="size-4" />} rotulo={`Excessos (>${limite} km/h)`} valor={resumo.excessos} destaque={resumo.excessos > 0} />
+                    <Resumo icone={<AlertTriangle className="size-4" />} rotulo="Excessos" valor={resumo.excessos} destaque={resumo.excessos > 0} />
                     <Resumo icone={<User className="size-4" />} rotulo="Motorista" valor={resumo.motoristas.join(', ')} />
                 </div>
             )}
@@ -272,11 +272,11 @@ function Rotas() {
                                     <CircleMarker
                                         key={index}
                                         center={[ponto.lat, ponto.lng]}
-                                        radius={ativo ? 10 : extremo ? 8 : 5}
+                                        radius={ativo ? 7 : extremo ? 5 : 3}
                                         pathOptions={{
                                             fillColor: CORES_MAPA[situacao.chave],
                                             color: ativo ? '#000' : 'white',
-                                            weight: ativo ? 3 : 1,
+                                            weight: ativo ? 2 : 0.5,
                                             fillOpacity: 1,
                                         }}
                                     >
