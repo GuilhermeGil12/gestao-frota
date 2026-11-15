@@ -13,9 +13,14 @@ public interface ControladoraRepository extends JpaRepository <Controladora, Lon
     //O objetivo do existsBy é bloquear repetições
     boolean existsByVeiculoId(Long idVeiculo);
 
-    boolean existsByIpControladora(String ipControladora);
-
     boolean existsByMacControladora(String macControladora);
+
+    boolean existsByImei(String imei);
+
+    // Na edição: outra controladora (que não seja esta) já usa o MAC/IMEI?
+    boolean existsByMacControladoraAndIdControladoraNot(String macControladora, Long idControladora);
+
+    boolean existsByImeiAndIdControladoraNot(String imei, Long idControladora);
 
     Optional<Controladora> findByIdControladoraAndSenha(Long idControladora, String senha);
 

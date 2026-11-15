@@ -3,8 +3,8 @@ import BotaoFlutuante from "../components/BotaoFlutuante";
 import api from "../services/api";
 //import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
-import { maskIP, maskMAC } from "../utils/mascaras.js";
-import { validarIP, validarMAC, validarSenha, sePreenchido, SENHA_MINIMA } from "../utils/validacoes";
+import { maskMAC, maskNumeros, maskTelefone } from "../utils/mascaras.js";
+import { validarMAC, validarIMEI, validarTelefone, validarSenha, sePreenchido, SENHA_MINIMA } from "../utils/validacoes";
 import { useErros } from "../utils/useErros";
 import Campo from "../components/Campo";
 import { Button } from "../components/ui/button";
@@ -34,7 +34,7 @@ function Controladoras() {
     const { temPermissao } = useAuth();
     const [controladoras, setControladoras] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const initialState = { idControladora: null, ipControladora: "", macControladora: "", senha: "", ativo: true };
+    const initialState = { idControladora: null, macControladora: "", imei: "", linhaChip: "", senha: "", ativo: true };
     const [formData, setFormData] = useState(initialState);
     const { erros, validar, limpar, resetar } = useErros();
 
@@ -60,8 +60,9 @@ function Controladoras() {
     const handleSalvar = async (e) => {
         e.preventDefault();
         const ok = validar({
-            ipControladora: validarIP(formData.ipControladora),
-            macControladora: validarMAC(formData.macControladora),
+            macControladora: sePreenchido(formData.macControladora, validarMAC),
+            imei: sePreenchido(formData.imei, validarIMEI),
+            linhaChip: sePreenchido(formData.linhaChip, validarTelefone),
             // Na edição a senha é opcional (em branco = mantém a atual).
             senha: formData.idControladora ? sePreenchido(formData.senha, validarSenha) : validarSenha(formData.senha),
         });
@@ -100,7 +101,13 @@ function Controladoras() {
         setControladoraParaExcluir(idControladora);
     };
 
-    const abrirModal = (c = null) => { setFormData(c || initialState); resetar(); setIsModalOpen(true); };
+    // Na edição, campos vazios do banco (null) viram "" para os inputs; a senha nunca vem do servidor.
+    const abrirModal = (c = null) => {
+        setFormData(c ? { ...initialState, ...c, macControladora: c.macControladora ?? "", imei: c.imei ?? "",
+                          linhaChip: c.linhaChip ? maskTelefone(c.linhaChip) : "", senha: "" } : initialState);
+        resetar();
+        setIsModalOpen(true);
+    };
 
     const paginacao = usePaginacao(controladoras, 20);
 
@@ -115,20 +122,30 @@ function Controladoras() {
 
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="max-w-[600px]">
-                    <DialogHeader><DialogTitle>{formData.idControladora ? "Editar Controladora" : "Cadastrar Controladora"}</DialogTitle><DialogDescription>Preencha os dados da controladora.</DialogDescription></DialogHeader>
+                    <DialogHeader>
+                        <DialogTitle>{formData.idControladora ? `Editar controladora #${formData.idControladora}` : "Cadastrar controladora"}</DialogTitle>
+                        <DialogDescription>
+                            {formData.idControladora
+                                ? `O código desta controladora é ${formData.idControladora}: é o CODIGO gravado no firmware.`
+                                : "O código é gerado ao salvar. Grave esse número no firmware (CODIGO)."}
+                        </DialogDescription>
+                    </DialogHeader>
                     <form onSubmit={handleSalvar} className="space-y-4" noValidate>
-                        <Campo id="campo-ipControladora" rotulo="Endereço IP" erro={erros.ipControladora} obrigatorio>
-                            <Input placeholder="192.168.0.1" value={formData.ipControladora} onChange={e => mudar("ipControladora", maskIP(e.target.value))} inputMode="decimal" />
+                        <Campo id="campo-senha" rotulo="Senha" erro={erros.senha} obrigatorio={!formData.idControladora}
+                               ajuda={formData.idControladora ? "Em branco, mantém a senha atual." : `Pelo menos ${SENHA_MINIMA} caracteres.`}>
+                            <Input type="password" placeholder="Senha do equipamento" value={formData.senha ?? ""} onChange={e => mudar("senha", e.target.value)} autoComplete="new-password" />
                         </Campo>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <Campo id="campo-macControladora" rotulo="Endereço MAC" erro={erros.macControladora} obrigatorio>
+                            <Campo id="campo-macControladora" rotulo="Endereço MAC" erro={erros.macControladora} ajuda="Opcional.">
                                 <Input placeholder="00:1B:44:11:3A:B7" value={formData.macControladora} onChange={e => mudar("macControladora", maskMAC(e.target.value))} />
                             </Campo>
-                            <Campo id="campo-senha" rotulo="Senha" erro={erros.senha} obrigatorio={!formData.idControladora}
-                                   ajuda={formData.idControladora ? "Em branco, mantém a senha atual." : `Pelo menos ${SENHA_MINIMA} caracteres.`}>
-                                <Input type="password" placeholder="Senha do equipamento" value={formData.senha ?? ""} onChange={e => mudar("senha", e.target.value)} autoComplete="new-password" />
+                            <Campo id="campo-imei" rotulo="IMEI do modem" erro={erros.imei} ajuda="Opcional. 15 números, impresso na placa.">
+                                <Input placeholder="15 números" value={formData.imei} onChange={e => mudar("imei", maskNumeros(e.target.value, 15))} inputMode="numeric" />
                             </Campo>
                         </div>
+                        <Campo id="campo-linhaChip" rotulo="Linha do chip 4G" erro={erros.linhaChip} ajuda="Opcional. Número do chip, para recarga ou cancelamento.">
+                            <Input type="tel" placeholder="(17) 99999-9999" value={formData.linhaChip} onChange={e => mudar("linhaChip", maskTelefone(e.target.value))} inputMode="numeric" />
+                        </Campo>
                         <DialogFooter className="border-t border-border pt-4"><Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button><Button type="submit">Confirmar</Button></DialogFooter>
                     </form>
                 </DialogContent>
@@ -136,21 +153,23 @@ function Controladoras() {
 
             <Table>
                 <TableHeader><TableRow>
-                    <TableHead className="w-[10%]">Status</TableHead><TableHead className="w-[15%]">ID Banco</TableHead>
-                    <TableHead className="w-[25%]">IP Controladora</TableHead><TableHead className="w-[25%]">MAC Controladora</TableHead><TableHead className="w-[25%] text-center">Ações</TableHead>
+                    <TableHead>Status</TableHead><TableHead>Código</TableHead><TableHead>Veículo</TableHead>
+                    <TableHead>IMEI</TableHead><TableHead>Linha do chip</TableHead><TableHead>MAC</TableHead><TableHead className="text-right">Ações</TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
                     {(!Array.isArray(controladoras) || controladoras.length === 0) ? (
-                        <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhuma controladora encontrada no banco.</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhuma controladora cadastrada.</TableCell></TableRow>
                     ) : (
                         paginacao.visiveis.map(c => (
                             <TableRow key={c.idControladora}>
                                 <TableCell><Badge variant={c.ativo ? "default" : "secondary"} className={c.ativo ? "bg-green-600" : ""}>{c.ativo ? "Ativo" : "Inativo"}</Badge></TableCell>
-                                <TableCell>#{c.idControladora}</TableCell>
-                                <TableCell>{c.ipControladora}</TableCell>
-                                <TableCell>{c.macControladora}</TableCell>
+                                <TableCell className="font-semibold tabular-nums">#{c.idControladora}</TableCell>
+                                <TableCell>{c.veiculo ? `${c.veiculo.placa}${c.veiculo.nome ? ` · ${c.veiculo.nome}` : ""}` : <span className="text-muted-foreground">Sem veículo</span>}</TableCell>
+                                <TableCell className="tabular-nums">{c.imei || "—"}</TableCell>
+                                <TableCell className="tabular-nums">{c.linhaChip ? maskTelefone(c.linhaChip) : "—"}</TableCell>
+                                <TableCell className="tabular-nums">{c.macControladora || "—"}</TableCell>
                                 <TableCell>
-                                    <div className="flex gap-2 justify-center">
+                                    <div className="flex justify-end gap-2 whitespace-nowrap">
                                         {temPermissao("controladoras.editar") && (
                                             <Button size="sm" variant="outline" onClick={() => abrirModal(c)}>Editar</Button>
                                         )}

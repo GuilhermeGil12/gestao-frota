@@ -40,17 +40,18 @@ public class ControladoraService {
     }
 
     public Controladora salvar(Controladora controladora){
-        Validacoes.ip(controladora.getIpControladora());
-        Validacoes.mac(controladora.getMacControladora());
         Validacoes.senha(controladora.getSenha());
+        // MAC, IMEI e linha são opcionais; vazio vira null (assim o "único" não briga com outro vazio).
+        controladora.setMacControladora(Validacoes.macOpcional(controladora.getMacControladora()));
+        controladora.setImei(Validacoes.imeiOpcional(controladora.getImei()));
+        controladora.setLinhaChip(Validacoes.telefoneOpcional(controladora.getLinhaChip()));
 
-
-        if (controladoraRepository.existsByIpControladora(controladora.getIpControladora())){
-            throw new RuntimeException("Já existe uma controladora com esse IP cadastrada!");
-
-        }
-        if (controladoraRepository.existsByMacControladora(controladora.getMacControladora())){
+        if (controladora.getMacControladora() != null
+                && controladoraRepository.existsByMacControladora(controladora.getMacControladora())) {
             throw new RuntimeException("Já existe uma controladora com esse MAC cadastrada!");
+        }
+        if (controladora.getImei() != null && controladoraRepository.existsByImei(controladora.getImei())) {
+            throw new RuntimeException("Já existe uma controladora com esse IMEI cadastrada!");
         }
 
         // Primeiro verificamos se o front-end mandou um veículo e se ele tem ID.
@@ -87,14 +88,17 @@ public class ControladoraService {
         Controladora controladoraAntiga = buscarPorId(id);
 
         //pego o valor que está na nova (vem do body) e pego da nova e coloco na antiga e depois descarto a antiga
-        if (Validacoes.mudou(controladoraNova.getIpControladora(), controladoraAntiga.getIpControladora(), false)) {
-            Validacoes.ip(controladoraNova.getIpControladora());
+        String mac = Validacoes.macOpcional(controladoraNova.getMacControladora());
+        String imei = Validacoes.imeiOpcional(controladoraNova.getImei());
+        if (mac != null && controladoraRepository.existsByMacControladoraAndIdControladoraNot(mac, id)) {
+            throw new RuntimeException("Já existe uma controladora com esse MAC cadastrada!");
         }
-        if (Validacoes.mudou(controladoraNova.getMacControladora(), controladoraAntiga.getMacControladora(), false)) {
-            Validacoes.mac(controladoraNova.getMacControladora());
+        if (imei != null && controladoraRepository.existsByImeiAndIdControladoraNot(imei, id)) {
+            throw new RuntimeException("Já existe uma controladora com esse IMEI cadastrada!");
         }
-        controladoraAntiga.setIpControladora(controladoraNova.getIpControladora());
-        controladoraAntiga.setMacControladora(controladoraNova.getMacControladora());
+        controladoraAntiga.setMacControladora(mac);
+        controladoraAntiga.setImei(imei);
+        controladoraAntiga.setLinhaChip(Validacoes.telefoneOpcional(controladoraNova.getLinhaChip()));
         // A senha não vai para a tela; em branco na edição = mantém a atual.
         if (!Validacoes.vazio(controladoraNova.getSenha())) {
             Validacoes.senha(controladoraNova.getSenha());

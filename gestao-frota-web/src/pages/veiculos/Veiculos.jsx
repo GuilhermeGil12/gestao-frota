@@ -156,7 +156,7 @@ function Veiculos() {
                                 <Label>Vincular Controladora</Label>
                                 <select value={formData.controladoraId} onChange={e => setFormData({ ...formData, controladoraId: e.target.value })} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                                     <option value="">Nenhuma / Sem Rastreador</option>
-                                    {Array.isArray(controladorasLivres) && controladorasLivres.map(c => (<option key={c.idControladora} value={c.idControladora}>ID: {c.idControladora} - IP: {c.ipControladora}</option>))}
+                                    {Array.isArray(controladorasLivres) && controladorasLivres.map(c => (<option key={c.idControladora} value={c.idControladora}>Controladora #{c.idControladora}{c.veiculo && c.veiculo.id !== formData.id ? ` (já está no ${c.veiculo.placa})` : ""}</option>))}
                                 </select>
                             </div>
                         </div>
@@ -180,7 +180,7 @@ function Veiculos() {
                                 <TableCell>{v.nome}</TableCell>
                                 <TableCell className="uppercase">{v.placa}</TableCell>
                                 <TableCell>{v.renavam}</TableCell>
-                                <TableCell>{v.controladora ? `IP: ${v.controladora.ipControladora}` : "Desvinculado"}</TableCell>
+                                <TableCell>{v.controladora ? `#${v.controladora.idControladora}` : <span className="text-muted-foreground">Sem controladora</span>}</TableCell>
                                 <TableCell>
                                     <div className="flex gap-2 justify-center">
                                         {temPermissao("veiculos.editar") && (

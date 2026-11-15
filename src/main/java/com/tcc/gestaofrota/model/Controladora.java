@@ -27,11 +27,21 @@ public class Controladora {
     @Column(name = "senha")
     private String senha;
 
-    @Column(name = "ip", length = 15)
-    private String ipControladora;
+    // A controladora é identificada pelo id (o código no tópico MQTT frota/<id>/...).
+    // O IP não é guardado: no 4G ele muda a cada conexão e não identifica nada.
+    // (A coluna "ip" antiga pode continuar no banco; não é mais usada.)
 
+    // Opcional. Único quando informado (conferido no ControladoraService).
     @Column(name = "mac", length = 17)
     private String macControladora;
+
+    // IMEI do modem 4G (impresso na placa). Opcional; identifica a placa física.
+    @Column(name = "imei", length = 15, unique = true)
+    private String imei;
+
+    // Número do chip 4G, para saber qual linha recarregar ou cancelar. Opcional.
+    @Column(name = "linha_chip", length = 20)
+    private String linhaChip;
 
     @Column(name = "ativo")
     private Boolean ativo;
@@ -70,12 +80,20 @@ public class Controladora {
         this.senha = senha;
     }
 
-    public String getIpControladora() {
-        return ipControladora;
+    public String getImei() {
+        return imei;
     }
 
-    public void setIpControladora(String ipControladora) {
-        this.ipControladora = ipControladora;
+    public void setImei(String imei) {
+        this.imei = imei;
+    }
+
+    public String getLinhaChip() {
+        return linhaChip;
+    }
+
+    public void setLinhaChip(String linhaChip) {
+        this.linhaChip = linhaChip;
     }
 
     public String getMacControladora() {

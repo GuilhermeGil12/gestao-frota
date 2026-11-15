@@ -159,15 +159,33 @@ public final class Validacoes {
 
     // ---------- Equipamentos ----------
 
-    public static void ip(String valor) {
-        obrigatorio(valor, "Endereço IP");
-        String[] partes = valor.trim().split("\\.", -1);
-        boolean ok = partes.length == 4;
-        for (String p : partes) {
-            if (!ok) break;
-            ok = p.matches("\\d{1,3}") && Integer.parseInt(p) <= 255;
+    /** MAC é opcional: devolve null se vazio, ou o MAC em maiúsculas se válido. */
+    public static String macOpcional(String valor) {
+        if (vazio(valor)) return null;
+        mac(valor);
+        return valor.trim().toUpperCase();
+    }
+
+    /** IMEI é opcional: 15 números com dígito verificador (Luhn). Devolve null se vazio. */
+    public static String imeiOpcional(String valor) {
+        if (vazio(valor)) return null;
+        String imei = soDigitos(valor);
+        if (imei.length() != 15) throw new RuntimeException("IMEI precisa ter 15 números.");
+        int soma = 0;
+        for (int i = 0; i < 15; i++) {
+            int d = imei.charAt(i) - '0';
+            if (i % 2 == 1) { d *= 2; if (d > 9) d -= 9; }
+            soma += d;
         }
-        if (!ok) throw new RuntimeException("IP inválido. Use 4 números de 0 a 255: 192.168.0.10");
+        if (soma % 10 != 0) throw new RuntimeException("IMEI inválido (dígito verificador não confere).");
+        return imei;
+    }
+
+    /** Linha do chip é opcional: se vier, telefone com DDD. Devolve só os números, ou null. */
+    public static String telefoneOpcional(String valor) {
+        if (vazio(valor)) return null;
+        telefone(valor);
+        return soDigitos(valor);
     }
 
     public static void mac(String valor) {

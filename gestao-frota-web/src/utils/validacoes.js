@@ -168,12 +168,17 @@ export const validarRaio = (v) => {
 
 // ---------- Equipamentos ----------
 
-export const validarIP = (v) => {
-    if (vazio(v)) return "Endereço IP é obrigatório.";
-    const partes = v.trim().split(".");
-    if (partes.length !== 4 || partes.some((p) => !/^\d{1,3}$/.test(p) || Number(p) > 255)) {
-        return "IP inválido. Use 4 números de 0 a 255: 192.168.0.10";
+/** IMEI do modem: 15 números com dígito verificador (algoritmo de Luhn). */
+export const validarIMEI = (v) => {
+    const imei = soDigitos(v);
+    if (imei.length !== 15) return `IMEI precisa ter 15 números (tem ${imei.length}).`;
+    let soma = 0;
+    for (let i = 0; i < 15; i++) {
+        let d = Number(imei[i]);
+        if (i % 2 === 1) { d *= 2; if (d > 9) d -= 9; }
+        soma += d;
     }
+    if (soma % 10 !== 0) return "IMEI inválido (dígito verificador não confere).";
     return null;
 };
 
