@@ -86,6 +86,7 @@ function Usuario() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [usuarioInativar, setUsuarioInativar] = useState(null);
     const [termoBusca, setTermoBusca] = useState("");
+    const [filtroStatus, setFiltroStatus] = useState("ativos");
     const [verSenha, setVerSenha] = useState(false);
     const [verConfirmarSenha, setVerConfirmarSenha] = useState(false);
 
@@ -337,7 +338,10 @@ function Usuario() {
         const busca = termoBusca.toLocaleLowerCase();
         const nome = u.nomeUsuario ? u.nomeUsuario.toLocaleLowerCase() : "";
         const email = u.email ? u.email.toLocaleLowerCase() : "";
-        return nome.includes(busca) || email.includes(busca);
+        const bateTexto = nome.includes(busca) || email.includes(busca);
+        if (filtroStatus === "ativos") return bateTexto && u.ativo;
+        if (filtroStatus === "inativos") return bateTexto && !u.ativo;
+        return bateTexto;
     });
 
     const paginacao = usePaginacao(usuariosFiltrados, 20);
@@ -346,13 +350,23 @@ function Usuario() {
         <div className="w-full">
             <div className="flex flex-wrap items-center justify-between mb-6 border-b border-border pb-4 gap-4">
                 <h1 className="text-xl font-semibold text-foreground">Usuários</h1>
-                <Input
-                    type="text"
-                    placeholder="Pesquise por nome ou e-mail"
-                    className="max-w-xs"
-                    value={termoBusca}
-                    onChange={(e) => setTermoBusca(e.target.value)}
-                />
+                <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+                    <Input
+                        type="text"
+                        placeholder="Pesquise por nome ou e-mail"
+                        className="sm:w-72"
+                        value={termoBusca}
+                        onChange={(e) => setTermoBusca(e.target.value)}
+                    />
+                    <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+                        <SelectTrigger className="sm:w-44" aria-label="Filtrar por status"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ativos">Apenas ativos</SelectItem>
+                            <SelectItem value="inativos">Apenas inativos</SelectItem>
+                            <SelectItem value="todos">Todos</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
                 {temPermissao("configuracoes.usuarios") && (
                     <BotaoFlutuante rotulo="Novo usuário" onClick={() => abrirModal()} />
                 )}
