@@ -1,6 +1,7 @@
 package com.tcc.gestaofrota.controller;
 
 
+import com.tcc.gestaofrota.dto.AprovacaoControladoraDTO;
 import com.tcc.gestaofrota.model.Controladora;
 import com.tcc.gestaofrota.service.ControladoraService;
 
@@ -20,11 +21,12 @@ public class ControladoraController {
         this.controladoraService = controladoraService;
     }
 
+    // Não existe mais "cadastrar": a controladora se apresenta sozinha pelo MQTT
+    // (provisionamento/<imei>) e aparece aqui como AGUARDANDO. O gestor só aprova.
     @PreAuthorize("hasAuthority('controladoras.cadastrar')")
-    @PostMapping
-    public ResponseEntity<Controladora> criar(@RequestBody Controladora controladora){
-        Controladora controladoraNova = controladoraService.salvar(controladora);
-        return ResponseEntity.ok(controladoraNova);
+    @PostMapping("/{id}/aprovar")
+    public ResponseEntity<Controladora> aprovar(@PathVariable Long id, @RequestBody AprovacaoControladoraDTO dados){
+        return ResponseEntity.ok(controladoraService.aprovar(id, dados.idVeiculo(), dados.linhaChip()));
     }
 
     @PreAuthorize("hasAuthority('controladoras.visualizar')")

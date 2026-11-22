@@ -158,6 +158,14 @@ export const validarVelocidadeMaxima = (v) => {
     return null;
 };
 
+/** Km do odômetro (opcional): sem valor, o sistema não conta a revisão. */
+export const validarKm = (v) => {
+    if (vazio(v)) return null;
+    const n = Number(v);
+    if (Number.isNaN(n) || n < 0 || n > 9999999) return "O km precisa estar entre 0 e 9.999.999.";
+    return null;
+};
+
 /** Raio da cerca, em metros. */
 export const validarRaio = (v) => {
     const n = Number(v);

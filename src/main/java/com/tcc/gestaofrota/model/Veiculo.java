@@ -1,5 +1,7 @@
 package com.tcc.gestaofrota.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -21,6 +23,25 @@ public class Veiculo {
 
     @Column(name = "km_atual")
     private Double kmAtual;
+
+    // Km do odômetro na última revisão. Vazio = revisões nos múltiplos do intervalo (10.000, 20.000...).
+    @Column(name = "km_ultima_revisao")
+    private Double kmUltimaRevisao;
+
+    // Até que horário os pontos do GPS já foram somados ao km atual (uso interno).
+    @JsonIgnore
+    @Column(name = "km_contado_ate")
+    private LocalDateTime kmContadoAte;
+
+    // Km da revisão que já foi avisada no Telegram, para não repetir o aviso (uso interno).
+    @JsonIgnore
+    @Column(name = "aviso_revisao_km")
+    private Double avisoRevisaoKm;
+
+    // Calculado na hora pelo RevisaoService (não fica no banco).
+    @Transient
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Double proximaRevisaoKm;
 
     @Column(name = "velocidade_maxima")
     private Double velocidadeMaxima;
@@ -119,4 +140,16 @@ public class Veiculo {
     public void setControladora(Controladora controladora) {
         this.controladora = controladora;
     }
+
+    public Double getKmUltimaRevisao() { return kmUltimaRevisao; }
+    public void setKmUltimaRevisao(Double kmUltimaRevisao) { this.kmUltimaRevisao = kmUltimaRevisao; }
+
+    public LocalDateTime getKmContadoAte() { return kmContadoAte; }
+    public void setKmContadoAte(LocalDateTime kmContadoAte) { this.kmContadoAte = kmContadoAte; }
+
+    public Double getAvisoRevisaoKm() { return avisoRevisaoKm; }
+    public void setAvisoRevisaoKm(Double avisoRevisaoKm) { this.avisoRevisaoKm = avisoRevisaoKm; }
+
+    public Double getProximaRevisaoKm() { return proximaRevisaoKm; }
+    public void setProximaRevisaoKm(Double proximaRevisaoKm) { this.proximaRevisaoKm = proximaRevisaoKm; }
 }

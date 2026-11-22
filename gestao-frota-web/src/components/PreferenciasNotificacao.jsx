@@ -11,6 +11,8 @@ const TIPOS = [
     { tipo: "COMANDO_EXECUTADO", rotulo: "Comandos executados", descricao: "Bloqueio, desbloqueio ou apito confirmado pelo veículo." },
     { tipo: "EXCESSO_VELOCIDADE", rotulo: "Excesso de velocidade", descricao: "Veículo passou do limite. Só no Telegram." },
     { tipo: "VISITA_CERCA", rotulo: "Entrada e saída de cercas", descricao: "Veículo entrou ou saiu de uma cerca, inclusive a casa de um funcionário. Só no Telegram." },
+    { tipo: "REVISAO", rotulo: "Revisão por km", descricao: "Veículo a 500 km ou menos da revisão, ou com a revisão vencida." },
+    { tipo: "CONTROLADORA", rotulo: "Controladora nova", descricao: "Uma controladora se apresentou ou pediu senha nova e espera aprovação." },
     { tipo: "RELATORIO_SEMANAL", rotulo: "Relatório semanal pronto", descricao: "Para líderes: avisa que o relatório da equipe chegou no e-mail. Só no Telegram." },
 ];
 

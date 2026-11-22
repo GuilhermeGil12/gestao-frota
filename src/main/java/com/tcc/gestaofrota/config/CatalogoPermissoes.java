@@ -43,7 +43,7 @@ public final class CatalogoPermissoes {
             )),
             new Grupo("controladoras", "Controladoras", List.of(
                     new Acao("controladoras.visualizar", "Visualizar"),
-                    new Acao("controladoras.cadastrar", "Cadastrar"),
+                    new Acao("controladoras.cadastrar", "Aprovar novas"),
                     new Acao("controladoras.editar", "Editar")
             )),
             new Grupo("cartoes", "Cartões", List.of(

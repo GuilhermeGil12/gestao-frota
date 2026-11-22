@@ -5,7 +5,7 @@ import api from "../../services/api";
 import Swal from "sweetalert2";
 import {toast} from 'sonner';
 import { maskPlaca, maskNumeros } from '../../utils/mascaras';
-import { validarPlaca, validarRenavam, validarVelocidadeMaxima, obrigatorio, tamanho, primeiroErro } from '../../utils/validacoes';
+import { validarPlaca, validarRenavam, validarVelocidadeMaxima, validarKm, obrigatorio, tamanho, primeiroErro } from '../../utils/validacoes';
 import { useErros } from '../../utils/useErros';
 import Campo from "../../components/Campo";
 import { Button } from "../../components/ui/button";
@@ -30,6 +30,23 @@ import {
 import Paginacao from "../../components/Paginacao";
 import { usePaginacao } from "../../utils/usePaginacao";
 
+
+const km = (v) => `${Math.round(Number(v)).toLocaleString("pt-BR")} km`;
+// Mesmo aviso do back-end (RevisaoService.KM_AVISO): a partir de 500 km antes.
+const KM_AVISO_REVISAO = 500;
+
+function Revisao({ veiculo }) {
+    if (veiculo.proximaRevisaoKm == null) return <span className="text-muted-foreground">Informe o km</span>;
+    const faltam = veiculo.proximaRevisaoKm - veiculo.kmAtual;
+    return (
+        <div className="flex flex-col gap-1">
+            <span className="tabular-nums">{km(veiculo.proximaRevisaoKm)}</span>
+            {faltam <= 0 && <Badge variant="destructive" className="w-fit">Vencida</Badge>}
+            {faltam > 0 && faltam <= KM_AVISO_REVISAO && <Badge variant="outline" className="w-fit border-destructive/40 text-destructive">Faltam {km(faltam)}</Badge>}
+        </div>
+    );
+}
+
 function Veiculos() {
     const { temPermissao } = useAuth();
     const [veiculos, setVeiculos] = useState([]);
@@ -52,7 +69,9 @@ function Veiculos() {
             const resVeiculos = await api.get('/veiculos');
             setVeiculos(Array.isArray(resVeiculos.data) ? resVeiculos.data : []);
             const resControladoras = await api.get('/controladora');
-            setControladorasLivres(Array.isArray(resControladoras.data) ? resControladoras.data : []);
+            // Aguardando aprovação só ganha veículo pelo "Aprovar" em Controladoras.
+            setControladorasLivres((Array.isArray(resControladoras.data) ? resControladoras.data : [])
+                .filter((c) => c.situacao !== "AGUARDANDO"));
         } catch (e) { console.error(e); }
     };
 
@@ -67,6 +86,7 @@ function Veiculos() {
             placa: validarPlaca(formData.placa),
             renavam: validarRenavam(formData.renavam),
             velocidadeMaxima: validarVelocidadeMaxima(formData.velocidadeMaxima),
+            kmAtual: validarKm(formData.kmAtual),
         });
         if (!ok) return;
         try {
@@ -78,6 +98,22 @@ function Veiculos() {
             carregarDados();
             toast.success("Veículo salvo com sucesso!");
         } catch (e) { toast.error(erroMsg(e, "Não foi possível salvar o veículo.")); }
+    };
+
+    // Revisão feita: o km de agora vira o da última revisão e a contagem recomeça.
+    const handleRevisao = async (veiculo) => {
+        const confirmacao = await Swal.fire({
+            title: 'Registrar revisão?',
+            text: `O ${veiculo.placa} está com ${km(veiculo.kmAtual)}. A próxima revisão passa a contar a partir daqui.`,
+            icon: 'question', showCancelButton: true, confirmButtonText: 'Registrar', cancelButtonText: 'Cancelar',
+            background: '#1e1e1e', color: '#ffffff',
+        });
+        if (!confirmacao.isConfirmed) return;
+        try {
+            await api.post(`/veiculos/${veiculo.id}/revisao`);
+            carregarDados();
+            toast.success("Revisão registrada.");
+        } catch (e) { toast.error(erroMsg(e, "Não foi possível registrar a revisão.")); }
     };
 
     const handleInativar = async (veiculo) => {
@@ -152,6 +188,9 @@ function Veiculos() {
                             <Campo id="campo-velocidadeMaxima" rotulo="Limite de velocidade (km/h)" erro={erros.velocidadeMaxima} ajuda="Em branco, vale 110 km/h.">
                                 <Input type="number" min={20} max={200} step={1} value={formData.velocidadeMaxima ?? ""} onChange={e => mudar("velocidadeMaxima", e.target.value)} placeholder="110" inputMode="numeric" />
                             </Campo>
+                            <Campo id="campo-kmAtual" rotulo="Km atual (odômetro)" erro={erros.kmAtual} ajuda="Depois de informado, o GPS soma os km rodados sozinho.">
+                                <Input type="number" min={0} step={1} value={formData.kmAtual ?? ""} onChange={e => mudar("kmAtual", e.target.value)} placeholder="Ex.: 45000" inputMode="numeric" />
+                            </Campo>
                             <div className="space-y-2">
                                 <Label>Vincular Controladora</Label>
                                 <select value={formData.controladoraId} onChange={e => setFormData({ ...formData, controladoraId: e.target.value })} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
@@ -167,12 +206,13 @@ function Veiculos() {
 
             <Table>
                 <TableHeader><TableRow>
-                    <TableHead className="w-[10%]">Status</TableHead><TableHead className="w-[20%]">Nome</TableHead><TableHead className="w-[15%]">Placa</TableHead>
-                    <TableHead className="w-[15%]">Renavam</TableHead><TableHead className="w-[20%]">Controladora</TableHead><TableHead className="w-[20%] text-center">Ações</TableHead>
+                    <TableHead>Status</TableHead><TableHead>Nome</TableHead><TableHead>Placa</TableHead>
+                    <TableHead>Renavam</TableHead><TableHead>Controladora</TableHead><TableHead>Km atual</TableHead>
+                    <TableHead>Próxima revisão</TableHead><TableHead className="text-center">Ações</TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
                     {(!Array.isArray(veiculosFiltrados) || veiculosFiltrados.length === 0) ? (
-                        <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{termoBusca ? "Nenhum veículo encontrado com esta pesquisa." : "Nenhum veículo encontrado no banco."}</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{termoBusca ? "Nenhum veículo encontrado com esta pesquisa." : "Nenhum veículo encontrado no banco."}</TableCell></TableRow>
                     ) : (
                         paginacao.visiveis.map(v => (
                             <TableRow key={v.id}>
@@ -181,10 +221,15 @@ function Veiculos() {
                                 <TableCell className="uppercase">{v.placa}</TableCell>
                                 <TableCell>{v.renavam}</TableCell>
                                 <TableCell>{v.controladora ? `#${v.controladora.idControladora}` : <span className="text-muted-foreground">Sem controladora</span>}</TableCell>
+                                <TableCell className="tabular-nums whitespace-nowrap">{v.kmAtual != null ? km(v.kmAtual) : <span className="text-muted-foreground">—</span>}</TableCell>
+                                <TableCell className="whitespace-nowrap"><Revisao veiculo={v} /></TableCell>
                                 <TableCell>
                                     <div className="flex gap-2 justify-center">
                                         {temPermissao("veiculos.editar") && (
                                             <Button size="sm" variant="outline" onClick={() => abrirModal(v)}>Editar</Button>
+                                        )}
+                                        {temPermissao("veiculos.editar") && v.kmAtual != null && (
+                                            <Button size="sm" variant="outline" onClick={() => handleRevisao(v)}>Revisão</Button>
                                         )}
                                         {temPermissao("veiculos.inativar") && (
                                             <Button size="sm" variant={v.ativo ? "secondary" : "default"} onClick={() => handleInativar(v)}>{v.ativo ? "Inativar" : "Ativar"}</Button>

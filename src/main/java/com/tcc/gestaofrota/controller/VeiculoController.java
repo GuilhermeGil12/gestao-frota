@@ -1,6 +1,7 @@
 package com.tcc.gestaofrota.controller;
 
 import com.tcc.gestaofrota.model.Veiculo;
+import com.tcc.gestaofrota.service.RevisaoService;
 import com.tcc.gestaofrota.service.VeiculoService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,9 +14,18 @@ import java.util.List;
 public class VeiculoController {
 
     private final VeiculoService veiculoService;
+    private final RevisaoService revisaoService;
 
-    public VeiculoController(VeiculoService veiculoService) {
+    public VeiculoController(VeiculoService veiculoService, RevisaoService revisaoService) {
         this.veiculoService = veiculoService;
+        this.revisaoService = revisaoService;
+    }
+
+    // Revisão feita: o km de agora vira o da última revisão e a contagem recomeça.
+    @PreAuthorize("hasAuthority('veiculos.editar')")
+    @PostMapping("/{id}/revisao")
+    public ResponseEntity<Veiculo> registrarRevisao(@PathVariable Long id) {
+        return ResponseEntity.ok(revisaoService.registrarRevisao(id));
     }
 
     // 1. Método para cadastrar um novo veículo

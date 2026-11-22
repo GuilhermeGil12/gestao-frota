@@ -45,7 +45,8 @@ function Comandos() {
     async function buscarControladoras() {
         try {
             const resp = await api.get('/controladora');
-            setControladoras(resp.data);
+            // Aguardando aprovação ainda não recebe comandos.
+            setControladoras((Array.isArray(resp.data) ? resp.data : []).filter((c) => c.situacao !== "AGUARDANDO"));
         } catch {
             toast.error("Erro ao buscar controladoras.");
         }

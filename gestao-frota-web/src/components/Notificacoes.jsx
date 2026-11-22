@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, IdCard, ShieldCheck, CheckCheck } from "lucide-react";
+import { Bell, IdCard, ShieldCheck, CheckCheck, Cpu } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import api from "@/services/api";
@@ -21,6 +21,7 @@ const ICONES = {
     CNH_VENCIDA: IdCard,
     CNH_VENCENDO: IdCard,
     COMANDO_EXECUTADO: ShieldCheck,
+    CONTROLADORA: Cpu,
 };
 
 // O que já foi lido fica no navegador, separado por usuário.

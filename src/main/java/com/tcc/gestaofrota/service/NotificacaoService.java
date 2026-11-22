@@ -3,8 +3,11 @@ package com.tcc.gestaofrota.service;
 import com.tcc.gestaofrota.dto.NotificacaoDTO;
 import com.tcc.gestaofrota.model.Comando;
 import com.tcc.gestaofrota.model.Funcionario;
+import com.tcc.gestaofrota.model.Controladora;
 import com.tcc.gestaofrota.repository.ComandoRepository;
+import com.tcc.gestaofrota.repository.ControladoraRepository;
 import com.tcc.gestaofrota.repository.FuncionarioRepository;
+import com.tcc.gestaofrota.repository.VeiculoRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -26,10 +29,19 @@ public class NotificacaoService {
     private final FuncionarioRepository funcionarioRepository;
     private final ComandoRepository comandoRepository;
     private final ConfiguracaoService configuracaoService;
+    private final VeiculoRepository veiculoRepository;
+    private final RevisaoService revisaoService;
+    private final ControladoraRepository controladoraRepository;
 
     public NotificacaoService(FuncionarioRepository funcionarioRepository,
                               ComandoRepository comandoRepository,
-                              ConfiguracaoService configuracaoService) {
+                              ConfiguracaoService configuracaoService,
+                              VeiculoRepository veiculoRepository,
+                              RevisaoService revisaoService,
+                              ControladoraRepository controladoraRepository) {
+        this.controladoraRepository = controladoraRepository;
+        this.veiculoRepository = veiculoRepository;
+        this.revisaoService = revisaoService;
         this.funcionarioRepository = funcionarioRepository;
         this.comandoRepository = comandoRepository;
         this.configuracaoService = configuracaoService;
@@ -41,6 +53,8 @@ public class NotificacaoService {
         List<NotificacaoDTO> lista = new ArrayList<>();
         if (permissoes.contains("funcionarios.visualizar")) lista.addAll(cnhVencendo());
         if (permissoes.contains("comandos.visualizar")) lista.addAll(comandosExecutados());
+        if (permissoes.contains("veiculos.visualizar")) lista.addAll(revisoes());
+        if (permissoes.contains("controladoras.cadastrar")) lista.addAll(controladorasAguardando());
         return lista.stream().filter(n -> !tiposDesativados.contains(n.tipo())).toList();
     }
 
@@ -78,6 +92,48 @@ public class NotificacaoService {
                             "/funcionarios"
                     );
                 })
+                .toList();
+    }
+
+    // Revisão vencida ou faltando 500 km ou menos (Configurações > Geral > "Revisão a cada").
+    private List<NotificacaoDTO> revisoes() {
+        return veiculoRepository.findAll().stream()
+                .filter(v -> !Boolean.FALSE.equals(v.getAtivo()) && revisaoService.precisaAvisar(v))
+                .map(v -> {
+                    double proxima = revisaoService.proximaRevisao(v);
+                    double faltam = proxima - v.getKmAtual();
+                    boolean vencida = faltam <= 0;
+                    String mensagem = "O veículo " + v.getPlaca() + " está com " + RevisaoService.formatarKm(v.getKmAtual())
+                            + (vencida ? " e passou da revisão dos " : "; a revisão é aos ")
+                            + RevisaoService.formatarKm(proxima) + ".";
+                    return new NotificacaoDTO(
+                            "revisao-" + v.getId() + "-" + (long) proxima,
+                            "REVISAO",
+                            vencida ? "Revisão vencida" : "Revisão chegando",
+                            mensagem,
+                            LocalDateTime.now(),
+                            "/veiculos"
+                    );
+                })
+                .toList();
+    }
+
+    // Controladora nova se apresentou (ou pediu troca de senha) e espera o "Aprovar".
+    private List<NotificacaoDTO> controladorasAguardando() {
+        List<Controladora> lista = new ArrayList<>(controladoraRepository.findBySituacao(Controladora.AGUARDANDO));
+        controladoraRepository.findAll().stream()
+                .filter(c -> c.estaAprovada() && c.isTrocaDeSenhaPendente())
+                .forEach(lista::add);
+        return lista.stream()
+                .map(c -> new NotificacaoDTO(
+                        "controladora-" + c.getIdControladora() + (c.estaAprovada() ? "-senha" : ""),
+                        "CONTROLADORA",
+                        c.estaAprovada() ? "Controladora pediu nova senha" : "Controladora aguardando aprovação",
+                        "IMEI " + c.getImei() + (c.getVeiculo() != null ? " (" + c.getVeiculo().getPlaca() + ")" : "")
+                                + ". Aprove em Controladoras.",
+                        c.getUltimoContato() != null ? c.getUltimoContato() : LocalDateTime.now(),
+                        "/controladoras"
+                ))
                 .toList();
     }
 

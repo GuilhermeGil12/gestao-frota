@@ -2,6 +2,7 @@ package com.tcc.gestaofrota.service;
 
 import com.tcc.gestaofrota.model.Configuracao;
 import com.tcc.gestaofrota.repository.ConfiguracaoRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -9,12 +10,18 @@ import java.time.LocalDateTime;
 @Service
 public class ConfiguracaoService {
 
+    /** As configurações foram salvas (ex.: o bloqueio de madrugada muda a lista de cartões). */
+    public record ConfiguracaoAlterada() {}
+
+    private final ApplicationEventPublisher eventos;
+
     private final AtividadeService atividadeService;
 
     private final ConfiguracaoRepository configuracaoRepository;
 
     public ConfiguracaoService(ConfiguracaoRepository configuracaoRepository,
-            AtividadeService atividadeService) {
+            AtividadeService atividadeService, ApplicationEventPublisher eventos) {
+        this.eventos = eventos;
         this.configuracaoRepository = configuracaoRepository;
         this.atividadeService = atividadeService;
     }
@@ -44,6 +51,7 @@ public class ConfiguracaoService {
         config.setAtualizadoEm(LocalDateTime.now());
         Configuracao salva = configuracaoRepository.save(config);
         atividadeService.registrar("CONFIGURACAO", "Alterou as configurações gerais");
+        eventos.publishEvent(new ConfiguracaoAlterada());
         return salva;
     }
 }

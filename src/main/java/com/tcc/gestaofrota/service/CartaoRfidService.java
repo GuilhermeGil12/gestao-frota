@@ -9,9 +9,12 @@ import com.tcc.gestaofrota.repository.ControladoraRepository;
 import com.tcc.gestaofrota.repository.FuncionarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.tcc.gestaofrota.util.Validacoes;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -27,11 +30,17 @@ public class CartaoRfidService {
     private final FuncionarioService funcionarioService;
     private final ControladoraRepository controladoraRepository;
     private final MqttService mqttService;
+    private final ConfiguracaoService configuracaoService;
+
+    // Bloqueio de madrugada (Configurações > Geral): das 22h às 6h nenhum cartão libera o veículo.
+    public static final LocalTime INICIO_MADRUGADA = LocalTime.of(22, 0);
+    public static final LocalTime FIM_MADRUGADA = LocalTime.of(6, 0);
 
 
     public CartaoRfidService(CartaoRfidRepository cartaoRfidRepository, FuncionarioService funcionarioService,
                              ControladoraRepository controladoraRepository, MqttService mqttService,
-            AtividadeService atividadeService) {
+            AtividadeService atividadeService, ConfiguracaoService configuracaoService) {
+        this.configuracaoService = configuracaoService;
         this.cartaoRfidRepository = cartaoRfidRepository;
         this.funcionarioService = funcionarioService;
         this.controladoraRepository = controladoraRepository;
@@ -39,17 +48,58 @@ public class CartaoRfidService {
         this.atividadeService = atividadeService;
     }
 
+    // Está no horário do bloqueio de madrugada (e a regra está ligada)?
+    public boolean madrugadaBloqueadaAgora() {
+        if (!Boolean.TRUE.equals(configuracaoService.buscar().getBloquearMadrugada())) return false;
+        LocalTime agora = LocalTime.now(ZoneId.of(RelatorioLiderService.FUSO));
+        return !agora.isBefore(INICIO_MADRUGADA) || agora.isBefore(FIM_MADRUGADA);
+    }
+
+    // O que a controladora recebe: os cartões ativos, ou nenhum durante o bloqueio de madrugada.
+    // A controladora só confere a lista na hora de passar o cartão: quem já está dirigindo às 22h segue.
+    private List<String> uidsParaControladora() {
+        return madrugadaBloqueadaAgora() ? List.of() : listarUidsAtivos();
+    }
+
     // Manda a lista de cartões liberados (retida) pra uma controladora.
-    public void publicarCartoes(Long idControladora) {
-        mqttService.publicarCartoes(idControladora, listarUidsAtivos());
+    public void publicarCartoes(Controladora controladora) {
+        if (!controladora.estaAprovada()) return; // aguardando aprovação não recebe cartões
+        mqttService.publicarCartoes(controladora.getCodigoMqtt(), uidsParaControladora());
+        publicarRegras(controladora.getCodigoMqtt());
+    }
+
+    private void publicarRegras(String codigo) {
+        boolean ligada = Boolean.TRUE.equals(configuracaoService.buscar().getBloquearMadrugada());
+        mqttService.publicarRegras(codigo, ligada, INICIO_MADRUGADA.getHour(), FIM_MADRUGADA.getHour());
+    }
+
+    // Recém-aprovada (ou passou a usar o IMEI): manda a lista de cartões no tópico dela.
+    @EventListener
+    public void aoAprovarControladora(ControladoraService.ControladoraAprovada evento) {
+        controladoraRepository.findById(evento.idControladora()).ifPresent(this::publicarCartoes);
     }
 
     // Toda mudança em cartão vale pra frota inteira: publica pra todas as controladoras.
     public void publicarCartoesParaTodas() {
-        List<String> uids = listarUidsAtivos();
+        List<String> uids = uidsParaControladora();
         for (Controladora controladora : controladoraRepository.findAll()) {
-            mqttService.publicarCartoes(controladora.getIdControladora(), uids);
+            if (!controladora.estaAprovada()) continue;
+            mqttService.publicarCartoes(controladora.getCodigoMqtt(), uids);
+            publicarRegras(controladora.getCodigoMqtt());
         }
+    }
+
+    // Às 22h a lista vai vazia e às 6h volta (se o bloqueio de madrugada estiver ligado).
+    // Por ser retida, a controladora que estava sem sinal recebe a lista certa ao voltar.
+    @Scheduled(cron = "5 0 22,6 * * *", zone = RelatorioLiderService.FUSO)
+    public void virarHorarioMadrugada() {
+        publicarCartoesParaTodas();
+    }
+
+    // Ligou ou desligou o bloqueio de madrugada: a lista muda na hora.
+    @EventListener
+    public void aoAlterarConfiguracao(ConfiguracaoService.ConfiguracaoAlterada evento) {
+        publicarCartoesParaTodas();
     }
 
     // O broker pode ter reiniciado e perdido as mensagens retidas: publica de novo.

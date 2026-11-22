@@ -46,9 +46,14 @@ function iconeCarro(placa) {
     });
 }
 
-function classificar(ponto) {
+// Limite cadastrado no veículo; sem valor, vale o padrão de 110 km/h (mesma regra do back-end).
+function limiteDo(veiculo) {
+    return Number(veiculo?.velocidadeMaxima) > 0 ? Number(veiculo.velocidadeMaxima) : LIMITE_VELOCIDADE;
+}
+
+function classificar(ponto, limite = LIMITE_VELOCIDADE) {
     if (!ponto) return { chave: 'semSinal', rotulo: 'Sem sinal', variante: 'outline' };
-    if (Number(ponto.velocidade) > LIMITE_VELOCIDADE) return { chave: 'excesso', rotulo: 'Excesso', variante: 'destructive' };
+    if (Number(ponto.velocidade) > limite) return { chave: 'excesso', rotulo: 'Excesso', variante: 'destructive' };
     const status = Number(ponto.status);
     if (status === 10) return { chave: 'movimento', rotulo: 'Em movimento', variante: 'default' };
     if (status === 1) return { chave: 'ignicao', rotulo: 'Ignição', variante: 'secondary' };
@@ -101,13 +106,13 @@ function Resumo({ icone, rotulo, valor }) {
     );
 }
 
-function DetalhesPonto({ titulo, ponto }) {
+function DetalhesPonto({ titulo, ponto, limite }) {
     return (
         <div className="min-w-[200px] space-y-1 text-sm">
             <p className="font-semibold">{titulo}</p>
             <p>Motorista: <b>{ponto.motorista || 'Não identificado'}</b></p>
             <p>Velocidade: <b>{ponto.velocidade} km/h</b></p>
-            <p>Situação: <b>{classificar(ponto).rotulo}</b></p>
+            <p>Situação: <b>{classificar(ponto, limite).rotulo}</b></p>
             {ponto.hora && <p>Horário: <b>{ponto.hora}</b></p>}
             {ponto.dataHora && <p>Atualizado: <b>{new Date(ponto.dataHora).toLocaleString("pt-BR")}</b></p>}
         </div>
@@ -163,7 +168,7 @@ function MonitoramentoTempoReal() {
         const porId = new Map(ultimas.map(p => [String(p.idVeiculo), p]));
         return veiculos.map(v => {
             const posicao = porId.get(idDe(v)) || null;
-            return { ...v, id: idDe(v), posicao, situacao: classificar(posicao) };
+            return { ...v, id: idDe(v), posicao, situacao: classificar(posicao, limiteDo(v)) };
         });
     }, [veiculos, ultimas]);
 
@@ -250,7 +255,7 @@ function MonitoramentoTempoReal() {
                         {/* Todos: cada carro pulsando, com os 2 últimos dígitos da placa */}
                         {veiculoSelecionado === "TODOS" && ultimas.map((p) => (
                             <Marker key={p.idVeiculo} position={[p.lat, p.lng]} icon={iconeCarro(p.placa)}>
-                                <Popup><DetalhesPonto titulo={p.placa} ponto={p} /></Popup>
+                                <Popup><DetalhesPonto titulo={p.placa} ponto={p} limite={limiteDo(frota.find(v => v.id === String(p.idVeiculo)))} /></Popup>
                             </Marker>
                         ))}
 
@@ -265,11 +270,11 @@ function MonitoramentoTempoReal() {
                                 {rota.length > 1 && (
                                     <CircleMarker center={[rota[0].lat, rota[0].lng]} radius={6}
                                                   pathOptions={{ fillColor: CORES_TRAJETO.normal, color: '#ffffff', weight: 2, fillOpacity: 1 }}>
-                                        <Popup><DetalhesPonto titulo="Início do dia" ponto={rota[0]} /></Popup>
+                                        <Popup><DetalhesPonto titulo="Início do dia" ponto={rota[0]} limite={limiteSelecionado} /></Popup>
                                     </CircleMarker>
                                 )}
                                 <Marker position={[ultimo.lat, ultimo.lng]} icon={iconeCarro(selecionado?.placa)}>
-                                    <Popup><DetalhesPonto titulo={`Posição atual — ${selecionado?.placa ?? ''}`} ponto={ultimo} /></Popup>
+                                    <Popup><DetalhesPonto titulo={`Posição atual — ${selecionado?.placa ?? ''}`} ponto={ultimo} limite={limiteSelecionado} /></Popup>
                                 </Marker>
                                 <SeguirCarro posicao={[ultimo.lat, ultimo.lng]} />
                             </>

@@ -64,28 +64,86 @@ Agora: só os endereços de `app.cors.origens` (padrão: o Vite em `localhost:51
 
 ---
 
-## 3. Pendente
+## 3. Broker MQTT: login por controladora e TLS
 
-### 3.1 Broker MQTT — credencial por controladora + ACL — **crítico**
-**Hoje:** todas as controladoras usam o **mesmo** usuário e senha no Mosquitto. Quem extrair a senha de um ESP pode publicar como **qualquer** controladora (mandar BLOQUEAR para outro carro, ler a lista de cartões de todas).
+O código já está pronto (backend e firmware), **desligado por padrão**, para não derrubar nada antes de a VM estar configurada. Para ligar, siga a ordem abaixo: em cada passo o sistema continua funcionando.
 
-**Alvo:**
-- Cada controladora com usuário próprio (`ctrl-<código>`) e senha própria.
-- **ACL:** `ctrl-52` só pode ler e publicar em `frota/52/#`.
-- O backend com usuário próprio, com acesso a `frota/#`.
-- `allow_anonymous false`.
+### 3.1 Login próprio por controladora + ACL — **crítico**
+**Problema:** hoje todas as controladoras usam o **mesmo** usuário (`frota`), e a senha dele está no código do firmware. Quem extrair essa senha de um ESP pode publicar como **qualquer** controladora: mandar BLOQUEAR para outro carro ou ler a lista de cartões de todas.
 
-**Como:** o Mosquitto 2.x tem o plugin **Dynamic Security**: o backend cria o usuário e a ACL de uma controladora nova publicando uma mensagem num tópico de controle. Assim, cadastrar uma controladora no site já cria a credencial dela no broker, sem mexer na VM.
+**Como ficou:**
+- Cada controladora entra com usuário = **IMEI** (ex.: `356938035643809`), client id `controladora-<imei>` e a **senha que ela mesma criou** no primeiro boot e que o gestor aprovou em Controladoras (ver `PLANO_CONTROLADORA.md`, etapa 1).
+- Ela só pode publicar em `frota/<imei>/telemetria` e `frota/<imei>/resposta` e só pode assinar `frota/<imei>/estado`, `comando`, `cartoes` e `regras`.
+- O backend (`MqttAcessoService`) mantém o broker igual ao site pelo plugin **dynamic-security** do Mosquitto 2.x. Ele cria ao aprovar, troca a senha ao aprovar uma senha nova, desativa ao inativar, apaga ao excluir e sincroniza todas ao conectar. Os comandos levam senha: o log mostra só o tópico.
+- **Falta (etapa 4 do plano):** um usuário só de provisionamento, que só pode publicar em `provisionamento/<imei>`. Sem ele, com o login próprio ligado, uma controladora **nova** (ainda não aprovada) não tem como se apresentar. Até lá, não ligar o passo 5 abaixo.
+- Liga com a variável `MQTT_ACESSO_POR_CONTROLADORA=true` (propriedade `app.mqtt.acesso-por-controladora`).
+
+**Passo a passo na VM:**
+
+1. Achar o plugin e criar o arquivo do dynamic-security, com um administrador (vai pedir uma senha nova; guarde fora do projeto):
+   ```bash
+   dpkg -L mosquitto | grep dynamic_security
+   sudo mosquitto_ctrl dynsec init /var/lib/mosquitto/dynamic-security.json admin-dynsec
+   sudo chown mosquitto:mosquitto /var/lib/mosquitto/dynamic-security.json
+   ```
+2. Em `/etc/mosquitto/conf.d/frota.conf`, tirar `password_file`/`acl_file` (se houver) e deixar:
+   ```
+   per_listener_settings false
+   allow_anonymous false
+   plugin /usr/lib/x86_64-linux-gnu/mosquitto_dynamic_security.so
+   plugin_opt_config_file /var/lib/mosquitto/dynamic-security.json
+   listener 1883
+   ```
+   (use o caminho do plugin que o `dpkg -L` mostrou) e `sudo systemctl restart mosquitto`.
+3. Recriar o usuário `frota` (o do backend) com **a mesma senha de hoje** e dar a ele acesso a tudo e ao tópico de controle. Cada comando pede a senha do `admin-dynsec` (`-P`):
+   ```bash
+   C="mosquitto_ctrl -h localhost -u admin-dynsec dynsec"
+   $C createClient frota                     # pede a senha: a mesma do MQTT_PASSWORD
+   $C createRole backend
+   $C addRoleACL backend publishClientSend 'frota/#' allow
+   $C addRoleACL backend subscribePattern 'frota/#' allow
+   $C addRoleACL backend publishClientSend '$CONTROL/dynamic-security/#' allow
+   $C addRoleACL backend subscribePattern '$CONTROL/dynamic-security/#' allow
+   $C addRoleACL backend subscribePattern 'provisionamento/#' allow
+   $C addRoleACL backend publishClientSend 'provisionamento/#' allow   # para apagar a mensagem retida
+   $C addClientRole frota backend
+   ```
+   Neste ponto tudo funciona como antes: o backend e o ESP antigo ainda entram como `frota`.
+4. Adicionar `MQTT_ACESSO_POR_CONTROLADORA=true` às variáveis do serviço e reiniciar o `frotasystem`. O backend cria o usuário de cada controladora. Para conferir: `$C listClients` mostra `frota` e o IMEI de cada controladora aprovada com firmware novo.
+5. **(Só depois da etapa 4 do plano.)** No firmware: `#define USAR_LOGIN_PROPRIO 1`. Não precisa digitar senha: a controladora usa o IMEI e a senha que ela criou. Gravar no ESP e ver no monitor serial `### MQTT CONECTADO`.
+6. Quando **todas** as controladoras estiverem com o login próprio, trocar a senha do `frota` (`$C setClientPassword frota`) e atualizar `MQTT_PASSWORD` no serviço. A senha antiga, que está no código do firmware, deixa de valer.
 
 ### 3.2 MQTT com TLS
-**Hoje:** a conexão é `tcp://...:1883`, **sem criptografia**: a senha e os dados viajam abertos.
-**Alvo:** porta **8883** com TLS. O A7670 suporta (`AT+CSSLCFG` + `AT+CMQTTSSLCFG`). Precisa de certificado no Mosquitto e do certificado da autoridade (CA) gravado no ESP.
+**Problema:** a conexão é `tcp://...:1883`, **sem criptografia**: a senha e os dados viajam abertos pela rede da operadora.
+
+**Como ficou:** o firmware tem `#define USAR_TLS`. Com `1`, conecta na porta **8883** com TLS (`AT+CSSLCFG` + `AT+CMQTTSSLCFG`).
+
+**Passo a passo na VM:**
+1. Criar o DNS `mqtt.frotasystem.com` apontando para o IP da VM, **só DNS (nuvem cinza)** no Cloudflare. O proxy do Cloudflare não passa MQTT.
+2. Emitir o certificado e deixá-lo legível pelo Mosquitto:
+   ```bash
+   sudo certbot certonly --nginx -d mqtt.frotasystem.com
+   sudo mkdir -p /etc/mosquitto/certs
+   sudo cp /etc/letsencrypt/live/mqtt.frotasystem.com/{fullchain,privkey}.pem /etc/mosquitto/certs/
+   sudo chown mosquitto:mosquitto /etc/mosquitto/certs/*.pem
+   ```
+   (o certificado vence a cada 90 dias: repetir a cópia num `--deploy-hook` do certbot).
+3. No `frota.conf`, acrescentar:
+   ```
+   listener 8883
+   certfile /etc/mosquitto/certs/fullchain.pem
+   keyfile /etc/mosquitto/certs/privkey.pem
+   ```
+   Liberar a porta 8883 no firewall da Azure e reiniciar o Mosquitto.
+4. Firmware com `#define USAR_TLS 1`, gravar e testar.
+5. Com todas as controladoras em TLS, trocar `listener 1883` por `listener 1883 127.0.0.1` (só o backend, na própria VM, usa a 1883), fechar a 1883 na Azure e conferir se o `MQTT_BROKER` do serviço aponta para `tcp://127.0.0.1:1883`.
+
+**Limitação:** o modem não tem a CA gravada, então o firmware usa `authmode 0`. A conexão é criptografada, o que protege contra quem só escuta a rede, mas o modem não confere o certificado do servidor. Para conferir, seria preciso gravar a CA no modem (`AT+CCERTDOWN`) e usar `authmode 1`.
 
 ### 3.3 Firmware
-- Usuário e senha **próprios** de cada controladora (hoje estão fixos no código e são iguais para todas).
-- Conexão com TLS (3.2).
+- Login próprio e TLS: prontos atrás dos `#define` acima. Os dois foram compilados, mas ainda **não testados no broker**.
 
-### 3.4 VM
+### 3.4 VM (pendente)
 - **HTTPS** no site (a senha do login não pode viajar aberta). Ainda **não verificado**.
 - **Firewall:** só 22 (SSH), 80/443 (site) e a porta do MQTT abertas. PostgreSQL (5432) e 8080 **não** podem ficar abertos para fora.
 

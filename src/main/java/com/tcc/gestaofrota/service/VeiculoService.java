@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.tcc.gestaofrota.util.Validacoes;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -19,6 +21,7 @@ public class VeiculoService {
 
     private final VeiculoRepository veiculoRepository;
     private final ControladoraRepository controladoraRepository;
+    private final RevisaoService revisaoService;
 
     /**
      * Construtor utilizado para a Injeção de Dependências (Padrão Ouro do Spring Boot).
@@ -32,7 +35,8 @@ public class VeiculoService {
      */
 
     public VeiculoService(VeiculoRepository veiculoRepository, ControladoraRepository controladoraRepository,
-            AtividadeService atividadeService) {
+            AtividadeService atividadeService, RevisaoService revisaoService) {
+        this.revisaoService = revisaoService;
         this.veiculoRepository = veiculoRepository;
         this.controladoraRepository = controladoraRepository;
         this.atividadeService = atividadeService;
@@ -61,9 +65,14 @@ public class VeiculoService {
         }
 
         Long controladoraId = (veiculo.getControladora() != null) ? veiculo.getControladora().getIdControladora() : null;
+        if (controladoraId != null) exigirAprovada(controladoraId);
 
         // Remove a referência detached antes de salvar para evitar cascade em entidade detached
         veiculo.setControladora(null);
+        validarKm(veiculo.getKmAtual());
+        veiculo.setKmUltimaRevisao(null);
+        // O GPS começa a somar a partir do km informado agora.
+        veiculo.setKmContadoAte(veiculo.getKmAtual() != null ? LocalDateTime.now() : null);
         Veiculo veiculoSalvo = veiculoRepository.save(veiculo);
         atividadeService.registrar("VEICULO", "Cadastrou o veículo " + veiculoSalvo.getPlaca());
 
@@ -79,7 +88,13 @@ public class VeiculoService {
     }
 
     public List<Veiculo> listarTodas(){
-        return veiculoRepository.findAll();
+        return veiculoRepository.findAll().stream().map(revisaoService::comProximaRevisao).toList();
+    }
+
+    private void validarKm(Double km) {
+        if (km != null && (km < 0 || km > 9_999_999)) {
+            throw new RuntimeException("O km atual deve ser entre 0 e 9.999.999.");
+        }
     }
 
     public Veiculo buscarPorId(Long id){
@@ -109,7 +124,12 @@ public class VeiculoService {
 
         //vai pegar o valor que vem do front e coloca dentro da variavel antiga, substitui
         //não coloquei a mudança da placa pois não será possível alterar a placa
-        veiculoAntigo.setKmAtual(veiculoNovo.getKmAtual());
+        // Km digitado à mão: vira a nova base e o GPS volta a somar a partir de agora.
+        if (!Objects.equals(veiculoNovo.getKmAtual(), veiculoAntigo.getKmAtual())) {
+            validarKm(veiculoNovo.getKmAtual());
+            veiculoAntigo.setKmAtual(veiculoNovo.getKmAtual());
+            veiculoAntigo.setKmContadoAte(veiculoNovo.getKmAtual() != null ? LocalDateTime.now() : null);
+        }
         veiculoAntigo.setRenavam(veiculoNovo.getRenavam());
         veiculoAntigo.setVelocidadeMaxima(veiculoNovo.getVelocidadeMaxima());
         veiculoAntigo.setNome(veiculoNovo.getNome());
@@ -117,6 +137,7 @@ public class VeiculoService {
 
         // Lógica para atualizar a controladora
         if (veiculoNovo.getControladora() != null && veiculoNovo.getControladora().getIdControladora() != null) {
+            exigirAprovada(veiculoNovo.getControladora().getIdControladora());
             // Se o usuário selecionou uma controladora nova
             Controladora novaControladora = controladoraRepository.findById(veiculoNovo.getControladora().getIdControladora())
                     .orElseThrow(() -> new RuntimeException("Controladora não encontrada"));
@@ -145,7 +166,7 @@ public class VeiculoService {
 
         Veiculo atualizado = veiculoRepository.save(veiculoAntigo);
         atividadeService.registrar("VEICULO", "Editou o veículo " + atualizado.getPlaca());
-        return atualizado;
+        return revisaoService.comProximaRevisao(atualizado);
     }
 
     @Transactional
@@ -161,5 +182,14 @@ public class VeiculoService {
 
         veiculoRepository.deleteById(id);
         atividadeService.registrar("VEICULO", "Excluiu o veículo " + veiculo.getPlaca());
+    }
+
+    // Controladora aguardando aprovação só ganha veículo pelo botão "Aprovar" em Controladoras.
+    private void exigirAprovada(Long idControladora) {
+        controladoraRepository.findById(idControladora).ifPresent(c -> {
+            if (!c.estaAprovada()) {
+                throw new RuntimeException("Esta controladora ainda não foi aprovada. Aprove em Controladoras.");
+            }
+        });
     }
 }

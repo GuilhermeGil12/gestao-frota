@@ -58,25 +58,31 @@ public class LocalizacaoService {
         this.telegramService = telegramService;
     }
 
-    // === Via HTTP (com senha) ===
-    public void processarLoteDoEsp32(String codigoControladora, String senha, List<CoordenadaEsp32DTO> loteDoEsp32) {
-        Long id = Long.parseLong(codigoControladora);
-        Optional<Controladora> controladoraBusca = controladoraRepository.findByIdControladoraAndSenha(id, senha);
-        if (controladoraBusca.isEmpty()) {
-            throw new RuntimeException("Credenciais inválidas! Controladora não encontrada ou senha incorreta.");
-        }
-        salvarPontos(controladoraBusca.get().getVeiculo(), loteDoEsp32);
-    }
-
-    // === Via MQTT (sem senha — a identidade vem do tópico frota/<codigo>/telemetria) ===
+    // A identidade vem do tópico frota/<codigo>/telemetria (IMEI ou, no firmware antigo, o número).
     public void salvarLoteMqtt(String codigoControladora, List<CoordenadaEsp32DTO> loteDoEsp32) {
-        Long id = Long.parseLong(codigoControladora);
-        Optional<Controladora> controladoraBusca = controladoraRepository.findById(id);
+        Optional<Controladora> controladoraBusca = buscarPorCodigoMqtt(codigoControladora);
         if (controladoraBusca.isEmpty()) {
             System.out.println("[MQTT] Controladora " + codigoControladora + " não encontrada — ignorando lote.");
             return;
         }
-        salvarPontos(controladoraBusca.get().getVeiculo(), loteDoEsp32);
+        Controladora controladora = controladoraBusca.get();
+        if (!controladora.estaAprovada()) {
+            System.out.println("[MQTT] Controladora " + codigoControladora + " aguardando aprovação — ignorando lote.");
+            return;
+        }
+        controladora.setUltimoContato(LocalDateTime.now());
+        controladoraRepository.save(controladora);
+        salvarPontos(controladora.getVeiculo(), loteDoEsp32);
+    }
+
+    // IMEI tem 15 números; o número da controladora (firmware antigo) é bem menor.
+    // O filtro garante que o código é o que ela usa hoje (quem já usa o IMEI não aceita o número).
+    private Optional<Controladora> buscarPorCodigoMqtt(String codigo) {
+        if (codigo == null || !codigo.matches("\\d{1,15}")) return Optional.empty();
+        Optional<Controladora> busca = codigo.length() == 15
+                ? controladoraRepository.findByImei(codigo)
+                : controladoraRepository.findById(Long.parseLong(codigo));
+        return busca.filter(c -> codigo.equals(c.getCodigoMqtt()));
     }
 
     // Firmwares antigos nao mandam as tensoes: nesse caso o campo fica nulo em vez de quebrar.
@@ -267,7 +273,7 @@ public class LocalizacaoService {
     }
 
     // Função interna para calcular a distância entre duas coordenadas (Fórmula de Haversine)
-    private double calcularDistancia(double lat1, double lon1, double lat2, double lon2) {
+    public static double calcularDistancia(double lat1, double lon1, double lat2, double lon2) {
         double raioTerraKm = 6371.0;
         double dLat = Math.toRadians(lat2 - lat1);
         double dLon = Math.toRadians(lon2 - lon1);

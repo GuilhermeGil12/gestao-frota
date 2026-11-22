@@ -44,6 +44,9 @@ public class ComandoService {
     public Comando enviarComando(Long idControladora, String tipo) {
         Controladora controladora = controladoraRepository.findById(idControladora)
                 .orElseThrow(() -> new RuntimeException("Controladora não encontrada!"));
+        if (!controladora.estaAprovada()) {
+            throw new RuntimeException("Esta controladora ainda não foi aprovada em Controladoras.");
+        }
 
         if (!tipo.equals("BLOQUEAR") && !tipo.equals("DESBLOQUEAR") && !tipo.equals("APITAR")) {
             throw new RuntimeException("Tipo de comando inválido. Use BLOQUEAR, DESBLOQUEAR ou APITAR.");
@@ -74,7 +77,7 @@ public class ComandoService {
     }
 
     private void publicarNoMqtt(Comando comando) {
-        Long codigo = comando.getControladora().getIdControladora();
+        String codigo = comando.getControladora().getCodigoMqtt();
         switch (comando.getTipo()) {
             case "BLOQUEAR"    -> mqttService.publicarEstado(codigo, comando.getIdComando(), "BLOQUEADO");
             case "DESBLOQUEAR" -> mqttService.publicarEstado(codigo, comando.getIdComando(), "LIBERADO");
@@ -87,7 +90,7 @@ public class ComandoService {
     public void aoReceberResposta(MqttService.RespostaRecebida resposta) {
         Optional<Comando> busca = comandoRepository.findById(resposta.idComando());
         // Só aceita a confirmação da própria controladora do comando.
-        if (busca.isEmpty() || !busca.get().getControladora().getIdControladora().equals(resposta.codigoControladora())) {
+        if (busca.isEmpty() || !busca.get().getControladora().getCodigoMqtt().equals(resposta.codigoControladora())) {
             System.out.println("[MQTT] resposta ignorada: comando " + resposta.idComando()
                     + " não pertence à controladora " + resposta.codigoControladora());
             return;
@@ -119,11 +122,20 @@ public class ComandoService {
     // último BLOQUEAR/DESBLOQUEAR de cada controladora. O ESP ignora se já executou esse id.
     @EventListener
     public void aoConectarMqtt(MqttService.Conectado evento) {
-        for (Controladora controladora : controladoraRepository.findAll()) {
-            comandoRepository
-                    .findFirstByControladora_IdControladoraAndTipoInOrderByCriadoEmDesc(controladora.getIdControladora(), TIPOS_DE_ESTADO)
-                    .ifPresent(this::publicarNoMqtt);
-        }
+        controladoraRepository.findAll().forEach(this::republicarEstado);
+    }
+
+    // Recém-aprovada (ou passou a usar o IMEI): o tópico mudou, publica o estado no tópico novo.
+    @EventListener
+    public void aoAprovarControladora(ControladoraService.ControladoraAprovada evento) {
+        controladoraRepository.findById(evento.idControladora()).ifPresent(this::republicarEstado);
+    }
+
+    private void republicarEstado(Controladora controladora) {
+        if (!controladora.estaAprovada()) return;
+        comandoRepository
+                .findFirstByControladora_IdControladoraAndTipoInOrderByCriadoEmDesc(controladora.getIdControladora(), TIPOS_DE_ESTADO)
+                .ifPresent(this::publicarNoMqtt);
     }
 
     // ESP chama isso no polling. Retorna o comando mais antigo ainda pendente.

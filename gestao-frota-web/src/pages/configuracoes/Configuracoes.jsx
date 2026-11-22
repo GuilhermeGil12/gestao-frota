@@ -188,11 +188,8 @@ function Configuracoes() {
                         </div>
                         <div className="flex items-center justify-between gap-4 border-t border-border pt-4">
                             <div className="space-y-0.5">
-                                <div className="flex items-center gap-2">
-                                    <Label htmlFor="km-revisao">Revisão a cada</Label>
-                                    <Badge variant="outline">Em breve</Badge>
-                                </div>
-                                <p className="text-xs text-muted-foreground">Km entre revisões.</p>
+                                <Label htmlFor="km-revisao">Revisão a cada</Label>
+                                <p className="text-xs text-muted-foreground">Km entre revisões. Avisa 500 km antes.</p>
                             </div>
                             <Input id="km-revisao" type="number" min={1} step={1000} value={config.kmRevisao}
                                    onChange={(e) => alterar("kmRevisao", e.target.value)} className="w-28 text-center" disabled={carregando} />
@@ -218,11 +215,8 @@ function Configuracoes() {
                         </div>
                         <div className="flex items-center justify-between gap-4 border-t border-border pt-4">
                             <div className="space-y-0.5">
-                                <div className="flex items-center gap-2">
-                                    <Label htmlFor="madrugada">Bloqueio de madrugada</Label>
-                                    <Badge variant="outline">Em breve</Badge>
-                                </div>
-                                <p className="text-xs text-muted-foreground">Não liberar o veículo das 22h às 6h.</p>
+                                <Label htmlFor="madrugada">Bloqueio de madrugada</Label>
+                                <p className="text-xs text-muted-foreground">Nenhum cartão libera o veículo das 22h às 6h.</p>
                             </div>
                             <Switch id="madrugada" checked={!!config.bloquearMadrugada}
                                     onCheckedChange={(v) => alterar("bloquearMadrugada", v)} disabled={carregando} />
