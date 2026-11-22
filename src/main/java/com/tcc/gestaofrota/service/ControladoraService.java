@@ -2,6 +2,7 @@ package com.tcc.gestaofrota.service;
 
 import com.tcc.gestaofrota.model.Controladora;
 import com.tcc.gestaofrota.model.Veiculo;
+import com.tcc.gestaofrota.repository.ComandoRepository;
 import com.tcc.gestaofrota.repository.ControladoraRepository;
 import com.tcc.gestaofrota.repository.VeiculoRepository;
 import com.tcc.gestaofrota.util.Validacoes;
@@ -37,6 +38,7 @@ public class ControladoraService {
 
     private final ControladoraRepository controladoraRepository;
     private final VeiculoRepository veiculoRepository;
+    private final ComandoRepository comandoRepository;
     private final AtividadeService atividadeService;
     private final MqttService mqttService;
     private final MqttAcessoService mqttAcessoService;
@@ -45,6 +47,7 @@ public class ControladoraService {
 
     public ControladoraService(ControladoraRepository controladoraRepository,
                                VeiculoRepository veiculoRepository,
+                               ComandoRepository comandoRepository,
                                AtividadeService atividadeService,
                                MqttService mqttService,
                                MqttAcessoService mqttAcessoService,
@@ -52,6 +55,7 @@ public class ControladoraService {
                                ApplicationEventPublisher eventos) {
         this.controladoraRepository = controladoraRepository;
         this.veiculoRepository = veiculoRepository;
+        this.comandoRepository = comandoRepository;
         this.atividadeService = atividadeService;
         this.mqttService = mqttService;
         this.mqttAcessoService = mqttAcessoService;
@@ -218,9 +222,18 @@ public class ControladoraService {
     }
 
     // Recusar uma controladora aguardando = excluir. Se ela ligar de novo, aparece de novo.
+    @Transactional
     public void deletar(Long id) {
         Controladora controladora = buscarPorId(id);
-        controladoraRepository.deleteById(id);
+        // O veículo tem cascade ALL para a controladora: se ele continuar apontando para ela,
+        // o Hibernate "salva de volta" e o delete some sem erro. Por isso desliga antes.
+        Veiculo veiculo = controladora.getVeiculo();
+        if (veiculo != null) {
+            veiculo.setControladora(null);
+            controladora.setVeiculo(null);
+        }
+        comandoRepository.deleteByControladora_IdControladora(id); // senão a chave estrangeira impede
+        controladoraRepository.delete(controladora);
         mqttAcessoService.remover(controladora);
         atividadeService.registrar("CONTROLADORA", (controladora.estaAprovada() ? "Excluiu a controladora " : "Recusou a controladora ")
                 + id + (controladora.getImei() != null ? " (IMEI " + controladora.getImei() + ")" : ""));

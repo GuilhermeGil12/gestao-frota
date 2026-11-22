@@ -11,6 +11,9 @@ import java.util.Optional;
 
 public interface ComandoRepository extends JpaRepository<Comando, Long> {
 
+    // Apaga o histórico de comandos ao excluir a controladora (o comando aponta para ela).
+    void deleteByControladora_IdControladora(Long idControladora);
+
     // Busca comandos PENDENTES de uma controladora, do mais antigo para o mais novo.
     // Retorna List para evitar erro quando há múltiplos pendentes.
     // O service pega apenas o primeiro da lista.

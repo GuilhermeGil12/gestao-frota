@@ -1,6 +1,8 @@
 package com.tcc.gestaofrota.service;
 
 import com.tcc.gestaofrota.model.Controladora;
+import com.tcc.gestaofrota.model.Veiculo;
+import com.tcc.gestaofrota.repository.ComandoRepository;
 import com.tcc.gestaofrota.repository.ControladoraRepository;
 import com.tcc.gestaofrota.repository.VeiculoRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +25,7 @@ class ControladoraServiceTest {
     private ControladoraRepository repositorio;
     private MqttService mqtt;
     private ApplicationEventPublisher eventos;
+    private ComandoRepository comandos;
     private ControladoraService servico;
 
     @BeforeEach
@@ -30,7 +33,8 @@ class ControladoraServiceTest {
         repositorio = mock(ControladoraRepository.class);
         mqtt = mock(MqttService.class);
         eventos = mock(ApplicationEventPublisher.class);
-        servico = new ControladoraService(repositorio, mock(VeiculoRepository.class), mock(AtividadeService.class),
+        comandos = mock(ComandoRepository.class);
+        servico = new ControladoraService(repositorio, mock(VeiculoRepository.class), comandos, mock(AtividadeService.class),
                 mqtt, mock(MqttAcessoService.class), mock(TelegramService.class), eventos);
         when(repositorio.save(any())).thenAnswer(i -> {
             Controladora c = i.getArgument(0);
@@ -107,6 +111,22 @@ class ControladoraServiceTest {
         assertEquals("17999999999", c.getLinhaChip());
         verify(eventos).publishEvent(new ControladoraService.ControladoraAprovada(2L));
         assertThrows(RuntimeException.class, () -> servico.aprovar(2L, null, null)); // já aprovada
+    }
+
+    @Test
+    void excluirDesligaOVeiculoEApagaOsComandosAntes() {
+        Controladora c = aprovada(SENHA);
+        Veiculo v = new Veiculo();
+        v.setControladora(c);
+        c.setVeiculo(v);
+        when(repositorio.findById(2L)).thenReturn(Optional.of(c));
+
+        servico.deletar(2L);
+
+        assertNull(v.getControladora()); // sem isso o cascade do veículo "desfaz" o delete
+        assertNull(c.getVeiculo());
+        verify(comandos).deleteByControladora_IdControladora(2L);
+        verify(repositorio).delete(c);
     }
 
     @Test
