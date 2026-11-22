@@ -132,7 +132,7 @@ public class NotificacaoService {
                         "IMEI " + c.getImei() + (c.getVeiculo() != null ? " (" + c.getVeiculo().getPlaca() + ")" : "")
                                 + ". Aprove em Controladoras.",
                         c.getUltimoContato() != null ? c.getUltimoContato() : LocalDateTime.now(),
-                        "/controladoras"
+                        "/controladoras?aba=aguardando"
                 ))
                 .toList();
     }

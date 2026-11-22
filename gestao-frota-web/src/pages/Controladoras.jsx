@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import api from "../services/api";
 import Swal from 'sweetalert2';
 import { format } from "date-fns";
@@ -9,10 +10,10 @@ import Campo from "../components/Campo";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { toast } from 'sonner';
-import { Cpu, KeyRound } from "lucide-react";
+import { Cpu, KeyRound, ListChecks } from "lucide-react";
 
 import {
     AlertDialog,
@@ -76,6 +77,10 @@ function Controladoras() {
     // Aprovar (controladora nova ou troca de senha).
     const [aprovacao, setAprovacao] = useState(null);
     const [controladoraParaExcluir, setControladoraParaExcluir] = useState(null);
+    // O aviso do sino abre direto na aba de aprovação (/controladoras?aba=aguardando).
+    const [parametros] = useSearchParams();
+    const [aba, setAba] = useState(parametros.get("aba") === "aguardando" ? "aguardando" : "cadastradas");
+    useEffect(() => { if (parametros.get("aba") === "aguardando") setAba("aguardando"); }, [parametros]);
 
     const carregar = async () => {
         try {
@@ -215,48 +220,6 @@ function Controladoras() {
                 </p>
             </div>
 
-            {/* ---------- Aguardando aprovação ---------- */}
-            {pendentes.length > 0 && (
-                <Card className="border-primary/40">
-                    <CardHeader>
-                        <CardTitle>Aguardando aprovação</CardTitle>
-                        <CardDescription>
-                            Confira o IMEI (está na etiqueta do modem) antes de aprovar.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        {pendentes.map((c) => (
-                            <div key={c.idControladora}
-                                 className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3">
-                                <div className="flex items-start gap-3 min-w-0">
-                                    {aguardando(c)
-                                        ? <Cpu className="h-5 w-5 mt-0.5 text-primary shrink-0" />
-                                        : <KeyRound className="h-5 w-5 mt-0.5 text-primary shrink-0" />}
-                                    <div className="min-w-0">
-                                        <p className="font-medium tabular-nums">
-                                            IMEI {c.imei}
-                                            {!aguardando(c) && c.veiculo && <span className="text-muted-foreground"> · {nomeVeiculo(c.veiculo)}</span>}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {aguardando(c) ? "Controladora nova" : `Controladora #${c.idControladora} pediu uma senha nova`}
-                                            {" · firmware "}{c.versaoFirmware ?? "?"}{" · "}{dataHora(c.ultimoContato)}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex gap-2">
-                                    {aguardando(c) && temPermissao("controladoras.editar") && (
-                                        <Button size="sm" variant="outline" onClick={() => recusar(c)}>Recusar</Button>
-                                    )}
-                                    {temPermissao("controladoras.cadastrar") && (
-                                        <Button size="sm" onClick={() => abrirAprovacao(c)}>Aprovar</Button>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
-
             {/* ---------- Aprovar ---------- */}
             <Dialog open={aprovacao !== null} onOpenChange={(open) => !open && setAprovacao(null)}>
                 <DialogContent className="max-w-[520px]">
@@ -326,8 +289,59 @@ function Controladoras() {
                 </DialogContent>
             </Dialog>
 
+            <Tabs value={aba} onValueChange={setAba} className="space-y-4">
+                <TabsList>
+                    <TabsTrigger value="cadastradas"><ListChecks className="h-4 w-4 mr-1" />Cadastradas</TabsTrigger>
+                    <TabsTrigger value="aguardando">
+                        <Cpu className="h-4 w-4 mr-1" />Aguardando aprovação
+                        {pendentes.length > 0 && <Badge className="ml-2 h-5 min-w-5 px-1.5 tabular-nums">{pendentes.length}</Badge>}
+                    </TabsTrigger>
+                </TabsList>
+
+            {/* ---------- Aguardando aprovação ---------- */}
+            <TabsContent value="aguardando" className="space-y-2">
+                <p className="text-sm text-muted-foreground">Confira o IMEI (está na etiqueta do modem) antes de aprovar.</p>
+                <Table>
+                    <TableHeader><TableRow>
+                        <TableHead>Pedido</TableHead><TableHead>IMEI</TableHead><TableHead>Veículo</TableHead>
+                        <TableHead>Firmware</TableHead><TableHead>Se apresentou em</TableHead><TableHead className="text-right">Ações</TableHead>
+                    </TableRow></TableHeader>
+                    <TableBody>
+                        {pendentes.length === 0 ? (
+                            <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                Nenhuma controladora aguardando. Ligue a controladora com o chip 4G e ela aparece aqui.
+                            </TableCell></TableRow>
+                        ) : (
+                            pendentes.map((c) => (
+                                <TableRow key={c.idControladora}>
+                                    <TableCell>
+                                        {aguardando(c)
+                                            ? <Badge variant="outline"><Cpu className="h-3 w-3 mr-1" />Nova</Badge>
+                                            : <Badge variant="outline" title={`A controladora #${c.idControladora} mandou uma senha diferente`}><KeyRound className="h-3 w-3 mr-1" />Senha nova</Badge>}
+                                    </TableCell>
+                                    <TableCell className="font-semibold tabular-nums">{c.imei}</TableCell>
+                                    <TableCell>{c.veiculo ? nomeVeiculo(c.veiculo) : <span className="text-muted-foreground">—</span>}</TableCell>
+                                    <TableCell className="tabular-nums">{c.versaoFirmware ?? "?"}</TableCell>
+                                    <TableCell className="tabular-nums">{dataHora(c.ultimoContato)}</TableCell>
+                                    <TableCell>
+                                        <div className="flex justify-end gap-2 whitespace-nowrap">
+                                            {aguardando(c) && temPermissao("controladoras.editar") && (
+                                                <Button size="sm" variant="outline" onClick={() => recusar(c)}>Recusar</Button>
+                                            )}
+                                            {temPermissao("controladoras.cadastrar") && (
+                                                <Button size="sm" onClick={() => abrirAprovacao(c)}>Aprovar</Button>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </TabsContent>
+
             {/* ---------- Aprovadas ---------- */}
-            <div>
+            <TabsContent value="cadastradas">
                 <Table>
                     <TableHeader><TableRow>
                         <TableHead>Status</TableHead><TableHead>Código</TableHead><TableHead>IMEI</TableHead><TableHead>Veículo</TableHead>
@@ -380,7 +394,8 @@ function Controladoras() {
                     fim={paginacao.fim}
                     onChange={paginacao.setPagina}
                 />
-            </div>
+            </TabsContent>
+            </Tabs>
 
             <AlertDialog open={controladoraParaExcluir !== null} onOpenChange={(open) => !open && setControladoraParaExcluir(null)}>
                 <AlertDialogContent>
