@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Login próprio de cada controladora no broker (plugin dynamic-security do Mosquitto).
@@ -42,6 +44,12 @@ public class MqttAcessoService {
     private final boolean ligado;
     private final ObjectMapper mapper = new ObjectMapper();
 
+    // Controladoras cuja senha já foi enviada ao broker desde que o backend conectou nele.
+    // O broker derruba o cliente quando a senha ou as permissões dele mudam; se o backend
+    // reenviasse a cada apresentação, a controladora cairia e voltaria sem parar.
+    // Guarda só "código + hash da senha" (na memória, nunca no banco nem no log).
+    private final Set<String> senhaJaEnviada = ConcurrentHashMap.newKeySet();
+
     public MqttAcessoService(MqttService mqttService,
                              ControladoraRepository controladoraRepository,
                              @Value("${app.mqtt.acesso-por-controladora:false}") boolean ligado) {
@@ -70,6 +78,9 @@ public class MqttAcessoService {
     public void sincronizar(Controladora c, String senhaLegivel) {
         if (!ligado || c.getCodigoMqtt() == null) return;
         if (!c.estaAprovada()) return; // só entra no broker depois de aprovada
+        if (senhaLegivel != null && !senhaJaEnviada.add(c.getCodigoMqtt() + ":" + senhaLegivel.hashCode())) {
+            return; // o broker já tem esta senha: não mexe (senão ele derruba a controladora)
+        }
         String base = "frota/" + c.getCodigoMqtt() + "/";
         List<Map<String, Object>> acls = List.of(
                 acl("publishClientSend", base + "telemetria"),
@@ -104,6 +115,7 @@ public class MqttAcessoService {
     /** Excluída no site: some do broker também. */
     public void remover(Controladora c) {
         if (!ligado || c.getCodigoMqtt() == null) return;
+        senhaJaEnviada.removeIf(chave -> chave.startsWith(c.getCodigoMqtt() + ":"));
         enviar(List.of(
                 Map.of("command", "deleteClient", "username", usuario(c)),
                 Map.of("command", "deleteRole", "rolename", papel(c))));
@@ -113,6 +125,9 @@ public class MqttAcessoService {
     @EventListener
     public void aoConectarMqtt(MqttService.Conectado evento) {
         if (!ligado) return;
+        // O broker pode ter reiniciado e perdido o cadastro: a senha de cada uma vai de novo
+        // na próxima vez que ela se apresentar.
+        senhaJaEnviada.clear();
         controladoraRepository.findAll().forEach(this::sincronizar);
     }
 
