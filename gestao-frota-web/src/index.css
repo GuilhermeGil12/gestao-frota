@@ -260,3 +260,8 @@ html { scroll-behavior: smooth; }
   from { transform: scale(1); opacity: 0.5; }
   to { transform: scale(3.4); opacity: 0; }
 }
+
+/* Mapa no tema escuro: inverte as cores do OpenStreetMap e devolve o tom (água azul, parques verdes). */
+.mapa-escuro {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
