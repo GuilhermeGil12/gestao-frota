@@ -160,8 +160,10 @@ Substitui o "bloqueio de madrugada" com a lista de cartões vazia e o tópico `r
 - [ ] Fixo, sem configuração: o bloqueio só acontece abaixo de 5 km/h (segurança).
 
 ### Etapa 4 — Login próprio no broker
-- [ ] Criar no broker um usuário **só de provisionamento**, que só pode publicar em `provisionamento/+`, para a controladora nova se apresentar antes de ser aprovada.
-- [ ] Firmware: entrar com o login próprio (IMEI e senha). Se o broker recusar, porque ainda não foi aprovada, entrar com o de provisionamento só para se apresentar.
+- [x] Firmware: entrar com o login próprio (IMEI e senha). Se o broker recusar, porque ainda não foi aprovada, entrar com o usuário `provisionamento` só para se apresentar (`apresentarSemAprovacao`). Com o login próprio ligado, a senha do `frota` não vai mais no firmware.
+- [x] Backend: a controladora também pode publicar no próprio `provisionamento/<imei>` (versão do firmware a cada conexão).
+- [x] Backend: a senha da controladora fica no banco só como hash BCrypt; a senha legível vai ao broker na hora em que ela se apresenta com a senha aprovada (senha antiga sem hash é convertida na próxima apresentação).
+- [ ] VM: criar o usuário `provisionamento` (só publica em `provisionamento/+`), comandos em `SEGURANCA.md` §3.1 passo 3.
 - [ ] VM: ativar o dynamic-security e o TLS (`SEGURANCA.md` §3) e depois trocar a senha do usuário `frota`.
 
 ### Etapa 5 — Atualização pelo 4G (OTA)

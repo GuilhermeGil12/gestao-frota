@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.Optional;
 
@@ -26,6 +27,8 @@ class ControladoraServiceTest {
     private MqttService mqtt;
     private ApplicationEventPublisher eventos;
     private ComandoRepository comandos;
+    private MqttAcessoService acesso;
+    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private ControladoraService servico;
 
     @BeforeEach
@@ -34,8 +37,9 @@ class ControladoraServiceTest {
         mqtt = mock(MqttService.class);
         eventos = mock(ApplicationEventPublisher.class);
         comandos = mock(ComandoRepository.class);
+        acesso = mock(MqttAcessoService.class);
         servico = new ControladoraService(repositorio, mock(VeiculoRepository.class), comandos, mock(AtividadeService.class),
-                mqtt, mock(MqttAcessoService.class), mock(TelegramService.class), eventos);
+                mqtt, acesso, mock(TelegramService.class), eventos, encoder);
         when(repositorio.save(any())).thenAnswer(i -> {
             Controladora c = i.getArgument(0);
             if (c.getIdControladora() == null) c.setIdControladora(7L);
@@ -51,7 +55,7 @@ class ControladoraServiceTest {
         Controladora c = new Controladora();
         c.setIdControladora(2L);
         c.setImei(IMEI);
-        c.setSenha(senha);
+        c.setSenha(encoder.encode(senha)); // o banco guarda só o hash
         c.setVersaoFirmware("3.1");
         c.setSituacao(Controladora.APROVADA);
         return c;
@@ -66,7 +70,8 @@ class ControladoraServiceTest {
         ArgumentCaptor<Controladora> salva = ArgumentCaptor.forClass(Controladora.class);
         verify(repositorio).save(salva.capture());
         assertEquals(Controladora.AGUARDANDO, salva.getValue().getSituacao());
-        assertEquals(SENHA, salva.getValue().getSenha());
+        assertNotEquals(SENHA, salva.getValue().getSenha()); // não guarda a senha legível
+        assertTrue(encoder.matches(SENHA, salva.getValue().getSenha()));
         assertFalse(salva.getValue().estaAprovada());
         verify(mqtt).limparProvisionamento(IMEI); // a senha não fica guardada no broker
     }
@@ -91,12 +96,36 @@ class ControladoraServiceTest {
         when(repositorio.findById(2L)).thenReturn(Optional.of(c));
 
         servico.aoReceberProvisionamento(mensagem(IMEI, IMEI, "OutraSenhaDoEsp32"));
-        assertEquals(SENHA, c.getSenha());
+        assertTrue(encoder.matches(SENHA, c.getSenha()));
         assertTrue(c.isTrocaDeSenhaPendente());
+        verify(acesso, never()).sincronizar(any(), any()); // senha errada não vai para o broker
 
         servico.aprovar(2L, null, null);
-        assertEquals("OutraSenhaDoEsp32", c.getSenha());
+        assertTrue(encoder.matches("OutraSenhaDoEsp32", c.getSenha()));
         assertFalse(c.isTrocaDeSenhaPendente());
+    }
+
+    @Test
+    void senhaAprovadaERepassadaAoBrokerNaHoraEmQueChega() {
+        Controladora c = aprovada(SENHA);
+        when(repositorio.findByImei(IMEI)).thenReturn(Optional.of(c));
+
+        servico.aoReceberProvisionamento(mensagem(IMEI, IMEI, SENHA));
+
+        verify(acesso).sincronizar(c, SENHA); // cria o login dela no broker
+        assertFalse(c.isTrocaDeSenhaPendente());
+    }
+
+    @Test
+    void senhaLegivelAntigaNoBancoViraHash() {
+        Controladora c = aprovada(SENHA);
+        c.setSenha(SENHA); // gravada antes do hash
+        when(repositorio.findByImei(IMEI)).thenReturn(Optional.of(c));
+
+        servico.aoReceberProvisionamento(mensagem(IMEI, IMEI, SENHA));
+
+        assertTrue(c.getSenha().startsWith("$2"));
+        assertTrue(encoder.matches(SENHA, c.getSenha()));
     }
 
     @Test

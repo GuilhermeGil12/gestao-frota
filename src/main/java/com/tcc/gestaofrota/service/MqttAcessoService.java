@@ -17,14 +17,18 @@ import java.util.Map;
  * Com app.mqtt.acesso-por-controladora=true, a controladora de IMEI 356789012345678 entra no
  * broker com usuário "356789012345678", client id "controladora-356789012345678" e a senha que
  * ela mesma criou (aprovada no site), e só pode:
- *   - publicar em frota/<imei>/telemetria e frota/<imei>/resposta;
+ *   - publicar em frota/<imei>/telemetria, frota/<imei>/resposta e provisionamento/<imei>
+ *     (versão do firmware a cada conexão);
  *   - assinar frota/<imei>/estado, comando, cartoes e regras.
- * Ainda falta o usuário só de provisionamento, para a controladora nova se apresentar antes
- * de ser aprovada (etapa 4 do PLANO_CONTROLADORA.md).
+ * A controladora ainda não aprovada entra com o usuário "provisionamento" (criado à mão na VM,
+ * SEGURANCA.md §3.1), que só pode publicar em provisionamento/+.
  * Assim, uma controladora (ou alguém com a senha dela) não lê nem manda nada das outras.
  *
- * O backend mantém o broker igual ao cadastro: cria ao cadastrar, troca a senha ao editar,
- * desativa ao inativar e apaga ao excluir. Ao conectar no broker, sincroniza todas.
+ * O backend mantém o broker igual ao cadastro: permissões ao aprovar, desativa ao inativar e
+ * apaga ao excluir. A senha o banco não tem (só o hash): ela é repassada ao broker quando a
+ * controladora se apresenta com a senha aprovada (ControladoraService.atualizarExistente).
+ * Por isso, logo depois de aprovar, a controladora leva até ~2 min para entrar com o login
+ * próprio: é recusada uma vez, se apresenta pelo usuário de provisionamento e já entra.
  * Desligado (padrão), não faz nada: todas usam o usuário compartilhado, como antes.
  * Passo a passo para ligar na VM: SEGURANCA.md.
  */
@@ -53,14 +57,24 @@ public class MqttAcessoService {
         return Map.of("acltype", tipo, "topic", topico, "allow", true);
     }
 
-    /** Cria (ou atualiza) o usuário e as permissões da controladora no broker. */
+    /** Permissões e ativo/inativo, sem mexer na senha. */
     public void sincronizar(Controladora c) {
-        if (!ligado || c.getCodigoMqtt() == null || c.getSenha() == null || c.getSenha().isBlank()) return;
+        sincronizar(c, null);
+    }
+
+    /**
+     * Cria (ou atualiza) o usuário e as permissões da controladora no broker.
+     * senhaLegivel: a senha que a controladora acabou de mandar (já conferida com o hash), ou
+     * null para não mexer na senha. Nunca vai para o banco nem para o log.
+     */
+    public void sincronizar(Controladora c, String senhaLegivel) {
+        if (!ligado || c.getCodigoMqtt() == null) return;
         if (!c.estaAprovada()) return; // só entra no broker depois de aprovada
         String base = "frota/" + c.getCodigoMqtt() + "/";
         List<Map<String, Object>> acls = List.of(
                 acl("publishClientSend", base + "telemetria"),
                 acl("publishClientSend", base + "resposta"),
+                acl("publishClientSend", "provisionamento/" + c.getCodigoMqtt()),
                 acl("subscribeLiteral", base + "estado"),
                 acl("subscribeLiteral", base + "comando"),
                 acl("subscribeLiteral", base + "cartoes"),
@@ -69,9 +83,17 @@ public class MqttAcessoService {
         List<Map<String, Object>> comandos = new ArrayList<>();
         // "create" falha se já existe (normal); os comandos seguintes deixam tudo igual ao cadastro.
         comandos.add(Map.of("command", "createRole", "rolename", papel(c), "acls", acls));
-        comandos.add(Map.of("command", "createClient", "username", usuario(c), "password", c.getSenha(),
+        // Papel que já existia (versão anterior): acrescenta as permissões que faltarem.
+        for (Map<String, Object> a : acls) {
+            comandos.add(Map.of("command", "addRoleACL", "rolename", papel(c), "acltype", a.get("acltype"),
+                    "topic", a.get("topic"), "allow", true));
+        }
+        // Sem senha ainda, o usuário existe mas ninguém consegue entrar com ele.
+        comandos.add(Map.of("command", "createClient", "username", usuario(c),
                 "clientid", papel(c), "roles", List.of(Map.of("rolename", papel(c)))));
-        comandos.add(Map.of("command", "setClientPassword", "username", usuario(c), "password", c.getSenha()));
+        if (senhaLegivel != null) {
+            comandos.add(Map.of("command", "setClientPassword", "username", usuario(c), "password", senhaLegivel));
+        }
         comandos.add(Map.of("command", "setClientId", "username", usuario(c), "clientid", papel(c)));
         comandos.add(Map.of("command", "addClientRole", "username", usuario(c), "rolename", papel(c)));
         comandos.add(Map.of("command", Boolean.FALSE.equals(c.getAtivo()) ? "disableClient" : "enableClient",

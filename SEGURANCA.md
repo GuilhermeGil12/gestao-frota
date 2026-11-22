@@ -73,9 +73,11 @@ O código já está pronto (backend e firmware), **desligado por padrão**, para
 
 **Como ficou:**
 - Cada controladora entra com usuário = **IMEI** (ex.: `356938035643809`), client id `controladora-<imei>` e a **senha que ela mesma criou** no primeiro boot e que o gestor aprovou em Controladoras (ver `PLANO_CONTROLADORA.md`, etapa 1).
-- Ela só pode publicar em `frota/<imei>/telemetria` e `frota/<imei>/resposta` e só pode assinar `frota/<imei>/estado`, `comando`, `cartoes` e `regras`.
-- O backend (`MqttAcessoService`) mantém o broker igual ao site pelo plugin **dynamic-security** do Mosquitto 2.x. Ele cria ao aprovar, troca a senha ao aprovar uma senha nova, desativa ao inativar, apaga ao excluir e sincroniza todas ao conectar. Os comandos levam senha: o log mostra só o tópico.
-- **Falta (etapa 4 do plano):** um usuário só de provisionamento, que só pode publicar em `provisionamento/<imei>`. Sem ele, com o login próprio ligado, uma controladora **nova** (ainda não aprovada) não tem como se apresentar. Até lá, não ligar o passo 5 abaixo.
+- Ela só pode publicar em `frota/<imei>/telemetria`, `frota/<imei>/resposta` e `provisionamento/<imei>` e só pode assinar `frota/<imei>/estado`, `comando`, `cartoes` e `regras`.
+- O backend (`MqttAcessoService`) mantém o broker igual ao site pelo plugin **dynamic-security** do Mosquitto 2.x. Ele cria as permissões ao aprovar, desativa ao inativar, apaga ao excluir e sincroniza todas ao conectar. Os comandos levam senha: o log mostra só o tópico.
+- **Senha no banco: só o hash BCrypt**, igual à senha dos usuários do site. A senha legível só existe na controladora. O backend a vê apenas quando ela se apresenta: se bater com o hash aprovado, repassa ao broker naquele momento (e não grava). Por isso, logo depois de aprovar, a controladora leva até ~2 min para entrar com o login próprio (é recusada uma vez, se apresenta e já entra). Se o broker perder o cadastro, ela se recadastra sozinha do mesmo jeito.
+- **Controladora ainda não aprovada:** o broker recusa o login próprio dela. Então ela entra com o usuário `provisionamento`, publica o pedido em `provisionamento/<imei>` e sai. Esse usuário **só pode publicar** em `provisionamento/+`: não lê nada e não manda comando para ninguém. Se a senha dele vazar, o máximo que alguém consegue é criar um pedido falso, que o gestor recusa. Depois de aprovada, ela entra com o login próprio em no máximo 60 s.
+- Com o login próprio ligado, a senha do `frota` (usuário do backend) **não vai mais no firmware**.
 - Liga com a variável `MQTT_ACESSO_POR_CONTROLADORA=true` (propriedade `app.mqtt.acesso-por-controladora`).
 
 **Passo a passo na VM:**
@@ -107,10 +109,18 @@ O código já está pronto (backend e firmware), **desligado por padrão**, para
    $C addRoleACL backend subscribePattern 'provisionamento/#' allow
    $C addRoleACL backend publishClientSend 'provisionamento/#' allow   # para apagar a mensagem retida
    $C addClientRole frota backend
+
+   # usuário de provisionamento (pede uma senha nova: a mesma vai no MQTT_PROV_PASS do firmware)
+   $C createClient provisionamento
+   $C createRole provisionamento
+   $C addRoleACL provisionamento publishClientSend 'provisionamento/+' allow
+   $C addClientRole provisionamento provisionamento
    ```
    Neste ponto tudo funciona como antes: o backend e o ESP antigo ainda entram como `frota`.
-4. Adicionar `MQTT_ACESSO_POR_CONTROLADORA=true` às variáveis do serviço e reiniciar o `frotasystem`. O backend cria o usuário de cada controladora. Para conferir: `$C listClients` mostra `frota` e o IMEI de cada controladora aprovada com firmware novo.
-5. **(Só depois da etapa 4 do plano.)** No firmware: `#define USAR_LOGIN_PROPRIO 1`. Não precisa digitar senha: a controladora usa o IMEI e a senha que ela criou. Gravar no ESP e ver no monitor serial `### MQTT CONECTADO`.
+4. Adicionar `MQTT_ACESSO_POR_CONTROLADORA=true` às variáveis do serviço e reiniciar o `frotasystem`. O backend cria o usuário de cada controladora aprovada (a senha entra quando ela se apresentar). Para conferir: `$C listClients` mostra `frota`, `provisionamento` e o IMEI de cada controladora aprovada com firmware novo.
+5. No firmware: `#define USAR_LOGIN_PROPRIO 1` e, em `MQTT_PROV_PASS`, a senha do usuário `provisionamento` do passo 3. Gravar no ESP e conferir no monitor serial:
+   - controladora nova: `login próprio recusado` → `apresentada em provisionamento/...` → `aguardando aprovação`;
+   - depois de aprovar no site (até 60 s): `### MQTT CONECTADO`.
 6. Quando **todas** as controladoras estiverem com o login próprio, trocar a senha do `frota` (`$C setClientPassword frota`) e atualizar `MQTT_PASSWORD` no serviço. A senha antiga, que está no código do firmware, deixa de valer.
 
 ### 3.2 MQTT com TLS
@@ -141,7 +151,7 @@ O código já está pronto (backend e firmware), **desligado por padrão**, para
 **Limitação:** o modem não tem a CA gravada, então o firmware usa `authmode 0`. A conexão é criptografada, o que protege contra quem só escuta a rede, mas o modem não confere o certificado do servidor. Para conferir, seria preciso gravar a CA no modem (`AT+CCERTDOWN`) e usar `authmode 1`.
 
 ### 3.3 Firmware
-- Login próprio e TLS: prontos atrás dos `#define` acima. Os dois foram compilados, mas ainda **não testados no broker**.
+- Login próprio (com o usuário de provisionamento) e TLS: prontos atrás dos `#define` acima. Os dois foram compilados, mas ainda **não testados no broker**.
 
 ### 3.4 VM (pendente)
 - **HTTPS** no site (a senha do login não pode viajar aberta). Ainda **não verificado**.

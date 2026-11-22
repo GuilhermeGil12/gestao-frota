@@ -45,3 +45,4 @@ src/main/resources/application-casa.properties
 src/main/resources/application-flash.properties
 # Requisicoes de teste com dados pessoais
 *.http
+.claude/worktrees/hardcore-blackburn

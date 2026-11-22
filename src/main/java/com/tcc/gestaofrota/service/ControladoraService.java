@@ -8,6 +8,7 @@ import com.tcc.gestaofrota.repository.VeiculoRepository;
 import com.tcc.gestaofrota.util.Validacoes;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,10 @@ import java.util.Optional;
  *
  * Se uma controladora já aprovada aparecer com outra senha (ex.: a memória foi apagada),
  * ela continua funcionando e a senha nova fica pendente até o gestor aprovar de novo.
+ *
+ * Senha: o banco guarda só o hash BCrypt (igual à senha dos usuários do site). A senha legível
+ * só existe na controladora; o backend a vê apenas quando ela se apresenta, e é nessa hora
+ * (se bater com o hash aprovado) que repassa ao broker (MqttAcessoService).
  * Passo a passo completo: PLANO_CONTROLADORA.md.
  */
 @Service
@@ -44,6 +49,7 @@ public class ControladoraService {
     private final MqttAcessoService mqttAcessoService;
     private final TelegramService telegramService;
     private final ApplicationEventPublisher eventos;
+    private final BCryptPasswordEncoder encoder;
 
     public ControladoraService(ControladoraRepository controladoraRepository,
                                VeiculoRepository veiculoRepository,
@@ -52,7 +58,8 @@ public class ControladoraService {
                                MqttService mqttService,
                                MqttAcessoService mqttAcessoService,
                                TelegramService telegramService,
-                               ApplicationEventPublisher eventos) {
+                               ApplicationEventPublisher eventos,
+                               BCryptPasswordEncoder encoder) {
         this.controladoraRepository = controladoraRepository;
         this.veiculoRepository = veiculoRepository;
         this.comandoRepository = comandoRepository;
@@ -61,6 +68,15 @@ public class ControladoraService {
         this.mqttAcessoService = mqttAcessoService;
         this.telegramService = telegramService;
         this.eventos = eventos;
+        this.encoder = encoder;
+    }
+
+    // A senha recebida bate com a guardada? Aceita também a senha legível que ficou no banco
+    // de antes do hash (ela é trocada pelo hash na próxima vez que a controladora se apresentar).
+    private boolean confere(String recebida, String guardada) {
+        if (guardada == null) return false;
+        if (guardada.startsWith("$2")) return encoder.matches(recebida, guardada);
+        return guardada.equals(recebida);
     }
 
     // ==========================================
@@ -101,7 +117,7 @@ public class ControladoraService {
     private void criarAguardando(String imei, String senha, String versao) {
         Controladora c = new Controladora();
         c.setImei(imei);
-        c.setSenha(senha);
+        c.setSenha(encoder.encode(senha));
         c.setVersaoFirmware(versao);
         c.setSituacao(Controladora.AGUARDANDO);
         c.setAtivo(true);
@@ -121,12 +137,16 @@ public class ControladoraService {
         c.setVersaoFirmware(versao);
         c.setUltimoContato(LocalDateTime.now());
 
+        boolean senhaAprovada = false;
         if (!c.estaAprovada()) {
-            c.setSenha(senha); // ainda aguardando: vale sempre a última senha que ela mandou
-        } else if (senha.equals(c.getSenha())) {
+            // ainda aguardando: vale sempre a última senha que ela mandou
+            if (!confere(senha, c.getSenha())) c.setSenha(encoder.encode(senha));
+        } else if (confere(senha, c.getSenha())) {
+            senhaAprovada = true;
+            if (!c.getSenha().startsWith("$2")) c.setSenha(encoder.encode(senha)); // senha antiga sem hash
             c.setSenhaPendente(null); // voltou à senha aprovada: nada pendente
-        } else if (!senha.equals(c.getSenhaPendente())) {
-            c.setSenhaPendente(senha);
+        } else if (!confere(senha, c.getSenhaPendente())) {
+            c.setSenhaPendente(encoder.encode(senha));
             atividadeService.registrar("CONTROLADORA", "Controladora #" + c.getIdControladora()
                     + " (IMEI " + c.getImei() + ") mandou uma senha nova; aguarda aprovação");
             telegramService.avisar("CONTROLADORA", "controladoras.cadastrar",
@@ -135,6 +155,9 @@ public class ControladoraService {
                             + ". Aprove a troca em Controladoras.");
         }
         controladoraRepository.save(c);
+        // Senha certa: é a única hora em que o backend tem a senha legível. Repassa ao broker
+        // (cria o login dela na primeira vez, ou recria se o broker perdeu o cadastro).
+        if (senhaAprovada) mqttAcessoService.sincronizar(c, senha);
         if (mudouDeTopico) eventos.publishEvent(new ControladoraAprovada(c.getIdControladora()));
     }
 
