@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from "sonner";
-import { MapContainer, TileLayer, Polyline, Popup, CircleMarker, useMap } from 'react-leaflet';
-import { CORES_TRAJETO, LINHA_CONTORNO, linhaTrecho, dividirTrechos } from '../../utils/trajeto';
+import { MapContainer, Popup, CircleMarker, useMap, useMapEvents } from 'react-leaflet';
+import { CORES_TRAJETO } from '../../utils/trajeto';
+import MapaFundo from '../../components/MapaFundo';
+import TrajetoMapa from '../../components/TrajetoMapa';
 import L from 'leaflet';
 import api from '../../services/api';
 import { Button } from "../../components/ui/button";
@@ -108,6 +110,13 @@ function FocarMapa({ alvo }) {
     return null;
 }
 
+// Avisa o zoom atual: de longe só a linha, de perto aparecem os pontos (como no Google Maps).
+const ZOOM_MOSTRA_PONTOS = 15;
+function AcompanharZoom({ aoMudar }) {
+    useMapEvents({ zoomend: (e) => aoMudar(e.target.getZoom()) });
+    return null;
+}
+
 function Resumo({ icone, rotulo, valor, destaque }) {
     return (
         <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
@@ -129,6 +138,7 @@ function Rotas() {
     const [historicoRotas, setHistoricoRotas] = useState([]);
     const [alvoMapa, setAlvoMapa] = useState(null);
     const [pontoAtivo, setPontoAtivo] = useState(null);
+    const [zoom, setZoom] = useState(13);
 
     const veiculo = veiculosReais.find(v => v.id == veiculoSelecionado);
     const limite = veiculo?.velocidadeMaxima || LIMITE_PADRAO;
@@ -161,8 +171,6 @@ function Rotas() {
             motoristas: [...motoristas],
         };
     }, [historicoRotas, limite]);
-
-    const trechos = useMemo(() => dividirTrechos(historicoRotas, limite), [historicoRotas, limite]);
 
     const handleBuscarRotas = async () => {
         if (!dataBusca || !veiculoSelecionado) { toast.error("Selecione a data e o veículo."); return; }
@@ -253,7 +261,7 @@ function Rotas() {
                         Acima de {limite} km/h
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="size-3 rounded-full border-2 border-white shadow" style={{ backgroundColor: CORES_TRAJETO.normal }} />
+                        <span className="size-3 rounded-full border-2 border-white shadow" style={{ backgroundColor: CORES_TRAJETO.inicio }} />
                         Início
                     </div>
                     <div className="flex items-center gap-2">
@@ -263,20 +271,12 @@ function Rotas() {
                 </div>
 
                 <MapContainer center={[-23.5505, -46.6333]} zoom={13} style={{ height: "100%", width: "100%" }}>
-                    <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
+                    <MapaFundo />
                     <FocarMapa alvo={alvoMapa} />
+                    <AcompanharZoom aoMudar={setZoom} />
                     {historicoRotas.length > 0 && (
                         <>
-                            {/* Contorno branco por baixo + trechos verdes/vermelhos por cima */}
-                            <Polyline positions={historicoRotas.map(p => [p.lat, p.lng])}
-                                      pathOptions={LINHA_CONTORNO} />
-                            {trechos.map((t, i) => (
-                                <Polyline key={`trecho-${i}`} positions={t.pontos}
-                                          pathOptions={linhaTrecho(t.excesso)} />
-                            ))}
+                            <TrajetoMapa pontos={historicoRotas} limite={limite} />
                             {historicoRotas.map((ponto, index) => {
                                 const situacao = classificar(ponto, limite);
                                 const inicio = index === 0;
@@ -284,14 +284,16 @@ function Rotas() {
                                 const ativo = index === pontoAtivo;
                                 const excesso = Number(ponto.velocidade) > limite;
                                 const motorista = separarMotorista(ponto.motorista);
+                                // De longe, só início, fim e o ponto escolhido na tabela: a linha fica limpa.
+                                if (!inicio && !fim && !ativo && zoom < ZOOM_MOSTRA_PONTOS) return null;
                                 // Pontos brancos com a borda da cor do trecho; início verde e fim escuro, maiores.
                                 const estilo = ativo
-                                    ? { radius: 7, fillColor: '#ffffff', color: CORES_TRAJETO.fim, weight: 3 }
+                                    ? { radius: 8, fillColor: CORES_TRAJETO.branco, color: CORES_TRAJETO.fim, weight: 3 }
                                     : inicio
-                                        ? { radius: 6, fillColor: CORES_TRAJETO.normal, color: '#ffffff', weight: 2 }
+                                        ? { radius: 7, fillColor: CORES_TRAJETO.inicio, color: CORES_TRAJETO.branco, weight: 3 }
                                         : fim
-                                            ? { radius: 6, fillColor: CORES_TRAJETO.fim, color: '#ffffff', weight: 2 }
-                                            : { radius: 3, fillColor: '#ffffff', color: excesso ? CORES_TRAJETO.excesso : CORES_TRAJETO.normal, weight: 1.5 };
+                                            ? { radius: 7, fillColor: CORES_TRAJETO.fim, color: CORES_TRAJETO.branco, weight: 3 }
+                                            : { radius: 3.5, fillColor: CORES_TRAJETO.branco, color: excesso ? CORES_TRAJETO.excessoBorda : CORES_TRAJETO.normalBorda, weight: 2 };
                                 return (
                                     <CircleMarker
                                         key={index}

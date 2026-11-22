@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap } from 'react-leaflet';
+import { MapContainer, Marker, Popup, CircleMarker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { Car, Gauge, Power, WifiOff, MapPin } from "lucide-react";
 import api from '../services/api';
-import { CORES_TRAJETO, LINHA_CONTORNO, linhaTrecho, dividirTrechos } from '../utils/trajeto';
+import { CORES_TRAJETO, rumoAtual } from '../utils/trajeto';
+import MapaFundo from '../components/MapaFundo';
+import TrajetoMapa from '../components/TrajetoMapa';
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,18 +33,23 @@ const CORES_MAPA = {
 const LIMITE_VELOCIDADE = 110;
 const INTERVALO_MS = 5000;
 
-// Marcador pulsante (radar) com os 2 últimos dígitos da placa no meio
-function iconeCarro(placa) {
+// Marcador pulsante (radar) com os 2 últimos dígitos da placa no meio, na cor da situação.
+// Em movimento, ganha uma seta apontando para onde o carro está indo (como no Google Maps).
+function iconeCarro(placa, cor, rumo = null) {
     const num = (placa || "").slice(-2);
+    const seta = rumo === null ? '' : `
+        <span class="carro-seta" style="transform: translate(-50%, -50%) rotate(${Math.round(rumo)}deg)">
+          <svg width="48" height="48" viewBox="0 0 48 48"><path d="M24 1 L31 11 L17 11 Z" fill="${cor}" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>
+        </span>`;
     return L.divIcon({
         className: '',
-        html: `<div class="carro-wrap">
-                 <span class="carro-onda"></span>
+        html: `<div class="carro-wrap" style="--cor: ${cor}">
+                 <span class="carro-onda"></span>${seta}
                  <span class="carro-badge">${num}</span>
                </div>`,
-        iconSize: [34, 34],
-        iconAnchor: [17, 17],
-        popupAnchor: [0, -16],
+        iconSize: [48, 48],
+        iconAnchor: [24, 24],
+        popupAnchor: [0, -18],
     });
 }
 
@@ -187,7 +194,9 @@ function MonitoramentoTempoReal() {
 
     // Divide o rastro em trechos: verde no limite, vermelho acima do limite do veículo.
     const limiteSelecionado = Number(selecionado?.velocidadeMaxima) > 0 ? Number(selecionado.velocidadeMaxima) : LIMITE_VELOCIDADE;
-    const trechos = useMemo(() => dividirTrechos(rota, limiteSelecionado), [rota, limiteSelecionado]);
+    const situacaoAtual = classificar(ultimo, limiteSelecionado);
+    const emMovimento = ['movimento', 'excesso'].includes(situacaoAtual.chave);
+    const rumo = useMemo(() => (emMovimento ? rumoAtual(rota) : null), [rota, emMovimento]);
 
     // Troca de veículo: limpa o rastro anterior na hora, para o mapa não enquadrar o carro errado.
     const escolherVeiculo = (id) => { setRota([]); setVeiculoSelecionado(id); };
@@ -197,17 +206,19 @@ function MonitoramentoTempoReal() {
         <div className="w-full space-y-6">
             {/* CSS do efeito de onda (radar) + badge com o número */}
             <style>{`
-                .carro-wrap { position: relative; width: 34px; height: 34px; }
+                .carro-wrap { position: relative; width: 48px; height: 48px; }
                 .carro-badge { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                    width: 28px; height: 28px; background: #2563eb; color: #fff; border: 2px solid #fff;
+                    width: 28px; height: 28px; background: var(--cor); color: #fff; border: 3px solid #fff;
                     border-radius: 50%; display: flex; align-items: center; justify-content: center;
-                    font-size: 12px; font-weight: bold; z-index: 2; box-shadow: 0 0 5px rgba(0,0,0,.5); }
+                    font-size: 12px; font-weight: bold; z-index: 3; box-shadow: 0 1px 6px rgba(0,0,0,.45); }
+                .carro-seta { position: absolute; top: 50%; left: 50%; width: 48px; height: 48px; z-index: 2;
+                    filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); transition: transform .6s ease; }
                 .carro-onda { position: absolute; top: 50%; left: 50%; width: 28px; height: 28px;
-                    background: rgba(37,99,235,.40); border-radius: 50%;
-                    transform: translate(-50%, -50%); animation: ondaAnim 1.6s ease-out infinite; }
+                    background: var(--cor); border-radius: 50%;
+                    transform: translate(-50%, -50%); animation: ondaAnim 1.8s ease-out infinite; }
                 @keyframes ondaAnim {
-                    0%   { transform: translate(-50%, -50%) scale(0.7); opacity: 1; }
-                    100% { transform: translate(-50%, -50%) scale(3);   opacity: 0; }
+                    0%   { transform: translate(-50%, -50%) scale(0.8); opacity: .45; }
+                    100% { transform: translate(-50%, -50%) scale(2.6); opacity: 0; }
                 }
             `}</style>
 
@@ -246,34 +257,32 @@ function MonitoramentoTempoReal() {
                 {/* Mapa — "isolate" fecha os z-index do Leaflet aqui dentro, pra ele não cobrir o Select */}
                 <div className="isolate h-[60vh] min-h-80 overflow-hidden rounded-xl border border-border lg:h-[640px]">
                     <MapContainer center={[-15.78, -47.93]} zoom={4} style={{ height: "100%", width: "100%" }}>
-                        <TileLayer
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
+                        <MapaFundo />
                         <Centralizar pontos={pontosFoco} gatilho={veiculoSelecionado} />
 
                         {/* Todos: cada carro pulsando, com os 2 últimos dígitos da placa */}
-                        {veiculoSelecionado === "TODOS" && ultimas.map((p) => (
-                            <Marker key={p.idVeiculo} position={[p.lat, p.lng]} icon={iconeCarro(p.placa)}>
-                                <Popup><DetalhesPonto titulo={p.placa} ponto={p} limite={limiteDo(frota.find(v => v.id === String(p.idVeiculo)))} /></Popup>
-                            </Marker>
-                        ))}
+                        {veiculoSelecionado === "TODOS" && ultimas.map((p) => {
+                            const limite = limiteDo(frota.find(v => v.id === String(p.idVeiculo)));
+                            return (
+                                <Marker key={p.idVeiculo} position={[p.lat, p.lng]}
+                                        icon={iconeCarro(p.placa, CORES_MAPA[classificar(p, limite).chave])}>
+                                    <Popup><DetalhesPonto titulo={p.placa} ponto={p} limite={limite} /></Popup>
+                                </Marker>
+                            );
+                        })}
 
                         {/* Um carro: rastro do dia (cresce a cada 5 s) + onde começou + posição atual pulsando */}
                         {veiculoSelecionado !== "TODOS" && ultimo && (
                             <>
-                                {/* Contorno branco por baixo: o rastro aparece em qualquer fundo do mapa */}
-                                <Polyline positions={rota.map(p => [p.lat, p.lng])} pathOptions={LINHA_CONTORNO} />
-                                {trechos.map((t, i) => (
-                                    <Polyline key={i} positions={t.pontos} pathOptions={linhaTrecho(t.excesso)} />
-                                ))}
+                                <TrajetoMapa pontos={rota} limite={limiteSelecionado} />
                                 {rota.length > 1 && (
-                                    <CircleMarker center={[rota[0].lat, rota[0].lng]} radius={6}
-                                                  pathOptions={{ fillColor: CORES_TRAJETO.normal, color: '#ffffff', weight: 2, fillOpacity: 1 }}>
+                                    <CircleMarker center={[rota[0].lat, rota[0].lng]} radius={7}
+                                                  pathOptions={{ fillColor: CORES_TRAJETO.inicio, color: CORES_TRAJETO.branco, weight: 3, fillOpacity: 1 }}>
                                         <Popup><DetalhesPonto titulo="Início do dia" ponto={rota[0]} limite={limiteSelecionado} /></Popup>
                                     </CircleMarker>
                                 )}
-                                <Marker position={[ultimo.lat, ultimo.lng]} icon={iconeCarro(selecionado?.placa)}>
+                                <Marker position={[ultimo.lat, ultimo.lng]} zIndexOffset={1000}
+                                        icon={iconeCarro(selecionado?.placa, CORES_MAPA[situacaoAtual.chave], rumo)}>
                                     <Popup><DetalhesPonto titulo={`Posição atual — ${selecionado?.placa ?? ''}`} ponto={ultimo} limite={limiteSelecionado} /></Popup>
                                 </Marker>
                                 <SeguirCarro posicao={[ultimo.lat, ultimo.lng]} />

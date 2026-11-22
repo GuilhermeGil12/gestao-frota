@@ -183,6 +183,7 @@ Substitui o "bloqueio de madrugada" com a lista de cartões vazia e o tópico `r
 - [ ] Atualizar a especificação do firmware (`Documentacao_Firmware_Controladora` em PDF/HTML) com o IMEI e o provisionamento.
 
 ### TCC
+- [ ] **Guia para a banca:** documento explicando como tudo funciona, em linguagem simples (as peças do sistema, o caminho de uma passagem de cartão, aprovação da controladora, senha com hash, login próprio no broker, TLS e as limitações), com as perguntas prováveis e as respostas.
 - [ ] Atualizar o texto: a controladora agora se apresenta pelo IMEI e o gestor aprova (seções do cadastro de controladoras e da comunicação MQTT).
 - [ ] Refazer as figuras da tela de Controladoras e as que já estavam pendentes (39, 45 e 54; conferir a 47).
 - [ ] Escrever a seção 3.5 (Testes). Os testes automáticos deste plano estão em `ControladoraServiceTest`.
