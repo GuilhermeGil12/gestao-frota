@@ -128,24 +128,27 @@ O código já está pronto (backend e firmware), **desligado por padrão**, para
 
 **Como ficou:** o firmware tem `#define USAR_TLS`. Com `1`, conecta na porta **8883** com TLS (`AT+CSSLCFG` + `AT+CMQTTSSLCFG`).
 
-**Passo a passo na VM:**
-1. Criar o DNS `mqtt.frotasystem.com` apontando para o IP da VM, **só DNS (nuvem cinza)** no Cloudflare. O proxy do Cloudflare não passa MQTT.
-2. Emitir o certificado e deixá-lo legível pelo Mosquitto:
+**Passo a passo na VM** (feito em 23/11/2026, passos 1 a 3):
+1. Certificado próprio, criado na VM (vale 10 anos). Como o modem não confere o certificado (`authmode 0`), ele protege tanto quanto um do Let's Encrypt, sem precisar de domínio nem renovar a cada 90 dias:
    ```bash
-   sudo certbot certonly --nginx -d mqtt.frotasystem.com
    sudo mkdir -p /etc/mosquitto/certs
-   sudo cp /etc/letsencrypt/live/mqtt.frotasystem.com/{fullchain,privkey}.pem /etc/mosquitto/certs/
+   sudo openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
+     -keyout /etc/mosquitto/certs/privkey.pem \
+     -out /etc/mosquitto/certs/fullchain.pem \
+     -subj "/CN=<IP da VM>"
    sudo chown mosquitto:mosquitto /etc/mosquitto/certs/*.pem
+   sudo chmod 600 /etc/mosquitto/certs/privkey.pem
    ```
-   (o certificado vence a cada 90 dias: repetir a cópia num `--deploy-hook` do certbot).
-3. No `frota.conf`, acrescentar:
+   (Se um dia o modem passar a conferir o certificado, trocar por um do Let's Encrypt em `mqtt.frotasystem.com`, com o DNS em **só DNS / nuvem cinza** no Cloudflare.)
+2. No `/etc/mosquitto/conf.d/frotasystem.conf` (backup em `frotasystem.conf.bak-tls`), acrescentar:
    ```
    listener 8883
    certfile /etc/mosquitto/certs/fullchain.pem
    keyfile /etc/mosquitto/certs/privkey.pem
    ```
-   Liberar a porta 8883 no firewall da Azure e reiniciar o Mosquitto.
-4. Firmware com `#define USAR_TLS 1`, gravar e testar.
+   Reiniciar o Mosquitto (`sudo ss -tlnp | grep mosquitto` deve mostrar 1883 e 8883).
+3. Liberar a porta 8883 nas regras de entrada da Azure (`frotaSystem-nsg`).
+4. Firmware com `#define USAR_TLS 1` (e `enableSNI` 0, porque conecta pelo IP), gravar e testar.
 5. Com todas as controladoras em TLS, trocar `listener 1883` por `listener 1883 127.0.0.1` (só o backend, na própria VM, usa a 1883), fechar a 1883 na Azure e conferir se o `MQTT_BROKER` do serviço aponta para `tcp://127.0.0.1:1883`.
 
 **Limitação:** o modem não tem a CA gravada, então o firmware usa `authmode 0`. A conexão é criptografada, o que protege contra quem só escuta a rede, mas o modem não confere o certificado do servidor. Para conferir, seria preciso gravar a CA no modem (`AT+CCERTDOWN`) e usar `authmode 1`.

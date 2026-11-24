@@ -36,6 +36,7 @@ const ROTULOS_EVENTO = {
     PARADA: 'Parada',
     PARTIDA: 'Partida',
     CURVA: 'Curva',
+    ANTES_CURVA: 'Antes da curva',
     TEMPO: 'Periódico',
 };
 

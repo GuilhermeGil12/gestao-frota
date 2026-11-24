@@ -57,6 +57,7 @@ const ROTULOS_EVENTO = {
     PARADA: 'Parada',
     PARTIDA: 'Partida',
     CURVA: 'Curva',
+    ANTES_CURVA: 'Antes da curva',
     TEMPO: 'Periódico',
 };
 
@@ -70,6 +71,13 @@ function rotuloEvento(ponto) {
 
 const LIMITE_PADRAO = 110;
 const VELOCIDADE_PARADO = 3; // abaixo disso o GPS oscila mesmo com o carro parado
+const INTERVALO_MAXIMO_SEGUNDOS = 300; // igual ao backend: mais que isso entre pontos = sem sinal
+
+// "07:31:05" → segundos desde a meia-noite (a rota é sempre de um dia só).
+function segundosDoDia(hora) {
+    const [h, m, s] = (hora || '0:0:0').split(':').map(Number);
+    return h * 3600 + m * 60 + (s || 0);
+}
 
 function classificar(ponto, limite) {
     const status = Number(ponto.status ?? ponto.ign);
@@ -157,7 +165,20 @@ function Rotas() {
         for (let i = 1; i < historicoRotas.length; i++) distancia += distanciaKm(historicoRotas[i - 1], historicoRotas[i]);
 
         const velocidades = historicoRotas.map(p => Number(p.velocidade) || 0);
-        const emMovimento = velocidades.filter(v => v >= VELOCIDADE_PARADO);
+
+        // Média = distância ÷ tempo em movimento (mesma conta do Relatório).
+        // Não dá para tirar a média das velocidades dos pontos: eles saem mais juntos onde o carro
+        // está devagar (curvas, paradas), e a média ficaria puxada para baixo.
+        let kmEmMovimento = 0;
+        let segundosEmMovimento = 0;
+        for (let i = 0; i < historicoRotas.length - 1; i++) {
+            if (velocidades[i] < VELOCIDADE_PARADO) continue;
+            const segundos = segundosDoDia(historicoRotas[i + 1].hora) - segundosDoDia(historicoRotas[i].hora);
+            // Mais de 5 min entre dois pontos é falta de sinal, não viagem: fica de fora.
+            if (segundos <= 0 || segundos > INTERVALO_MAXIMO_SEGUNDOS) continue;
+            segundosEmMovimento += segundos;
+            kmEmMovimento += distanciaKm(historicoRotas[i], historicoRotas[i + 1]);
+        }
         const motoristas = new Set(historicoRotas.map(p => separarMotorista(p.motorista).nome));
 
         return {
@@ -165,7 +186,7 @@ function Rotas() {
             fim: historicoRotas[historicoRotas.length - 1].hora,
             distancia,
             maxima: Math.max(...velocidades),
-            media: emMovimento.length ? emMovimento.reduce((s, v) => s + v, 0) / emMovimento.length : 0,
+            media: segundosEmMovimento > 0 ? kmEmMovimento / (segundosEmMovimento / 3600) : 0,
             // Cada ponto acima do limite conta como um excesso.
             excessos: velocidades.filter(v => v > limite).length,
             motoristas: [...motoristas],
