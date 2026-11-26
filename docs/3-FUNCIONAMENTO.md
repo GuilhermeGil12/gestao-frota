@@ -101,7 +101,7 @@ A controladora está sempre em **um** destes 5 estados:
 |---|---|---|---|
 | **DESLIGADO** | Chave desligada | Todos soltos | Silêncio |
 | **AGUARDANDO_CARTAO** | Chave ligada, esperando o crachá | Ignição e ar soltos (o carro não liga) | Bipe a cada ~1,2 s |
-| **LIBERADO** | Motorista identificado | Ignição e ar acionados | Silêncio (sirene se passar de 110 km/h) |
+| **LIBERADO** | Motorista identificado | Ignição e ar acionados | Silêncio (sirene se passar do limite do veículo) |
 | **TOLERANCIA** | Desligou a chave há menos de 60 s | Ignição e ar continuam acionados | Silêncio |
 | **BLOQUEADO** | Bloqueado pelo gestor | Bomba cortada (com a chave ligada ou desligada) | Silêncio |
 
@@ -134,7 +134,7 @@ O GPS dá uma leitura por segundo. A placa **não grava todas**: só as que impo
 | `ACELERACAO` | Ganhou 12 km/h ou mais em 1 segundo |
 | `FREADA` | Perdeu 15 km/h ou mais em 1 segundo |
 | `VIRADA_BRUSCA` | Virou 35° ou mais em 1 segundo, acima de 30 km/h |
-| `EXCESSO_INICIO` / `EXCESSO_FIM` | Passou de 110 km/h / voltou para menos de 105 km/h |
+| `EXCESSO_INICIO` / `EXCESSO_FIM` | Passou do limite do veículo / voltou para 5 km/h abaixo dele (padrão: 110 e 105 km/h) |
 | `PARADA` | Ficou 30 s abaixo de 3 km/h |
 | `PARTIDA` | Voltou a andar (acima de 8 km/h) |
 | `ANTES_CURVA` | A leitura de 1 s antes de uma curva (para a linha dobrar no lugar certo) |
@@ -183,7 +183,7 @@ O GPS dá uma leitura por segundo. A placa **não grava todas**: só as que impo
 | "Autorizado" | Cartão aceito |
 | "Negado" | Cartão recusado |
 | "Bloqueado" / "Desbloqueado" | Comando do gestor executado |
-| Sirene de 2 tons | Excesso de velocidade (acima de 110 km/h) |
+| Sirene de 2 tons | Excesso de velocidade (acima do limite do veículo, padrão 110 km/h) |
 | Sirene por 15 s | Comando **APITAR** (para achar o carro num estacionamento) |
 
 Os áudios ficam no microSD (`/audio300/*.wav`).
@@ -240,7 +240,7 @@ Os áudios ficam no microSD (`/audio300/*.wav`).
 | `frota/<IMEI>/estado` | servidor → placa | BLOQUEADO ou LIBERADO, com o id | Sim |
 | `frota/<IMEI>/comando` | servidor → placa | APITAR, com o id | Não |
 | `frota/<IMEI>/cartoes` | servidor → placa | Lista de cartões autorizados | Sim |
-| `frota/<IMEI>/regras` | servidor → placa | Bloqueio de madrugada (ligado, início, fim) | Sim |
+| `frota/<IMEI>/regras` | servidor → placa | Bloqueio de madrugada (ligado, início, fim) e **limite de velocidade do veículo** | Sim |
 | `frota/<IMEI>/confirmacao` | servidor → placa | "Salvei o lote N": só então a placa apaga o lote | Não |
 
 O backend assina `frota/+/telemetria`, `frota/+/resposta` e `provisionamento/+`. O `+` quer dizer "qualquer controladora".

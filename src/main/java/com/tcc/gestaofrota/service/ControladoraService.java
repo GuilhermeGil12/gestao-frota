@@ -241,6 +241,8 @@ public class ControladoraService {
 
         Controladora atualizada = controladoraRepository.save(antiga);
         atividadeService.registrar("CONTROLADORA", "Editou a controladora " + id);
+        // Pode ter trocado de veículo: o limite de velocidade dela muda.
+        eventos.publishEvent(new VeiculoService.LimiteOuVinculoAlterado());
         return atualizada;
     }
 

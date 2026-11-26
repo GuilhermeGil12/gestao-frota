@@ -5,6 +5,7 @@ import com.tcc.gestaofrota.model.Controladora;
 import com.tcc.gestaofrota.model.Veiculo;
 import com.tcc.gestaofrota.repository.ControladoraRepository;
 import com.tcc.gestaofrota.repository.VeiculoRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,8 +35,14 @@ public class VeiculoService {
      * deste repositório para ser instanciado e funcionar.
      */
 
+    /** O limite de velocidade de um veículo mudou, ou uma controladora trocou de veículo. */
+    public record LimiteOuVinculoAlterado() {}
+
+    private final ApplicationEventPublisher eventos;
+
     public VeiculoService(VeiculoRepository veiculoRepository, ControladoraRepository controladoraRepository,
-            AtividadeService atividadeService, RevisaoService revisaoService) {
+            AtividadeService atividadeService, RevisaoService revisaoService, ApplicationEventPublisher eventos) {
+        this.eventos = eventos;
         this.revisaoService = revisaoService;
         this.veiculoRepository = veiculoRepository;
         this.controladoraRepository = controladoraRepository;
@@ -82,6 +89,7 @@ public class VeiculoService {
             controladora.setVeiculo(veiculoSalvo);
             controladoraRepository.save(controladora);
             veiculoSalvo.setControladora(controladora);
+            eventos.publishEvent(new LimiteOuVinculoAlterado()); // a controladora recebe o limite do veículo
         }
 
         return veiculoSalvo;
@@ -174,6 +182,8 @@ public class VeiculoService {
 
         Veiculo atualizado = veiculoRepository.save(veiculoAntigo);
         atividadeService.registrar("VEICULO", "Editou o veículo " + atualizado.getPlaca());
+        // O limite de velocidade vai para a controladora pelo tópico de regras.
+        eventos.publishEvent(new LimiteOuVinculoAlterado());
         return revisaoService.comProximaRevisao(atualizado);
     }
 

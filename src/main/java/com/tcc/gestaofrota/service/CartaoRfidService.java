@@ -65,12 +65,22 @@ public class CartaoRfidService {
     public void publicarCartoes(Controladora controladora) {
         if (!controladora.estaAprovada()) return; // aguardando aprovação não recebe cartões
         mqttService.publicarCartoes(controladora.getCodigoMqtt(), uidsParaControladora());
-        publicarRegras(controladora.getCodigoMqtt());
+        publicarRegras(controladora);
     }
 
-    private void publicarRegras(String codigo) {
+    // Limite de velocidade quando o veículo não tem um cadastrado (o mesmo das telas e relatórios).
+    public static final int LIMITE_PADRAO = 110;
+
+    private void publicarRegras(Controladora controladora) {
         boolean ligada = Boolean.TRUE.equals(configuracaoService.buscar().getBloquearMadrugada());
-        mqttService.publicarRegras(codigo, ligada, INICIO_MADRUGADA.getHour(), FIM_MADRUGADA.getHour());
+        mqttService.publicarRegras(controladora.getCodigoMqtt(), ligada, INICIO_MADRUGADA.getHour(),
+                FIM_MADRUGADA.getHour(), limiteDo(controladora));
+    }
+
+    // Limite do veículo em que a controladora está instalada (sem veículo ou sem limite: 110 km/h).
+    private static int limiteDo(Controladora controladora) {
+        Double limite = controladora.getVeiculo() != null ? controladora.getVeiculo().getVelocidadeMaxima() : null;
+        return limite != null && limite > 0 ? (int) Math.round(limite) : LIMITE_PADRAO;
     }
 
     // Recém-aprovada (ou passou a usar o IMEI): manda a lista de cartões no tópico dela.
@@ -85,7 +95,7 @@ public class CartaoRfidService {
         for (Controladora controladora : controladoraRepository.findAll()) {
             if (!controladora.estaAprovada()) continue;
             mqttService.publicarCartoes(controladora.getCodigoMqtt(), uids);
-            publicarRegras(controladora.getCodigoMqtt());
+            publicarRegras(controladora);
         }
     }
 
@@ -99,6 +109,12 @@ public class CartaoRfidService {
     // Ligou ou desligou o bloqueio de madrugada: a lista muda na hora.
     @EventListener
     public void aoAlterarConfiguracao(ConfiguracaoService.ConfiguracaoAlterada evento) {
+        publicarCartoesParaTodas();
+    }
+
+    // Mudou o limite de um veículo ou a controladora trocou de veículo: as regras vão de novo.
+    @EventListener
+    public void aoAlterarVeiculo(VeiculoService.LimiteOuVinculoAlterado evento) {
         publicarCartoesParaTodas();
     }
 

@@ -25,7 +25,7 @@ import java.util.concurrent.CompletableFuture;
  *  - Publica  frota/<codigo>/estado  → BLOQUEADO/LIBERADO com o id do comando (retido)
  *  - Publica  frota/<codigo>/comando → APITAR com o id do comando (não retido)
  *  - Publica  frota/<codigo>/cartoes → lista de UIDs liberados (retida)
- *  - Publica  frota/<codigo>/regras  → bloqueio de madrugada ligado/desligado (retida)
+ *  - Publica  frota/<codigo>/regras  → bloqueio de madrugada e limite de velocidade do veículo (retida)
  *  - Publica  frota/<codigo>/confirmacao → {"lote":N} depois de salvar o lote N (a controladora só apaga depois disso)
  *
  * <codigo> = IMEI da controladora (firmware novo) ou o número dela (firmware antigo).
@@ -281,8 +281,9 @@ public class MqttService {
     }
 
     // A controladora também confere o horário sozinha (cobre o carro que estava sem sinal às 22h).
-    public void publicarRegras(String codigo, boolean madrugada, int inicio, int fim) {
+    // "limite" = limite de velocidade do veículo: a controladora usa na sirene e nos eventos de excesso.
+    public void publicarRegras(String codigo, boolean madrugada, int inicio, int fim, int limite) {
         publicar("frota/" + codigo + "/regras",
-                json(Map.of("madrugada", madrugada, "inicio", inicio, "fim", fim)), true);
+                json(Map.of("madrugada", madrugada, "inicio", inicio, "fim", fim, "limite", limite)), true);
     }
 }

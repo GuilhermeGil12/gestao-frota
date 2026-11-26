@@ -224,6 +224,14 @@ A anotação fica só na memória do backend e não guarda a senha em si.
 
 ---
 
+## 9.7 Limite de velocidade do veículo também na controladora 🧪
+
+**Problema:** o site usava o limite cadastrado em cada veículo, mas a controladora usava **110 km/h fixo** para a sirene e para os eventos "Início/Fim de excesso". No teste de 24/11 o FAK-1234 estava com limite 120 e a tabela mostrava "Início de excesso" a 110 km/h, num trecho que não ficava vermelho no mapa.
+
+**Correção:** o servidor manda o limite do veículo junto com as regras (tópico `regras`): `{"madrugada":false,"inicio":22,"fim":6,"limite":120}`. A placa guarda na memória (vale sem internet) e usa para a sirene e os eventos. As regras vão de novo quando o gestor edita o veículo ou troca a controladora de carro. Sem limite cadastrado, vale 110.
+
+---
+
 ## 10. Modo de teste sem o fio do pós-chave
 
 Para testar no carro sem ligar o fio da chave, o firmware tem:
