@@ -232,6 +232,22 @@ A anotação fica só na memória do backend e não guarda a senha em si.
 
 ---
 
+## 9.8 Cartão SD travado não perde mais pontos (firmware 3.3) 🧪
+
+**Problema (teste de 26/11):** a internet caiu três vezes (06:44, 06:46 e 06:48–06:55) e esses trechos sumiram, mesmo com a confirmação dos lotes funcionando. O servidor mostrou que o reenvio do microSD parou às 06:36 no meio do arquivo e que nenhum ponto do dia foi gravado no cartão. O cartão deixou de abrir o `buffer.txt`, e o firmware tinha três falhas:
+1. tirava os pontos da memória **antes** de gravar no SD — se a gravação falhava, eles se perdiam;
+2. no reenvio, "arquivo não abriu" era tratado como "arquivo acabou" — parava até desligar a placa;
+3. nunca reiniciava o cartão depois de um erro.
+
+**Correção:**
+- Se o SD não gravar, os pontos **voltam para a memória** (cabem 300 pontos ≈ 50 min rodando) e saem quando a internet voltar.
+- Erro ao abrir/gravar/ler → a placa **reinicia o cartão** (`SD.end()` + `SD.begin()`, no máximo a cada 10 s e nunca durante um áudio) e tenta de novo.
+- Cada lote é gravado começando numa linha nova: uma gravação cortada no meio não estraga o lote seguinte.
+- O provisionamento leva `"sd":"ok, 0 falhas, 0 reinicios"` — aparece no log do servidor (`journalctl -u frotasystem | grep provisionamento`), já que no carro não há Monitor Serial.
+- Servidor: lote com JSON quebrado é confirmado e descartado (com log), senão a placa reenviaria para sempre e a fila do SD travaria.
+
+---
+
 ## 10. Modo de teste sem o fio do pós-chave
 
 Para testar no carro sem ligar o fio da chave, o firmware tem:

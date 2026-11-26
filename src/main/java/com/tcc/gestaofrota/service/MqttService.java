@@ -1,5 +1,6 @@
 package com.tcc.gestaofrota.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Ponte MQTT do backend.
@@ -53,6 +56,8 @@ public class MqttService {
 
     /** Uma controladora se apresentou: provisionamento/<imei> com a senha que ela criou. */
     public record ProvisionamentoRecebido(String imeiDoTopico, String imei, String senha, String versao) {}
+
+    private static final Pattern NUMERO_DO_LOTE = Pattern.compile("\"lote\"\\s*:\\s*(\\d{1,10})");
 
     private final LocalizacaoService localizacaoService;
     private final ApplicationEventPublisher eventos;
@@ -157,6 +162,16 @@ public class MqttService {
             localizacaoService.salvarLoteMqtt(codigo, lote);
             System.out.println("[MQTT] telemetria de " + codigo + ": " + lote.size() + " ponto(s) salvo(s).");
             confirmarLote(codigo, lote);
+        } catch (JsonProcessingException e) {
+            // JSON quebrado (ex.: gravação no microSD cortada no meio) nunca vai ser lido: confirma
+            // assim mesmo, senão a controladora reenvia para sempre e a fila do SD trava.
+            Matcher numero = NUMERO_DO_LOTE.matcher(payload);
+            if (numero.find()) {
+                publicar("frota/" + codigo + "/confirmacao", "{\"lote\":" + numero.group(1) + "}", false);
+                System.out.println("[MQTT] lote " + numero.group(1) + " de " + codigo + " ilegível — descartado");
+            } else {
+                System.out.println("[MQTT] telemetria ilegível de " + codigo + ": " + e.getOriginalMessage());
+            }
         } catch (Exception e) {
             // Sem confirmação: a controladora guarda o lote no microSD e manda de novo depois.
             System.out.println("[MQTT] erro ao processar telemetria: " + e.getMessage());
@@ -188,8 +203,10 @@ public class MqttService {
         try {
             JsonNode json = mapper.readTree(payload);
             // O log nunca mostra a senha.
+            // "sd" (firmware 3.3+): como está o cartão da placa — no carro não há Monitor Serial.
             System.out.println("[MQTT] provisionamento de " + imeiDoTopico
-                    + " (firmware " + json.path("versao").asText("?") + ")");
+                    + " (firmware " + json.path("versao").asText("?") + ")"
+                    + (json.hasNonNull("sd") ? " | SD: " + json.path("sd").asText() : ""));
             // Fora da thread do Paho: quem trata pode querer publicar (limpar o retido, cartões...).
             CompletableFuture.runAsync(() -> eventos.publishEvent(new ProvisionamentoRecebido(imeiDoTopico,
                     json.path("imei").asText(""), json.path("senha").asText(""), json.path("versao").asText(""))));
