@@ -117,7 +117,15 @@ public class VeiculoService {
             Validacoes.obrigatorio(veiculoNovo.getNome(), "Nome do veículo");
             Validacoes.tamanho(veiculoNovo.getNome(), 2, 60, "Nome do veículo");
         }
-        if (Validacoes.mudou(veiculoNovo.getRenavam(), veiculoAntigo.getRenavam(), false)) Validacoes.renavam(veiculoNovo.getRenavam());
+        if (Validacoes.mudou(veiculoNovo.getRenavam(), veiculoAntigo.getRenavam(), false)) {
+            Validacoes.renavam(veiculoNovo.getRenavam());
+            // Mesma regra do cadastro: o RENAVAM não pode ser de outro veículo.
+            veiculoRepository.findByRenavam(veiculoNovo.getRenavam())
+                    .filter(outro -> !outro.getId().equals(id))
+                    .ifPresent(outro -> {
+                        throw new RuntimeException("Já existe Veículo com esse Renavam cadastrado! (" + outro.getPlaca() + ")");
+                    });
+        }
         if (Validacoes.mudou(veiculoNovo.getVelocidadeMaxima(), veiculoAntigo.getVelocidadeMaxima(), false)) {
             Validacoes.velocidadeMaximaOpcional(veiculoNovo.getVelocidadeMaxima());
         }

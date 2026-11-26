@@ -64,6 +64,18 @@ class RevisaoServiceTest {
     }
 
     @Test
+    void revisaoSoPodeSerRegistradaQuandoChegaAHora() {
+        when(veiculoRepository.findById(1L)).thenReturn(Optional.of(veiculo));
+        veiculo.setKmAtual(4997.0); // faltam 5.003 km para os 10.000
+        assertThrows(RuntimeException.class, () -> servico.registrarRevisao(1L));
+        assertNull(veiculo.getKmUltimaRevisao());
+
+        veiculo.setKmAtual(9600.0); // faltam 400 km: agora pode
+        servico.registrarRevisao(1L);
+        assertEquals(9600.0, veiculo.getKmUltimaRevisao());
+    }
+
+    @Test
     void semKmInformadoNaoCalcula() {
         veiculo.setKmAtual(null);
         assertNull(servico.proximaRevisao(veiculo));

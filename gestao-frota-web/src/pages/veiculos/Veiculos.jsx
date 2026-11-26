@@ -35,6 +35,12 @@ const km = (v) => `${Math.round(Number(v)).toLocaleString("pt-BR")} km`;
 // Mesmo aviso do back-end (RevisaoService.KM_AVISO): a partir de 500 km antes.
 const KM_AVISO_REVISAO = 500;
 
+// O botão "Revisão" só aparece quando chegou a hora: a 500 km ou menos, ou já vencida.
+function horaDaRevisao(veiculo) {
+    if (veiculo.kmAtual == null || veiculo.proximaRevisaoKm == null) return false;
+    return veiculo.proximaRevisaoKm - veiculo.kmAtual <= KM_AVISO_REVISAO;
+}
+
 function Revisao({ veiculo }) {
     if (veiculo.proximaRevisaoKm == null) return <span className="text-muted-foreground">Informe o km</span>;
     const faltam = veiculo.proximaRevisaoKm - veiculo.kmAtual;
@@ -228,7 +234,7 @@ function Veiculos() {
                                         {temPermissao("veiculos.editar") && (
                                             <Button size="sm" variant="outline" onClick={() => abrirModal(v)}>Editar</Button>
                                         )}
-                                        {temPermissao("veiculos.editar") && v.kmAtual != null && (
+                                        {temPermissao("veiculos.editar") && horaDaRevisao(v) && (
                                             <Button size="sm" variant="outline" onClick={() => handleRevisao(v)}>Revisão</Button>
                                         )}
                                         {temPermissao("veiculos.inativar") && (

@@ -56,7 +56,7 @@ Sumário:
 
 **Os relés:**
 - **Ignição** e **ar** são ligados (acionados) só quando o motorista está **liberado**.
-- **Bomba** é ligada ao contrário (contato NF): quando o relé é acionado, a bomba é **cortada** e o motor apaga. Isso só acontece quando o carro está **bloqueado** e com a chave ligada.
+- **Bomba** é ligada ao contrário (contato NF): quando o relé é acionado, a bomba é **cortada** e o motor apaga. Isso só acontece quando o carro está **bloqueado**, com a chave ligada ou desligada. No resto do tempo o relé fica solto e a bomba funciona normalmente.
 
 ### 2.2 O programa: 4 tarefas ao mesmo tempo
 
@@ -103,7 +103,7 @@ A controladora está sempre em **um** destes 5 estados:
 | **AGUARDANDO_CARTAO** | Chave ligada, esperando o crachá | Ignição e ar soltos (o carro não liga) | Bipe a cada ~1,2 s |
 | **LIBERADO** | Motorista identificado | Ignição e ar acionados | Silêncio (sirene se passar de 110 km/h) |
 | **TOLERANCIA** | Desligou a chave há menos de 60 s | Ignição e ar continuam acionados | Silêncio |
-| **BLOQUEADO** | Bloqueado pelo gestor | Bomba cortada (com a chave ligada) | Silêncio |
+| **BLOQUEADO** | Bloqueado pelo gestor | Bomba cortada (com a chave ligada ou desligada) | Silêncio |
 
 - **Tolerância de 60 s:** se o motorista desligar e religar o carro rapidinho (ex.: parou num posto), **não precisa passar o cartão de novo**.
 - **O estado é salvo** na memória interna a cada mudança. Se a placa reiniciar com o carro andando, ela volta **liberada** (não pede cartão no meio da rua).
@@ -153,6 +153,14 @@ O GPS dá uma leitura por segundo. A placa **não grava todas**: só as que impo
 ```
 
 ### 2.7 Sem internet: o microSD
+
+**Confirmação de cada lote:** cada lote de pontos ganha um número. Depois de salvar, o servidor responde no tópico `confirmacao`: *"salvei o lote N"*. **A placa só apaga o lote depois dessa resposta.**
+- O "OK" do modem não basta. Com o sinal caindo, o modem pode dizer que enviou e o lote se perder no caminho.
+- Se a resposta não chega em **30 s**, ou a conexão cai, o lote vai para o microSD e é enviado de novo.
+- Se o lote tinha chegado e só a resposta se perdeu, o servidor reconhece os pontos repetidos (mesmo veículo, mesmo horário, mesma posição) e **não grava duas vezes**.
+- O reenvio do microSD funciona do mesmo jeito: um lote por vez, e cada lote só sai do arquivo depois da confirmação.
+- **Ponto estragado não trava a fila:** o servidor lê cada ponto sozinho. Um campo inválido (ex.: velocidade `nan`) é gravado vazio, e um ponto sem posição válida é descartado; o lote é confirmado normalmente. Só um erro do **banco** impede a confirmação (aí o lote é reenviado depois).
+
 
 1. Os pontos ficam numa fila na memória (até 300).
 2. Se ficar **30 s sem conexão**, os pontos vão para o arquivo `buffer.txt` no microSD, em lotes de 20. Cabem uns 15 mil pontos (4 MB).
@@ -233,6 +241,7 @@ Os áudios ficam no microSD (`/audio300/*.wav`).
 | `frota/<IMEI>/comando` | servidor → placa | APITAR, com o id | Não |
 | `frota/<IMEI>/cartoes` | servidor → placa | Lista de cartões autorizados | Sim |
 | `frota/<IMEI>/regras` | servidor → placa | Bloqueio de madrugada (ligado, início, fim) | Sim |
+| `frota/<IMEI>/confirmacao` | servidor → placa | "Salvei o lote N": só então a placa apaga o lote | Não |
 
 O backend assina `frota/+/telemetria`, `frota/+/resposta` e `provisionamento/+`. O `+` quer dizer "qualquer controladora".
 
@@ -261,7 +270,7 @@ O backend assina `frota/+/telemetria`, `frota/+/resposta` e `provisionamento/+`.
 | `CartaoRfidService` | Monta a lista de cartões ativos e publica para as placas (vazia na madrugada, se ligado) |
 | `CnhService` | Todo dia confere as CNHs; vencida bloqueia os cartões do motorista (se a opção estiver ligada) |
 | `AvisoCercaService` | Percebe quando um carro **entra** ou **sai** de uma cerca e avisa no Telegram |
-| `RevisaoService` | A cada 15 min soma os km rodados e avisa quando faltam 500 km para a revisão |
+| `RevisaoService` | A cada 15 min soma os km rodados e avisa quando faltam 500 km para a revisão. Só deixa registrar a revisão a partir desse ponto (ou com ela vencida) |
 | `RelatorioService` / `RelatorioLiderService` | Relatórios de uso e relatório semanal por e-mail para os líderes (segunda, 7h) |
 | `TelegramService` | Bot do Telegram: conectar a conta, mandar avisos |
 | `NotificacaoService` | As notificações do sino no site |
@@ -307,10 +316,10 @@ Pontos com mais de 30 min (reenviados do microSD) **não geram aviso**, porque s
 | **Login** | Entrar, recuperar a senha |
 | **Dashboard** | Os veículos com a situação (em movimento, parado, sem sinal), o motorista, a velocidade, a tensão do alternador e botões de **bloquear** e **apitar** |
 | **Monitoramento** | Mapa em tempo real (atualiza a cada 5 s), com todos os carros ou um só. Com um só, mostra o **rastro do dia**, a seta de direção e os trechos de excesso em vermelho |
-| **Rotas** | Escolhe o veículo e o período e vê o **trajeto** no mapa, com o resumo (distância, tempo, velocidade máxima) e a tabela de pontos |
+| **Rotas** | Escolhe o veículo e o período e vê o **trajeto** no mapa, com o resumo (distância, tempo, velocidade máxima, **média em movimento** = distância ÷ tempo em movimento, a mesma conta do relatório) e a tabela de pontos |
 | **Alertas** | Excessos de velocidade e visitas às cercas, com filtros |
 | **Cercas** | Cadastrar áreas no mapa (centro + raio). A casa de cada funcionário vira uma cerca automaticamente |
-| **Veículos** | Cadastro (placa, RENAVAM, limite de velocidade, km atual), revisão |
+| **Veículos** | Cadastro (placa, RENAVAM com dígito verificador e sem repetir, inclusive na edição, limite de velocidade, km atual) e revisão. O botão **"Revisão"** só aparece quando faltam 500 km ou menos (ou já venceu) |
 | **Funcionários** | Cadastro com endereço (busca por CEP), CNH (número, categoria, validade), setor e líder |
 | **Cartões** | Cartões RFID ligados a cada funcionário |
 | **Controladoras** | Abas **Cadastradas** e **Aguardando aprovação**. Aprovar, recusar, editar, inativar, excluir |

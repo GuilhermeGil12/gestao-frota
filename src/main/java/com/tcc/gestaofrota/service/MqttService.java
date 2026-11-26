@@ -26,6 +26,7 @@ import java.util.concurrent.CompletableFuture;
  *  - Publica  frota/<codigo>/comando → APITAR com o id do comando (não retido)
  *  - Publica  frota/<codigo>/cartoes → lista de UIDs liberados (retida)
  *  - Publica  frota/<codigo>/regras  → bloqueio de madrugada ligado/desligado (retida)
+ *  - Publica  frota/<codigo>/confirmacao → {"lote":N} depois de salvar o lote N (a controladora só apaga depois disso)
  *
  * <codigo> = IMEI da controladora (firmware novo) ou o número dela (firmware antigo).
  * Ver Controladora.getCodigoMqtt().
@@ -155,9 +156,18 @@ public class MqttService {
                     mapper.readValue(payload, new TypeReference<List<CoordenadaEsp32DTO>>() {});
             localizacaoService.salvarLoteMqtt(codigo, lote);
             System.out.println("[MQTT] telemetria de " + codigo + ": " + lote.size() + " ponto(s) salvo(s).");
+            confirmarLote(codigo, lote);
         } catch (Exception e) {
+            // Sem confirmação: a controladora guarda o lote no microSD e manda de novo depois.
             System.out.println("[MQTT] erro ao processar telemetria: " + e.getMessage());
         }
+    }
+
+    // "Lote N salvo": só depois disso a controladora apaga o lote. Firmware antigo não manda o número.
+    private void confirmarLote(String codigo, List<CoordenadaEsp32DTO> lote) {
+        lote.stream().map(CoordenadaEsp32DTO::getLote).filter(n -> n != null && n.matches("\\d{1,10}"))
+                .findFirst()
+                .ifPresent(n -> publicar("frota/" + codigo + "/confirmacao", "{\"lote\":" + n + "}", false));
     }
 
     // payload = {"id":15,"status":"EXECUTADO"}

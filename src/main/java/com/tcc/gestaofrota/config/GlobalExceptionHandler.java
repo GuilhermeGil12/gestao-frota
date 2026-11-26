@@ -27,6 +27,14 @@ public class GlobalExceptionHandler {
                 .body(Map.of("message", "Sessão inválida. Faça login novamente."));
     }
 
+    // Regra do banco (ex.: valor repetido) que escapou da validação: nunca mostrar o SQL na tela.
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, String>> handleDataIntegrity(org.springframework.dao.DataIntegrityViolationException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(Map.of("message", "Não foi possível salvar: algum dado já está cadastrado em outro registro."));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
         return ResponseEntity

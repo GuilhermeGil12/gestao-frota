@@ -166,6 +166,64 @@ A anotação fica só na memória do backend e não guarda a senha em si.
 
 ---
 
+## 9.1 Pontos perdidos com sinal fraco: confirmação de cada lote 🧪
+
+**Problema:** no teste de 24/11 sumiram ~70 pontos (de 06:45 a 06:57), exatamente nos momentos em que o modem reconectava (sinal fraco). O servidor não recusou nada, e os pontos também não chegaram depois pelo microSD.
+
+**Por quê:** a placa apagava o lote assim que o **modem** dizia "enviado". Com a conexão morrendo, o modem pode dizer "OK" e o lote se perder no caminho. A placa achava que tinha dado certo e não guardava no microSD.
+
+**Correção:**
+- Cada lote ganha um **número**. O servidor salva e responde em `frota/<IMEI>/confirmacao`: "salvei o lote N".
+- A placa **só apaga depois dessa resposta**. Sem resposta em 30 s (ou se a conexão cair), o lote vai para o microSD e é enviado de novo.
+- Se o lote tinha chegado e só a resposta se perdeu, o servidor ignora os **pontos repetidos**.
+- 30 s sem confirmação com a conexão "de pé" quer dizer que ela morreu sem o modem perceber: a placa reconecta.
+
+**Ordem para subir:** primeiro o **backend** (ele libera o tópico novo no broker), depois gravar a placa.
+
+---
+
+## 9.2 Ponto estragado não trava a fila ✅ (testes automáticos)
+
+**Problema:** se um único ponto viesse com um campo inválido (ex.: velocidade `nan` quando o GPS falha), o servidor dava erro no lote inteiro e não confirmava. A placa reenviaria para sempre, e a fila do microSD (um lote por vez) travaria.
+
+**Correção:** o servidor lê cada ponto sozinho. Campo inválido é gravado vazio; ponto sem posição válida é descartado; o lote é confirmado. Só um erro do **banco** impede a confirmação, para nunca confirmar um lote que não foi salvo.
+
+---
+
+## 9.3 Bomba cortada também com a chave desligada 🧪
+
+**Antes:** o relé da bomba só era acionado com o carro bloqueado **e** a chave ligada. Na bancada, bloqueado com o pós-chave desligado, a sinaleira vermelha acendia de novo.
+
+**Agora:** bloqueado = relé acionado e bomba cortada, **com a chave ligada ou desligada**. No resto do tempo o relé fica solto (contato NF fechado) e a bomba funciona normalmente.
+
+---
+
+## 9.4 Média em movimento diferente entre Rotas e Relatório ✅
+
+**Problema:** no dia 23/11 a tela de Rotas mostrava 59 km/h e o Relatório 80 km/h para a mesma viagem (36,2 km em 27 min).
+
+**Por quê:** as Rotas tiravam a média das velocidades dos pontos. Como a placa grava mais pontos onde o carro está devagar (curvas, paradas), a média ficava puxada para baixo.
+
+**Correção:** as Rotas usam a mesma conta do Relatório: **distância ÷ tempo em movimento**.
+
+---
+
+## 9.5 Revisão registrada antes da hora ✅
+
+**Problema:** o botão "Revisão" aparecia para qualquer veículo, e dava para registrar uma revisão com 5.000 km ainda faltando.
+
+**Correção:** o botão só aparece quando faltam **500 km ou menos** (ou com a revisão vencida), e o servidor também recusa antes disso.
+
+---
+
+## 9.6 RENAVAM repetido na edição e erro do banco na tela ✅
+
+**Problema:** no cadastro o sistema conferia se o RENAVAM era repetido, mas na **edição** não. O banco recusava, e a mensagem técnica (com SQL, nomes de tabelas e colunas) aparecia na tela.
+
+**Correção:** a edição confere o RENAVAM igual ao cadastro ("Já existe Veículo com esse Renavam cadastrado! (FAK-1234)"). E qualquer erro desse tipo que escape das validações aparece com uma mensagem simples, nunca com o SQL.
+
+---
+
 ## 10. Modo de teste sem o fio do pós-chave
 
 Para testar no carro sem ligar o fio da chave, o firmware tem:

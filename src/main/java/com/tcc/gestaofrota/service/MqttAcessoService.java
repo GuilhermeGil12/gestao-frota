@@ -89,7 +89,8 @@ public class MqttAcessoService {
                 acl("subscribeLiteral", base + "estado"),
                 acl("subscribeLiteral", base + "comando"),
                 acl("subscribeLiteral", base + "cartoes"),
-                acl("subscribeLiteral", base + "regras"));
+                acl("subscribeLiteral", base + "regras"),
+                acl("subscribeLiteral", base + "confirmacao"));
 
         List<Map<String, Object>> comandos = new ArrayList<>();
         // "create" falha se já existe (normal); os comandos seguintes deixam tudo igual ao cadastro.

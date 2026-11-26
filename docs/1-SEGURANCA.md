@@ -50,7 +50,7 @@ Cada camada protege uma coisa diferente. Se uma falhar, as outras continuam vale
 ### 2.5 Outras proteções do site
 - **HTTPS**: o site passa pelo Cloudflare e pelo Nginx com certificado. A senha do login viaja criptografada.
 - **CORS**: só o próprio site (`frotasystem.com`) pode chamar a API pelo navegador. Um site estranho não consegue usar a sessão do usuário.
-- **Erros sem detalhes**: em produção, um erro não mostra a mensagem interna do servidor (que poderia dar pistas a um atacante).
+- **Erros sem detalhes**: em produção, um erro não mostra a mensagem interna do servidor (que poderia dar pistas a um atacante). Um erro do banco (por exemplo, um valor repetido) aparece como "algum dado já está cadastrado em outro registro", **nunca com o SQL**, que mostraria nomes de tabelas e colunas.
 - **Recuperação de senha**: código por e-mail que vale 15 minutos, com limite de tentativas.
 - **Produção não sobe com senha padrão**: se faltar `JWT_SECRET`, `ADMIN_SENHA`, `MQTT_BROKER` ou `MQTT_USER`, o sistema **se recusa a iniciar**. Assim é impossível esquecer uma senha de teste no servidor de verdade.
 - **Segredos fora do código**: senhas do banco, do e-mail, do broker e do bot do Telegram ficam em **variáveis de ambiente** na VM (`/etc/frotasystem.env`), nunca no GitHub.

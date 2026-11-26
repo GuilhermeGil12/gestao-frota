@@ -37,6 +37,10 @@ public interface LocalizacaoRepository extends JpaRepository <Localizacao, Long>
 
     Optional<Localizacao> findTopByVeiculoIdOrderByDataHoraDesc(Long veiculoId);
 
+    // O mesmo ponto pode chegar duas vezes (a controladora reenvia o lote quando a confirmação não chega).
+    boolean existsByVeiculoIdAndDataHoraAndLatitudeAndLongitude(Long veiculoId, LocalDateTime dataHora,
+                                                                Double latitude, Double longitude);
+
     // Alerta = ponto acima do limite DO VEÍCULO (sem limite cadastrado, vale 110 km/h). Mais recentes primeiro.
     @Query("SELECT l FROM Localizacao l WHERE l.veiculo.id = :veiculoId AND l.velocidade > " + LIMITE_DO_VEICULO
             + " AND l.dataHora BETWEEN :inicio AND :fim ORDER BY l.dataHora DESC")

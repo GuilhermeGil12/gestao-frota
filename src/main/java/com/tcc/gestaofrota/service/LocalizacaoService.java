@@ -86,13 +86,22 @@ public class LocalizacaoService {
     }
 
     // Firmwares antigos nao mandam as tensoes: nesse caso o campo fica nulo em vez de quebrar.
+    // Número estragado ("nan", "inf", texto) vira null: o ponto é gravado sem aquele campo.
     private Double paraDouble(String valor) {
         if (valor == null || valor.isBlank()) return null;
         try {
-            return Double.parseDouble(valor);
+            double d = Double.parseDouble(valor.trim());
+            return Double.isFinite(d) ? d : null;
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    // Latitude e longitude existem, estão na faixa do planeta e não são o 0,0 de "GPS sem sinal".
+    private static boolean posicaoValida(Double lat, Double lng) {
+        return lat != null && lng != null
+                && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+                && lat != 0.0 && lng != 0.0;
     }
 
     // A chave chega como 1/0; aceita também true/false pra um ponto mal formatado não derrubar o lote.
@@ -111,19 +120,22 @@ public class LocalizacaoService {
 
         for (CoordenadaEsp32DTO dto : loteDoEsp32) {
 
-            // Converte coordenadas vindas do ESP32
-            double lat = Double.parseDouble(dto.getLatitude());
-            double lng = Double.parseDouble(dto.getLongitude());
+            // Cada ponto é lido sozinho e um campo estragado (ex.: "nan" quando o GPS falha) vira
+            // "sem valor", em vez de derrubar o lote inteiro: um lote com erro nunca seria
+            // confirmado, a controladora reenviaria para sempre e a fila do microSD travaria.
+            // (Erro do BANCO continua derrubando o lote: sem confirmação, ele é reenviado depois.)
+            Double lat = paraDouble(dto.getLatitude());
+            Double lng = paraDouble(dto.getLongitude());
 
-            // Só processa se a coordenada for válida (GPS com sinal)
-            if (lat != 0.0 && lng != 0.0) {
+            // Sem posição válida (GPS sem sinal ou número estragado) não dá pra desenhar: descarta o ponto.
+            if (posicaoValida(lat, lng)) {
 
                 Localizacao novaLoc = new Localizacao();
                 novaLoc.setVeiculo(carroDoEsp32);
                 novaLoc.setLatitude(lat);
                 novaLoc.setLongitude(lng);
-                novaLoc.setAltitude(Double.parseDouble(dto.getAltitude()));
-                novaLoc.setVelocidade(Double.parseDouble(dto.getVelocidade()));
+                novaLoc.setAltitude(paraDouble(dto.getAltitude()));
+                novaLoc.setVelocidade(paraDouble(dto.getVelocidade()));
                 novaLoc.setStatus(paraStatus(dto.getIgn()));
                 novaLoc.setRecebidoEM(LocalDateTime.now());
                 novaLoc.setTensaoPosChave(paraDouble(dto.getTensao_pos_chave()));
@@ -164,6 +176,12 @@ public class LocalizacaoService {
                 } catch (Exception e) {
                     // Fallback caso a data do GPS venha mal formatada
                     novaLoc.setDataHora(LocalDateTime.now());
+                }
+
+                // Reenvio de um lote que já tinha sido salvo (a confirmação se perdeu no caminho): ignora.
+                if (carroDoEsp32 != null && localizacaoRepository.existsByVeiculoIdAndDataHoraAndLatitudeAndLongitude(
+                        carroDoEsp32.getId(), novaLoc.getDataHora(), lat, lng)) {
+                    continue;
                 }
 
                 localizacoesParaSalvar.add(novaLoc);

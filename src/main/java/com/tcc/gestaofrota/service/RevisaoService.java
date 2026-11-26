@@ -83,6 +83,12 @@ public class RevisaoService {
         if (v.getKmAtual() == null) {
             throw new RuntimeException("Informe o km atual do veículo antes de registrar a revisão.");
         }
+        // Só a partir de 500 km antes (ou vencida): antes disso não é hora de revisão.
+        if (!precisaAvisar(v)) {
+            throw new RuntimeException("A revisão do " + v.getPlaca() + " ainda não chegou: faltam "
+                    + formatarKm(proximaRevisao(v) - v.getKmAtual()) + ". Ela pode ser registrada a partir de "
+                    + formatarKm(KM_AVISO) + " antes.");
+        }
         v.setKmUltimaRevisao(v.getKmAtual());
         v.setAvisoRevisaoKm(null);
         Veiculo salvo = veiculoRepository.save(v);
